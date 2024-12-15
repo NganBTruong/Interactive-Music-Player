@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Music Player</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    .widget-container {
+      max-width: 500px;
+      margin: auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #ddd;
+    }
+
+    .song-title {
+      margin: 10px 0;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .control-btn {
+      border: none;
+      background: #ddd;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+      font-size: 14px;
+      margin: 0 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .progress-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .progress-bar {
+      width: 80%;
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress {
+      height: 100%;
+      background-color: #888;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 10px; /* Rounded corners for progress */
+    }
+
+    .time {
+      font-size: 14px;
+      margin: 0 5px;
+      color: #555;
+    }
+
+    .playlist-container {
+      margin-top: 20px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: #f9f9f9;
+      padding: 10px;
+    }
+
+    .playlist-container::-webkit-scrollbar {
+      width: 0.5em;
+    }
+
+    .playlist-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .playlist-container::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    .playlist-container::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    .playlist-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+
+    .playlist-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    .playlist-item img {
+      width: 40px;
+      height: 40px;
+      background-color: #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #555;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="widget-container">
+    <div class="video-container"></div>
+
+    <div class="song-title">Genshin OST - Main Theme</div>
+
+    <div class="controls">
+      <button id="prev-btn" class="control-btn">⏮</button>
+      <button id="play-btn" class="control-btn">▶</button>
+      <button id="pause-btn" class="control-btn" style="display: none;">⏸</button>
+      <button id="next-btn" class="control-btn">⏭</button>
+    </div>
+
+    <div class="progress-container">
+      <div class="time" id="current-time">0:00</div>
+      <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+      </div>
+      <div class="time" id="duration">0:00</div>
+    </div>
+
+    <div class="playlist-container">
+     <div class="playlist-item" data-src="https://drive.google.com/uc?export=download&id=1UKZYpLGsBXxKGim8ZipLui1cVsYimvmG">
+  <img src="https://via.placeholder.com/40" alt="Thumbnail">
+  <div>Genshin OST - Main Theme</div>
+      </div>
+      <div class="playlist-item" data-src="https://example.com/genshin-wind.mp3">
+        <img src="https://via.placeholder.com/40" alt="Thumbnail">
+        <div>Genshin OST - Wind and Stars</div>
+      </div>
+      <div class="playlist-item" data-src="https://example.com/genshin-battle.mp3">
+        <img src="https://via.placeholder.com/40" alt="Thumbnail">
+        <div>Genshin OST - Battle Theme</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressBar = document.getElementById('progress');
+    const currentTimeElem = document.getElementById('current-time');
+    const durationElem = document.getElementById('duration');
+    const playlistItems = document.querySelectorAll('.playlist-item');
+
+    let audio = new Audio();
+    let currentTrackIndex = 0;
+    const tracks = Array.from(playlistItems).map(item => item.dataset.src);
+
+    function loadTrack(index) {
+      audio.src = tracks[index];
+      audio.load();
+      document.querySelector('.song-title').textContent = playlistItems[index].textContent.trim();
+    }
+
+    function playTrack() {
+      audio.play();
+      playBtn.style.display = 'none';
+      pauseBtn.style.display = 'inline';
+    }
+
+    function pauseTrack() {
+      audio.pause();
+      playBtn.style.display = 'inline';
+      pauseBtn.style.display = 'none';
+    }
+
+    function updateProgressBar() {
+      const progressPercent = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = progressPercent + '%';
+      currentTimeElem.textContent = formatTime(audio.currentTime);
+      durationElem.textContent = formatTime(audio.duration);
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    playBtn.addEventListener('click', playTrack);
+    pauseBtn.addEventListener('click', pauseTrack);
+
+    prevBtn.addEventListener('click', () => {
+      currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+      loadTrack(currentTrackIndex);
+      playTrack();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      loadTrack(currentTrackIndex);
+      playTrack();
+    });
+
+    playlistItems.forEach((item, index) => {
+      item.addEventListener('click', () => {
+        currentTrackIndex = index;
+        loadTrack(currentTrackIndex);
+        playTrack();
+      });
+    });
+
+    audio.addEventListener('timeupdate', updateProgressBar);
+    audio.addEventListener('ended', () => {
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      loadTrack(currentTrackIndex);
+      playTrack();
+    });
+
+    loadTrack(currentTrackIndex);
+  </script>
+</body>
+
+</html>
