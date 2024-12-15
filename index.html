@@ -82,7 +82,7 @@
       background-color: #888;
       width: 0%;
       transition: width 0.3s ease;
-      border-radius: 10px; /* Rounded corners for progress */
+      border-radius: 10px;
     }
 
     .time {
@@ -164,16 +164,16 @@
 
     <div class="progress-container">
       <div class="time" id="current-time">0:00</div>
-      <div class="progress-bar">
+      <div class="progress-bar" id="progress-bar">
         <div class="progress" id="progress"></div>
       </div>
       <div class="time" id="duration">0:00</div>
     </div>
 
     <div class="playlist-container">
-     <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3">
-  <img src="https://via.placeholder.com/40" alt="Thumbnail">
-  <div>Genshin OST - Main Theme</div>
+      <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3">
+        <img src="https://via.placeholder.com/40" alt="Thumbnail">
+        <div>Genshin OST - Main Theme</div>
       </div>
       <div class="playlist-item" data-src="https://example.com/genshin-wind.mp3">
         <img src="https://via.placeholder.com/40" alt="Thumbnail">
@@ -192,6 +192,7 @@
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const progressBar = document.getElementById('progress');
+    const progressBarContainer = document.getElementById('progress-bar');
     const currentTimeElem = document.getElementById('current-time');
     const durationElem = document.getElementById('duration');
     const playlistItems = document.querySelectorAll('.playlist-item');
@@ -199,6 +200,7 @@
     let audio = new Audio();
     let currentTrackIndex = 0;
     const tracks = Array.from(playlistItems).map(item => item.dataset.src);
+    let isDragging = false;
 
     function loadTrack(index) {
       audio.src = tracks[index];
@@ -260,6 +262,34 @@
       loadTrack(currentTrackIndex);
       playTrack();
     });
+
+    // Draggable progress bar functionality
+    progressBarContainer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      updateProgress(e);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        updateProgress(e);
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+      }
+    });
+
+    function updateProgress(e) {
+      const rect = progressBarContainer.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const progressWidth = Math.min(Math.max(0, offsetX), rect.width);
+      const progressPercent = (progressWidth / rect.width) * 100;
+      progressBar.style.width = progressPercent + '%';
+      audio.currentTime = (audio.duration * progressPercent) / 100;
+      currentTimeElem.textContent = formatTime(audio.currentTime);
+    }
 
     loadTrack(currentTrackIndex);
   </script>
