@@ -146,6 +146,32 @@
       color: #555;
       border-radius: 5px;
     }
+
+    .volume-container {
+      width: 100px;
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 5px;
+      position: relative;
+      margin-left: 20px;
+    }
+
+    .volume-slider {
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .volume-thumb {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      background-color: #888;
+      border-radius: 50%;
+      left: 0;
+    }
   </style>
 </head>
 
@@ -160,6 +186,13 @@
       <button id="play-btn" class="control-btn">▶</button>
       <button id="pause-btn" class="control-btn" style="display: none;">⏸</button>
       <button id="next-btn" class="control-btn">⏭</button>
+      
+      <!-- Volume Slider placed next to the 'next' button -->
+      <div class="volume-container">
+        <div class="volume-slider" id="volume-slider">
+          <div class="volume-thumb"></div>
+        </div>
+      </div>
     </div>
 
     <div class="progress-container">
@@ -171,7 +204,8 @@
     </div>
 
     <div class="playlist-container">
-      <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3">
+      <div class="playlist-item"
+        data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3">
         <img src="https://via.placeholder.com/40" alt="Thumbnail">
         <div>Genshin OST - Main Theme</div>
       </div>
@@ -186,116 +220,146 @@
     </div>
   </div>
 
-<script>
-  const playBtn = document.getElementById('play-btn');
-  const pauseBtn = document.getElementById('pause-btn');
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-  const progressBar = document.getElementById('progress');
-  const progressBarContainer = document.getElementById('progress-bar');
-  const currentTimeElem = document.getElementById('current-time');
-  const durationElem = document.getElementById('duration');
-  const playlistItems = document.querySelectorAll('.playlist-item');
+  <script>
+    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressBar = document.getElementById('progress');
+    const progressBarContainer = document.getElementById('progress-bar');
+    const currentTimeElem = document.getElementById('current-time');
+    const durationElem = document.getElementById('duration');
+    const playlistItems = document.querySelectorAll('.playlist-item');
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeThumb = document.querySelector('.volume-thumb');
 
-  let audio = new Audio();
-  let currentTrackIndex = 0;
-  const tracks = Array.from(playlistItems).map(item => item.dataset.src);
-  let isDragging = false;
 
-  function loadTrack(index) {
-    audio.src = tracks[index];
-    audio.load();
-    document.querySelector('.song-title').textContent = playlistItems[index].textContent.trim();
-  }
+    let audio = new Audio();
+    let currentTrackIndex = 0;
+    const tracks = Array.from(playlistItems).map(item => item.dataset.src);
+    let isDragging = false;
+    let isDraggingVolume = false;
 
-  function playTrack() {
-    audio.play();
-    playBtn.style.display = 'none';
-    pauseBtn.style.display = 'inline';
-  }
+    function loadTrack(index) {
+      audio.src = tracks[index];
+      audio.load();
+      document.querySelector('.song-title').textContent = playlistItems[index].textContent.trim();
+    }
 
-  function pauseTrack() {
-    audio.pause();
-    playBtn.style.display = 'inline';
-    pauseBtn.style.display = 'none';
-  }
+    function playTrack() {
+      audio.play();
+      playBtn.style.display = 'none';
+      pauseBtn.style.display = 'inline';
+    }
 
-  function updateProgressBar() {
-    const progressPercent = (audio.currentTime / audio.duration) * 100;
-    progressBar.style.width = progressPercent + '%';
-    currentTimeElem.textContent = formatTime(audio.currentTime);
-    durationElem.textContent = formatTime(audio.duration);
-  }
+    function pauseTrack() {
+      audio.pause();
+      playBtn.style.display = 'inline';
+      pauseBtn.style.display = 'none';
+    }
 
-  function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  }
+    function updateProgressBar() {
+      const progressPercent = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = progressPercent + '%';
+      currentTimeElem.textContent = formatTime(audio.currentTime);
+      durationElem.textContent = formatTime(audio.duration);
+    }
 
-  playBtn.addEventListener('click', playTrack);
-  pauseBtn.addEventListener('click', pauseTrack);
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
 
-  prevBtn.addEventListener('click', () => {
-    currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-    loadTrack(currentTrackIndex);
-    playTrack();
-  });
+    playBtn.addEventListener('click', playTrack);
+    pauseBtn.addEventListener('click', pauseTrack);
 
-  nextBtn.addEventListener('click', () => {
-    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-    loadTrack(currentTrackIndex);
-    playTrack();
-  });
-
-  playlistItems.forEach((item, index) => {
-    item.addEventListener('click', () => {
-      currentTrackIndex = index;
+    prevBtn.addEventListener('click', () => {
+      currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
       loadTrack(currentTrackIndex);
       playTrack();
     });
-  });
 
-  audio.addEventListener('timeupdate', updateProgressBar);
-  audio.addEventListener('ended', () => {
-    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+    nextBtn.addEventListener('click', () => {
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      loadTrack(currentTrackIndex);
+      playTrack();
+    });
+
+    playlistItems.forEach((item, index) => {
+      item.addEventListener('click', () => {
+        currentTrackIndex = index;
+        loadTrack(currentTrackIndex);
+        playTrack();
+      });
+    });
+
+    audio.addEventListener('timeupdate', updateProgressBar);
+    audio.addEventListener('ended', () => {
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      loadTrack(currentTrackIndex);
+      playTrack();
+    });
+
+    // Draggable progress bar functionality
+    progressBarContainer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      handleProgressBarDrag(e);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        handleProgressBarDrag(e);
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+      }
+    });
+
+    function handleProgressBarDrag(e) {
+      if (!isDragging) return;
+
+      const rect = progressBarContainer.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const progressWidth = Math.min(Math.max(offsetX, 0), rect.width);
+      const progressPercent = (progressWidth / rect.width) * 100;
+
+      progressBar.style.width = `${progressPercent}%`;
+      audio.currentTime = (audio.duration * progressPercent) / 100;
+      currentTimeElem.textContent = formatTime(audio.currentTime);
+    }
+
+    // Volume slider functionality
+    volumeSlider.addEventListener('mousedown', (e) => {
+      isDraggingVolume = true;
+      handleVolumeSliderDrag(e);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDraggingVolume) {
+        handleVolumeSliderDrag(e);
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingVolume = false;
+    });
+
+    function handleVolumeSliderDrag(e) {
+      const rect = volumeSlider.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const thumbPosition = Math.min(Math.max(offsetX, 0), rect.width);
+
+      volumeThumb.style.left = `${thumbPosition - (volumeThumb.offsetWidth / 2)}px`;
+      const volume = thumbPosition / rect.width;
+      audio.volume = volume;
+    }
+
     loadTrack(currentTrackIndex);
-    playTrack();
-  });
-
-  // Draggable progress bar functionality
-  progressBarContainer.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    handleProgressBarDrag(e); // Handle the initial drag
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      handleProgressBarDrag(e); // Continue dragging as the mouse moves
-    }
-  });
-
-  window.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false; // Stop dragging when mouse is released
-    }
-  });
-
-  function handleProgressBarDrag(e) {
-    if (!isDragging) return;
-
-    const rect = progressBarContainer.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const progressWidth = Math.min(Math.max(offsetX, 0), rect.width);
-    const progressPercent = (progressWidth / rect.width) * 100;
-
-    progressBar.style.width = `${progressPercent}%`;
-    audio.currentTime = (audio.duration * progressPercent) / 100;
-    currentTimeElem.textContent = formatTime(audio.currentTime);
-  }
-
-  loadTrack(currentTrackIndex);
-</script>
+  </script>
 </body>
 
 </html>
