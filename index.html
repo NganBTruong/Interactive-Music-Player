@@ -4,166 +4,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Music & Notes</title>
+    <title>Study Hub - Music, Notes, & Video</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0; /* Removed default padding */
-            background-color: #f0f2f5; /* Softer background */
-            display: flex; /* Added for overall layout */
-            min-height: 100vh; /* Ensure body takes full viewport height */
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            min-height: 100vh;
         }
 
         .main-container {
             display: flex;
             width: 100%;
-            height: 100vh; /* Full viewport height */
+            height: 100vh;
         }
 
         .music-player-section {
-            width: 35%; /* Music player takes up 35% of the width */
+            width: 35%;
             padding: 20px;
             background-color: #f9f9f9;
-            overflow-y: auto; /* Scroll if content overflows */
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-            display: flex;
-            flex-direction: column; /* Stack elements vertically */
-            box-sizing: border-box;
-        }
-
-        .widgets-section {
-            width: 65%; /* Widgets take up the remaining 65% */
-            padding: 20px;
-            background-color: #ffffff;
-            overflow-y: auto; /* Scroll if content overflows */
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
         }
 
-        /* Music Player Styles (adjusted from original .widget-container) */
+        .widgets-section {
+            width: 65%;
+            padding: 20px;
+            background-color: #ffffff;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column; /* Ensures widgets stack vertically */
+            box-sizing: border-box;
+            gap: 20px; /* Adds space between widgets */
+        }
+
+        /* Music Player Styles */
         .music-player-container {
-            margin: 0 auto; /* Center within its column if narrower */
+            margin: 0 auto;
             background-color: #ffffff;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 100%; /* Take full width of its column */
-            box-sizing: border-box; 
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .video-container {
             position: relative;
             width: 100%;
-            height: 200px; /* Adjusted height */
+            height: 200px;
             border-radius: 10px;
             overflow: hidden;
-            background-color: #ddd; /* Default background */
+            background-color: #ddd;
             margin-bottom: 15px;
-            background-size: cover; /* For album art */
-            background-position: center; /* For album art */
+            background-size: cover;
+            background-position: center;
         }
 
         .song-title {
-            margin: 10px 0;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            text-align: center;
+            margin: 10px 0; font-size: 18px; font-weight: bold;
+            color: #333; text-align: center;
         }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
-        }
-
+        .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
         .control-btn {
-            border: none;
-            background: #ddd;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #333;
-            font-size: 14px;
-            margin: 0 5px; /* Adjusted margin */
-            cursor: pointer;
-            border-radius: 5px;
+            border: none; background: #ddd; width: 40px; height: 40px;
+            display: flex; justify-content: center; align-items: center;
+            color: #333; font-size: 14px; margin: 0 5px;
+            cursor: pointer; border-radius: 5px;
         }
-
-        .progress-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 15px;
-        }
-
+        .progress-container { display: flex; align-items: center; justify-content: center; margin-top: 15px; }
         .progress-bar {
-            width: 70%; /* Adjusted width */
-            height: 15px; /* Adjusted height */
-            background-color: #ddd;
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
+            width: 70%; height: 15px; background-color: #ddd;
+            border-radius: 10px; position: relative; overflow: hidden; cursor: pointer;
         }
-
-        .progress {
-            height: 100%;
-            background-color: #888;
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 10px;
-        }
-
-        .time {
-            font-size: 14px;
-            margin: 0 10px; /* Adjusted margin */
-            color: #555;
-        }
-
+        .progress { height: 100%; background-color: #888; width: 0%; transition: width 0.3s ease; border-radius: 10px; }
+        .time { font-size: 14px; margin: 0 10px; color: #555; }
         .playlist-container {
-            margin-top: 20px;
-            max-height: 200px; /* Adjusted max-height */
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background: #f9f9f9;
-            padding: 10px;
+            margin-top: 20px; max-height: 200px; overflow-y: auto;
+            border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; padding: 10px;
         }
-
         .playlist-container::-webkit-scrollbar { width: 0.5em; }
         .playlist-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .playlist-container::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
         .playlist-container::-webkit-scrollbar-thumb:hover { background: #555; }
-
         .playlist-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 5px;
-            cursor: pointer;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; margin-bottom: 5px; cursor: pointer; background-color: #fff;
+            border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s;
         }
         .playlist-item:hover { background-color: #f0f0f0; }
-        .playlist-item.active-track {
-            background-color: #d1e7ff; 
-            border-left: 4px solid #007bff;
-        }
+        .playlist-item.active-track { background-color: #d1e7ff; border-left: 4px solid #007bff; }
         .playlist-item img {
             width: 40px; height: 40px; background-color: #ddd;
             display: flex; justify-content: center; align-items: center;
             color: #555; border-radius: 5px; margin-right: 10px;
         }
-
         .volume-container { display: flex; align-items: center; margin-left: 15px; }
         .volume-slider-container {
             width: 80px; height: 15px; background-color: #ddd;
@@ -172,41 +112,43 @@
         .volume-thumb {
             position: absolute; top: 50%; transform: translateY(-50%);
             width: 12px; height: 12px; background-color: #888;
-            border-radius: 50%; left: 50%; 
+            border-radius: 50%; left: 50%;
         }
 
-        /* Widgets Section Styles */
-        .widget-selector {
-            display: flex; justify-content: center; margin-bottom: 20px;
-            border-bottom: 1px solid #eee; padding-bottom: 15px;
-        }
-        .widget-tab-btn {
-            padding: 10px 20px; margin: 0 10px; cursor: pointer;
-            border: 1px solid transparent; border-bottom: 3px solid transparent; 
-            background-color: #f0f0f0; border-radius: 5px 5px 0 0;
-            font-size: 16px; transition: background-color 0.3s, border-color 0.3s;
-        }
-        .widget-tab-btn:hover { background-color: #e0e0e0; }
-        .widget-tab-btn.active {
-            background-color: #fff; border-color: #ddd;
-            border-bottom-color: #007bff; font-weight: bold;
-        }
-        .widget-content { flex-grow: 1; display: flex; flex-direction: column; }
-        .notes-widget, .checklist-widget {
-            padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px;
-            background-color: #fdfdfd; 
-            /* height: 100%; Removed to allow natural content flow within flex parent */
+        /* General Widget Styling */
+        .widget-card {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fdfdfd;
             box-sizing: border-box;
-            display: flex; flex-direction: column;
+            display: flex;
+            flex-direction: column;
+        }
+        .widget-card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Notes Widget Styles */
+        .notes-widget { /* Now uses .widget-card */
+            min-height: 200px; /* Suggest a min height */
         }
         #notes-area {
-            width: 100%; 
-            flex-grow: 1; /* Allow textarea to grow */
+            width: 100%;
+            flex-grow: 1;
             padding: 10px;
             border: 1px solid #ccc; border-radius: 5px; font-size: 15px;
-            resize: vertical; box-sizing: border-box; min-height: 100px; /* Minimum height */
+            resize: vertical; box-sizing: border-box; min-height: 150px;
         }
-        .checklist-widget h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
+
+        /* Checklist Widget Styles */
+        .checklist-widget { /* Now uses .widget-card */
+            min-height: 200px; /* Suggest a min height */
+        }
         .checklist-input-container { display: flex; margin-bottom: 15px; }
         #checklist-item-input {
             flex-grow: 1; padding: 10px; border: 1px solid #ccc;
@@ -218,9 +160,9 @@
             border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
         }
         #add-checklist-item-btn:hover { background-color: #0056b3; }
-        #checklist { 
-            list-style: none; padding: 0; margin: 0; 
-            flex-grow: 1; overflow-y: auto;  min-height: 100px; /* Minimum height */
+        #checklist {
+            list-style: none; padding: 0; margin: 0;
+            flex-grow: 1; overflow-y: auto; min-height: 100px;
         }
         #checklist li {
             display: flex; align-items: center; padding: 10px 0;
@@ -231,7 +173,7 @@
             appearance: none; -webkit-appearance: none; -moz-appearance: none;
             width: 20px; height: 20px; border: 2px solid #888;
             border-radius: 50%; margin-right: 12px; cursor: pointer;
-            position: relative; outline: none; flex-shrink: 0; /* Prevent shrinking */
+            position: relative; outline: none; flex-shrink: 0;
         }
         #checklist input[type="checkbox"]:checked { background-color: #007bff; border-color: #007bff; }
         #checklist input[type="checkbox"]:checked::before {
@@ -244,9 +186,42 @@
         .delete-item-btn {
             background: none; border: none; color: #ff4d4d;
             cursor: pointer; font-size: 16px; margin-left: 10px;
-            padding: 5px; line-height: 1; flex-shrink: 0; /* Prevent shrinking */
+            padding: 5px; line-height: 1; flex-shrink: 0;
         }
         .delete-item-btn:hover { color: #cc0000; }
+
+        /* YouTube Player Widget Styles */
+        .youtube-widget { /* Now uses .widget-card */
+             min-height: 300px; /* Suggest a min height */
+        }
+        .youtube-input-container { display: flex; margin-bottom: 15px; }
+        #youtube-url-input {
+            flex-grow: 1; padding: 10px; border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px; font-size: 15px;
+        }
+        #load-youtube-video-btn {
+            padding: 10px 15px; border: 1px solid #c9302c;
+            background-color: #d9534f; color: white;
+            border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
+        }
+        #load-youtube-video-btn:hover { background-color: #c9302c; }
+        .youtube-player-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            width: 100%;
+            background-color: #000; /* Fallback background */
+            border-radius: 5px;
+        }
+        .youtube-player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
 
     </style>
 </head>
@@ -255,84 +230,70 @@
     <div class="main-container">
         <section class="music-player-section">
             <div class="music-player-container">
-                <div class="video-container">
-                    </div>
-
+                <div class="video-container"></div>
                 <div class="song-title">Select a Song</div>
-
                 <div class="controls">
                     <button id="prev-btn" class="control-btn">⏮</button>
                     <button id="play-btn" class="control-btn">▶</button>
                     <button id="pause-btn" class="control-btn" style="display: none;">⏸</button>
                     <button id="next-btn" class="control-btn">⏭</button>
                     <div class="volume-container">
-                        <div class="volume-slider-container" id="volume-slider">
-                            <div class="volume-thumb"></div>
-                        </div>
+                        <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div>
                     </div>
                 </div>
-
                 <div class="progress-container">
                     <div class="time" id="current-time">0:00</div>
-                    <div class="progress-bar" id="progress-bar">
-                        <div class="progress" id="progress"></div>
-                    </div>
+                    <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div>
                     <div class="time" id="duration">0:00</div>
                 </div>
-
                 <div class="playlist-container">
-                    <div class="playlist-item" 
-                         data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" 
-                         data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF">
-                        <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found">
-                        <div>Amber Run - I Found</div>
+                    <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF">
+                        <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found</div>
                     </div>
-                    <div class="playlist-item" 
-                         data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" 
-                         data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM">
-                        <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG">
-                        <div>Kangaroo MusiQue - RPG</div>
+                    <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM">
+                        <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG</div>
                     </div>
-                    <div class="playlist-item" 
-                         data-src="https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg" 
-                         data-thumbnail="https://via.placeholder.com/40/e74c3c/FFFFFF?Text=EL">
-                        <img src="https://via.placeholder.com/40/e74c3c/FFFFFF?Text=EL" alt="Lepidoptera">
-                        <div>Epoq - Lepidoptera</div>
+                    <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg" data-thumbnail="https://via.placeholder.com/40/e74c3c/FFFFFF?Text=EL">
+                        <img src="https://via.placeholder.com/40/e74c3c/FFFFFF?Text=EL" alt="Lepidoptera"><div>Epoq - Lepidoptera</div>
                     </div>
-                    </div>
+                </div>
             </div>
         </section>
 
         <section class="widgets-section">
-            <div class="widget-selector">
-                <button class="widget-tab-btn active" id="notes-tab-btn">Notes</button>
-                <button class="widget-tab-btn" id="checklist-tab-btn">Checklist</button>
+            <div class="notes-widget widget-card" id="notes-widget-content">
+                <h3>My Notes</h3>
+                <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
             </div>
 
-            <div class="widget-content">
-                <div class="notes-widget" id="notes-widget-content">
-                    <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
+            <div class="checklist-widget widget-card" id="checklist-widget-content">
+                <h3>My Study Checklist</h3>
+                <div class="checklist-input-container">
+                    <input type="text" id="checklist-item-input" placeholder="Add a new task...">
+                    <button id="add-checklist-item-btn">Add</button>
                 </div>
+                <ul id="checklist"></ul>
+            </div>
 
-                <div class="checklist-widget" id="checklist-widget-content" style="display: none;">
-                    <h3>My Study Checklist</h3>
-                    <div class="checklist-input-container">
-                        <input type="text" id="checklist-item-input" placeholder="Add a new task...">
-                        <button id="add-checklist-item-btn">Add</button>
-                    </div>
-                    <ul id="checklist">
-                        </ul>
+            <div class="youtube-widget widget-card" id="youtube-widget-content">
+                <h3>Study Video</h3>
+                <div class="youtube-input-container">
+                    <input type="text" id="youtube-url-input" placeholder="Paste YouTube Video URL...">
+                    <button id="load-youtube-video-btn">Load Video</button>
                 </div>
+                <div class="youtube-player-container" id="youtube-player">
+                    </div>
             </div>
         </section>
     </div>
 
     <script>
+        // --- MUSIC PLAYER JavaScript (mostly unchanged) ---
         const playBtn = document.getElementById('play-btn');
         const pauseBtn = document.getElementById('pause-btn');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
-        const progressBarElem = document.getElementById('progress'); // Renamed to avoid conflict
+        const progressBarElem = document.getElementById('progress');
         const progressBarContainer = document.getElementById('progress-bar');
         const currentTimeElem = document.getElementById('current-time');
         const durationElem = document.getElementById('duration');
@@ -357,38 +318,27 @@
                 audio.src = tracks[index].src;
                 audio.load();
                 songTitleElem.textContent = tracks[index].title;
-                
                 const activePlaylistItem = playlistItems[index];
                 if (activePlaylistItem) {
                     const artSrc = activePlaylistItem.dataset.thumbnail || tracks[index].thumbnail;
                     videoContainer.style.backgroundImage = `url('${artSrc}')`;
-                } else {
-                     videoContainer.style.backgroundImage = `url('${tracks[index].thumbnail}')`;
-                }
-
+                } else { videoContainer.style.backgroundImage = `url('${tracks[index].thumbnail}')`; }
                 playlistItems.forEach(item => item.classList.remove('active-track'));
                 if(activePlaylistItem) activePlaylistItem.classList.add('active-track');
-                updateProgressBar(); // Update duration display immediately
+                updateProgressBar();
             }
         }
-
         function playTrack() {
             audio.play().then(() => {
                 playBtn.style.display = 'none';
                 pauseBtn.style.display = 'inline-block';
-            }).catch(error => {
-                console.error("Error playing audio:", error);
-                // Optionally, alert the user or try to play the next track
-                // alert("Could not play audio. Please ensure your browser allows autoplay or select another track.");
-            });
+            }).catch(error => console.error("Error playing audio:", error));
         }
-
         function pauseTrack() {
             audio.pause();
             playBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
         }
-
         function updateProgressBar() {
             if (audio.duration && isFinite(audio.duration)) {
                 const progressPercent = (audio.currentTime / audio.duration) * 100;
@@ -398,230 +348,124 @@
             } else {
                 progressBarElem.style.width = '0%';
                 currentTimeElem.textContent = "0:00";
-                if (audio.src && !isFinite(audio.duration)) {
-                    // Still loading or error in duration
-                    durationElem.textContent = "Loading...";
-                } else {
-                    durationElem.textContent = "0:00";
-                }
+                durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00";
             }
         }
-        
         audio.addEventListener('loadedmetadata', updateProgressBar);
         audio.addEventListener('durationchange', updateProgressBar);
-
-
         function formatTime(seconds) {
             if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00";
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
-
         playBtn.addEventListener('click', playTrack);
         pauseBtn.addEventListener('click', pauseTrack);
-
-        prevBtn.addEventListener('click', () => {
-            currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-            loadTrack(currentTrackIndex);
-            playTrack();
-        });
-
-        nextBtn.addEventListener('click', () => {
-            currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-            loadTrack(currentTrackIndex);
-            playTrack();
-        });
-
-        playlistItems.forEach((item, index) => {
-            item.addEventListener('click', () => {
-                currentTrackIndex = index;
-                loadTrack(currentTrackIndex);
-                playTrack();
-            });
-        });
-
+        prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrack(currentTrackIndex); playTrack(); });
+        nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrack(currentTrackIndex); playTrack(); });
+        playlistItems.forEach((item, index) => { item.addEventListener('click', () => { currentTrackIndex = index; loadTrack(currentTrackIndex); playTrack(); }); });
         audio.addEventListener('timeupdate', updateProgressBar);
-        audio.addEventListener('ended', () => {
-            nextBtn.click(); 
-        });
+        audio.addEventListener('ended', () => nextBtn.click());
 
-        progressBarContainer.addEventListener('click', function(e) { // Changed to click for simplicity, can be mousedown + drag
-            if (!audio.duration || !isFinite(audio.duration)) return;
-            const rect = this.getBoundingClientRect();
-            const offsetX = e.clientX - rect.left;
-            const newTime = (offsetX / rect.width) * audio.duration;
-            audio.currentTime = newTime;
-            updateProgressBar();
-        });
-        
-        // More robust draggable progress bar (Optional - can use simple click above)
-        progressBarContainer.addEventListener('mousedown', (e) => {
-            if (!audio.duration || !isFinite(audio.duration)) return;
-            isDraggingProgress = true;
-            handleProgressBarSeek(e);
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (isDraggingProgress) {
-                handleProgressBarSeek(e);
-            }
-        });
-        window.addEventListener('mouseup', () => {
-            if (isDraggingProgress) {
-                isDraggingProgress = false;
-            }
-        });
+        progressBarContainer.addEventListener('mousedown', (e) => { if (!audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); });
+        window.addEventListener('mousemove', (e) => { if (isDraggingProgress) handleProgressBarSeek(e); });
+        window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; });
         function handleProgressBarSeek(e) {
             if (!isDraggingProgress || !audio.duration || !isFinite(audio.duration)) return;
             const rect = progressBarContainer.getBoundingClientRect();
             const offsetX = e.clientX - rect.left;
             const progressWidth = Math.min(Math.max(offsetX, 0), rect.width);
-            const newTime = (progressWidth / rect.width) * audio.duration;
-            audio.currentTime = newTime;
+            audio.currentTime = (progressWidth / rect.width) * audio.duration;
             updateProgressBar();
         }
-
-
-        volumeSlider.addEventListener('click', function(e) { // Changed to click for simplicity
-            const rect = this.getBoundingClientRect();
-            const offsetX = e.clientX - rect.left;
-            let volumeLevel = offsetX / rect.width;
-            volumeLevel = Math.max(0, Math.min(1, volumeLevel)); // Clamp between 0 and 1
-            audio.volume = volumeLevel;
-            volumeThumb.style.left = `${volumeLevel * 100}%`; // Position thumb based on percentage
-             // Adjust thumb position so its center aligns with the click point
-            volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;
-        });
-
-        // More robust draggable volume (Optional - can use simple click above)
-        volumeSlider.addEventListener('mousedown', (e) => {
-            isDraggingVolume = true;
-            handleVolumeSliderDrag(e);
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (isDraggingVolume) {
-                handleVolumeSliderDrag(e);
-            }
-        });
-        window.addEventListener('mouseup', () => {
-            isDraggingVolume = false;
-        });
+        volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); });
+        window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); });
+        window.addEventListener('mouseup', () => { isDraggingVolume = false; });
         function handleVolumeSliderDrag(e) {
             const rect = volumeSlider.getBoundingClientRect();
             let offsetX = e.clientX - rect.left;
-            offsetX = Math.max(0, Math.min(offsetX, rect.width)); // Constrain
-            const volume = offsetX / rect.width;
-            audio.volume = volume;
-            // Position thumb relative to its parent, adjusting for thumb's own width
+            offsetX = Math.max(0, Math.min(offsetX, rect.width));
+            audio.volume = offsetX / rect.width;
             volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;
         }
-
-
         function setInitialVolume() {
-            const initialVolume = 0.5; 
-            audio.volume = initialVolume;
+            const initialVolume = 0.5; audio.volume = initialVolume;
             const rect = volumeSlider.getBoundingClientRect();
-            if (rect.width > 0) { // Ensure slider is rendered
-                 const thumbInitialPosition = initialVolume * (rect.width - volumeThumb.offsetWidth) + (volumeThumb.offsetWidth / 2);
-                 volumeThumb.style.left = `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px`;
-
-            } else { // Fallback if not rendered yet
-                 volumeThumb.style.left = `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;
-            }
+            volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;
         }
 
-        // Widget Switching Logic
-        const notesTabBtn = document.getElementById('notes-tab-btn');
-        const checklistTabBtn = document.getElementById('checklist-tab-btn');
-        const notesWidgetContent = document.getElementById('notes-widget-content');
-        const checklistWidgetContent = document.getElementById('checklist-widget-content');
-
-        notesTabBtn.addEventListener('click', () => {
-            notesWidgetContent.style.display = 'flex';
-            checklistWidgetContent.style.display = 'none';
-            notesTabBtn.classList.add('active');
-            checklistTabBtn.classList.remove('active');
-        });
-
-        checklistTabBtn.addEventListener('click', () => {
-            notesWidgetContent.style.display = 'none';
-            checklistWidgetContent.style.display = 'flex';
-            checklistTabBtn.classList.add('active');
-            notesTabBtn.classList.remove('active');
-        });
-
-        // Checklist Functionality
+        // --- CHECKLIST JavaScript (mostly unchanged) ---
         const checklistItemInput = document.getElementById('checklist-item-input');
         const addChecklistItemBtn = document.getElementById('add-checklist-item-btn');
         const checklist = document.getElementById('checklist');
         let checklistItemIdCounter = 0;
-
         function addChecklistItem(taskText = null, isChecked = false) {
             const itemText = taskText || checklistItemInput.value.trim();
-            if (itemText === "" && !taskText) { // Allow empty taskText if loaded (e.g. from storage)
-                alert("Please enter a task!");
-                return;
-            }
-
+            if (itemText === "" && !taskText) { alert("Please enter a task!"); return; }
             const listItem = document.createElement('li');
             const checkboxId = `task-${checklistItemIdCounter++}`;
-
             const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = checkboxId;
-            checkbox.checked = isChecked;
-
+            checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked;
             const label = document.createElement('label');
-            label.htmlFor = checkboxId;
-            label.textContent = itemText;
-            if(isChecked) { // Apply strikethrough if checked initially
-                 label.style.textDecoration = 'line-through';
-                 label.style.color = '#aaa';
-            }
+            label.htmlFor = checkboxId; label.textContent = itemText;
+            if(isChecked) { label.style.textDecoration = 'line-through'; label.style.color = '#aaa'; }
             checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    label.style.textDecoration = 'line-through';
-                    label.style.color = '#aaa';
-                } else {
-                    label.style.textDecoration = 'none';
-                    label.style.color = '#333';
-                }
+                label.style.textDecoration = this.checked ? 'line-through' : 'none';
+                label.style.color = this.checked ? '#aaa' : '#333';
             });
-
-
             const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️'; 
-            deleteBtn.className = 'delete-item-btn';
-            deleteBtn.title = 'Delete task';
+            deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Delete task';
             deleteBtn.addEventListener('click', function() { listItem.remove(); });
-
-            listItem.appendChild(checkbox);
-            listItem.appendChild(label);
-            listItem.appendChild(deleteBtn);
+            listItem.appendChild(checkbox); listItem.appendChild(label); listItem.appendChild(deleteBtn);
             checklist.appendChild(listItem);
+            if (!taskText) checklistItemInput.value = "";
+        }
+        addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
+        checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
-            if (!taskText) { 
-                checklistItemInput.value = "";
+        // --- YOUTUBE PLAYER JavaScript ---
+        const youtubeUrlInput = document.getElementById('youtube-url-input');
+        const loadYoutubeVideoBtn = document.getElementById('load-youtube-video-btn');
+        const youtubePlayerContainer = document.getElementById('youtube-player');
+
+        function getYouTubeVideoID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadYoutubeVideo() {
+            const url = youtubeUrlInput.value.trim();
+            const videoID = getYouTubeVideoID(url);
+
+            youtubePlayerContainer.innerHTML = ''; // Clear previous video
+
+            if (videoID) {
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0`; // Added autoplay, modestbranding, rel=0
+                iframe.width = "100%"; // Redundant due to CSS, but good fallback
+                iframe.height = "100%"; // Redundant due to CSS, but good fallback
+                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                iframe.allowFullscreen = true;
+                youtubePlayerContainer.appendChild(iframe);
+                youtubeUrlInput.value = ''; // Clear input field
+            } else if (url !== "") { // Only alert if URL was entered but invalid
+                alert("Invalid YouTube URL. Please enter a valid video link.");
             }
         }
 
-        addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
-        checklistItemInput.addEventListener('keypress', (e) => {
+        loadYoutubeVideoBtn.addEventListener('click', loadYoutubeVideo);
+        youtubeUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                addChecklistItem();
+                loadYoutubeVideo();
             }
         });
 
-        // Initial Load
-        if (tracks.length > 0) {
-            loadTrack(currentTrackIndex);
-        } else {
-            songTitleElem.textContent = "No tracks in playlist";
-            videoContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')";
-        }
+        // --- INITIAL LOAD ---
+        if (tracks.length > 0) { loadTrack(currentTrackIndex); }
+        else { songTitleElem.textContent = "No tracks in playlist"; videoContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; }
         setInitialVolume();
-        updateProgressBar(); 
-
+        updateProgressBar();
     </script>
 </body>
 </html>
