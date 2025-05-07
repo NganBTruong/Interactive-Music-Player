@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Sticky Notes Update!</title>
+    <title>Study Hub - Refinements!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,9 +14,7 @@
         .main-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
 
         #left-column {
-            /* Increased min-width */
-            min-width: 300px; 
-            padding: 20px; background-color: #f9f9f9;
+            min-width: 300px; padding: 20px; background-color: #f9f9f9;
             overflow-y: auto; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
             display: flex; flex-direction: column; box-sizing: border-box;
         }
@@ -27,27 +25,15 @@
         }
         .resizer::after { content: '⋮'; font-size: 18px; color: #555; line-height: 0; }
         #right-column {
-            flex-grow: 1; 
-            /* Increased min-width */
-            min-width: 350px; 
-            padding: 20px;
+            flex-grow: 1; min-width: 350px; padding: 20px;
             background-color: #ffffff; overflow-y: auto; display: flex;
             flex-direction: column; box-sizing: border-box;
         }
 
         /* --- Consistent Button Styles --- */
-        button, .button-like { 
-            padding: 8px 15px; font-size: 14px; border-radius: 5px;
-            cursor: pointer; border: 1px solid transparent;
-            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            text-align: center; font-weight: bold; line-height: 1.4; /* Ensure text fits */
-        }
+        button, .button-like { padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; text-align: center; font-weight: bold; line-height: 1.4; }
         button:hover, .button-like:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .control-btn {
-            background: #e0e0e0; color: #333; border-color: #ccc;
-            width: 40px; height: 40px; display: flex;
-            justify-content: center; align-items: center; margin: 0 5px; padding: 0; /* Override padding */
-        }
+        .control-btn { background: #e0e0e0; color: #333; border-color: #ccc; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin: 0 5px; padding: 0; }
         .control-btn:hover { background: #d0d0d0; }
         .btn-primary { background-color: #007bff; color: white; border-color: #007bff;}
         .btn-primary:hover { background-color: #0056b3; border-color: #0056b3;}
@@ -57,24 +43,12 @@
         .btn-success:hover { background-color: #218838; border-color: #218838;}
         .btn-secondary { background-color: #6c757d; color: white; border-color: #6c757d;}
         .btn-secondary:hover { background-color: #5a6268; border-color: #545b62;}
-        .delete-item-btn { /* Specific delete button style */
-             color: #d9534f; background: none; border: none; padding: 5px;
-             line-height: 1; flex-shrink: 0; font-weight: normal; /* Override */
-        }
+        .delete-item-btn { color: #d9534f; background: none; border: none; padding: 5px; line-height: 1; flex-shrink: 0; font-weight: normal; }
         .delete-item-btn:hover { color: #c9302c; background: #f0f0f0;}
 
         /* Music Player & Integrated Media Styles */
-        .music-player-container {
-            flex-grow: 1; display: flex; flex-direction: column;
-            margin: 0 auto; background-color: #ffffff; border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 20px;
-            width: 100%; box-sizing: border-box;
-        }
-        .video-container {
-            position: relative; width: 100%; padding-bottom: 56.25%; height: 0;
-            border-radius: 10px; overflow: hidden; background-color: #ddd;
-            margin-bottom: 15px; background-size: cover; background-position: center;
-        }
+        .music-player-container { flex-grow: 1; display: flex; flex-direction: column; margin: 0 auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 20px; width: 100%; box-sizing: border-box; }
+        .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden; background-color: #ddd; margin-bottom: 15px; background-size: cover; background-position: center; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; }
         .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
@@ -90,22 +64,23 @@
         .volume-container { display: flex; align-items: center; margin-left: 15px; }
         .volume-slider-container { width: 80px; height: 15px; background-color: #ddd; border-radius: 5px; position: relative; cursor: pointer; }
         .volume-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background-color: #888; border-radius: 50%; left: 50%; }
-        .media-input-area { margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; } /* Renamed class */
+        .media-input-area { margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; }
         .media-input-area h4 { margin-top:0; margin-bottom: 10px; font-size: 1em; color: #555;}
-        .media-input-container { display: flex; margin-bottom: 5px; } /* Renamed class */
+        .media-input-container { display: flex; margin-bottom: 5px; }
         #media-url-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 14px; }
-        #load-media-btn { border-radius: 0 5px 5px 0; } /* Specific corners */
+        #load-media-btn { border-radius: 0 5px 5px 0; }
 
         /* Widget Tabs (Right Column) */
-        .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; /* Allow tabs to wrap */ }
-        .widget-tab-btn { background-color: #f0f0f0; color:#333; border-color:transparent; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 5px; position: relative; bottom: -1px; padding: 10px 15px; margin-bottom: -1px; /* Overlap border */}
+        .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+        .widget-tab-btn { background-color: #f0f0f0; color:#333; border-color:transparent; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 5px; position: relative; bottom: -1px; padding: 10px 15px; margin-bottom: -1px; }
         .widget-tab-btn:hover { background-color: #e7e7e7; }
         .widget-tab-btn.active { background-color: #fff; border-color: #ddd #ddd transparent #ddd; font-weight: bold; border-bottom: 1px solid #fff; z-index: 1; }
-        .widget-content-area { border: 1px solid #ddd; border-top: none; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; position:relative; /* Needed for absolute positioned sticky notes */}
+        .widget-content-area { border: 1px solid #ddd; border-top: none; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
         .widget-card { background-color: #fff; box-sizing: border-box; display: flex; flex-direction: column; height: 100%; }
         .widget-card h3 { margin-top: 0; margin-bottom: 15px; color: #333; padding-bottom: 10px; border-bottom: 1px solid #eee; }
 
         /* Checklist Widget Styles */
+        .checklist-widget { /* Now the first widget */ }
         .checklist-input-container { display: flex; margin-bottom: 15px; }
         #checklist-item-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 15px; }
         #add-checklist-item-btn { border-radius: 0 5px 5px 0; }
@@ -116,530 +91,4 @@
         #checklist input[type="checkbox"]:checked { background-color: #007bff; border-color: #007bff; }
         #checklist input[type="checkbox"]:checked::before { content: ''; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background-color: white; border-radius: 50%; transform: translate(-50%, -50%); }
         #checklist label { flex-grow: 1; cursor: pointer; color: #333; word-break: break-word; }
-        #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color: #aaa; }
-
-        /* Notes Widget Styles */
-        .notes-widget { flex-grow: 1; } /* Allow notes area to take space */
-        #notes-area { width: 100%; flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: vertical; box-sizing: border-box; min-height: 150px; }
-
-        /* Flashcards Widget Styles */
-        .flashcards-widget { display: flex; flex-direction: column; gap: 15px; flex-grow:1; }
-        .flashcard-display-area {
-            min-height: 180px; border: 1px solid #ccc; border-radius: 8px; display: flex;
-            align-items: center; justify-content: center; text-align: center; padding: 20px;
-            font-size: 1.4em; cursor: pointer; background-color: #f9f9f9; position: relative;
-            perspective: 1000px; overflow: hidden; /* Hide text during flip */
-        }
-        .flashcard-face {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-            backface-visibility: hidden; /* Hide back face when rotating */
-            transition: transform 0.7s ease-in-out; /* Smoother transition */
-            position: absolute; overflow-wrap: break-word; word-wrap: break-word; padding: 10px;
-            box-sizing: border-box;
-        }
-        .flashcard-front { transform: rotateY(0deg); }
-        .flashcard-back { transform: rotateY(180deg); background-color: #e8f4fd; border-radius: 8px;}
-        /* Corrected flip logic using class */
-        .flashcard-display-area.is-flipped .flashcard-front { transform: rotateY(180deg); }
-        .flashcard-display-area.is-flipped .flashcard-back { transform: rotateY(0deg); }
-        .flashcard-nav { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;} /* Allow wrap */
-        #current-card-info { font-size: 0.9em; color: #666; margin: 0 10px; }
-        #flip-flashcard-btn { width:100%; margin-top:5px; }
-        .add-flashcard-area { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;}
-        .add-flashcard-area div { margin-bottom: 10px; }
-        .add-flashcard-area label { display: block; margin-bottom: 5px; font-weight: bold;}
-        .add-flashcard-area input[type="text"], .add-flashcard-area textarea { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
-        .add-flashcard-area textarea { min-height: 60px; resize: vertical; }
-        .flashcard-term-list-container { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; min-height: 100px; }
-        .flashcard-term-list-container h4 { margin-top:0; margin-bottom: 10px; }
-        #flashcard-term-list { list-style-type: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; border: 1px solid #eee; border-radius: 4px; }
-        #flashcard-term-list li { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        #flashcard-term-list li:last-child { border-bottom: none; }
-        #flashcard-term-list li:hover { background-color: #e9ecef; }
-        #flashcard-term-list li span { display: block; } /* Term and Def on separate lines */
-        #flashcard-term-list li span.term { font-weight: bold; }
-        #flashcard-term-list li span.definition { font-size: 0.9em; color: #555; padding-left: 10px; }
-
-        /* Sticky Notes Widget Styles */
-        .stickynotes-widget { flex-grow: 1; display: flex; flex-direction: column;}
-        #sticky-notes-controls { margin-bottom: 15px; }
-        #sticky-notes-board {
-            flex-grow: 1; /* Take remaining space */
-            border: 1px dashed #ccc;
-            border-radius: 5px;
-            position: relative; /* Important for positioning notes */
-            overflow: auto; /* Allow scroll if notes go out */
-            background-color: #fdfdfd;
-            min-height: 300px; /* Ensure it has some height */
-        }
-        .sticky-note {
-            position: absolute; /* Positioned relative to the board */
-            width: 180px;
-            height: 180px;
-            background-color: #ffc; /* Yellowish */
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            padding: 10px;
-            box-sizing: border-box;
-            cursor: move; /* Indicate draggable */
-            display: flex;
-            flex-direction: column;
-        }
-        .sticky-note textarea {
-            flex-grow: 1; /* Text area fills the note */
-            border: none;
-            background-color: transparent;
-            resize: none;
-            outline: none;
-            font-family: 'Architects Daughter', cursive; /* Optional: 'sticky note' font */
-            font-size: 1em;
-            padding: 5px;
-        }
-         .sticky-note-header {
-             display: flex; justify-content: flex-end; height: 15px; margin-bottom: 5px;
-         }
-         .delete-sticky-btn {
-            background: rgba(0,0,0,0.1); border: none; color: #333; border-radius: 50%;
-            cursor: pointer; width: 15px; height: 15px; font-size: 10px; line-height: 15px;
-            padding: 0; text-align: center; opacity: 0.5;
-        }
-        .sticky-note:hover .delete-sticky-btn { opacity: 1; }
-
-
-    </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="main-container">
-        <section id="left-column">
-            <div class="music-player-container">
-                <div class="video-container" id="main-video-player"></div>
-                <div class="song-title">Select a Song or Video</div>
-                <div class="player-controls-area">
-                    <div class="controls">
-                        <button id="prev-btn" class="control-btn">⏮</button>
-                        <button id="play-btn" class="control-btn">▶</button>
-                        <button id="pause-btn" class="control-btn" style="display: none;">⏸</button>
-                        <button id="next-btn" class="control-btn">⏭</button>
-                        <div class="volume-container">
-                            <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div>
-                        </div>
-                    </div>
-                    <div class="progress-container">
-                        <div class="time" id="current-time">0:00</div>
-                        <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div>
-                        <div class="time" id="duration">0:00</div>
-                    </div>
-                </div>
-                <div class="playlist-container">
-                    <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio">
-                        <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div>
-                    </div>
-                    <div class="playlist-item" data-src="https://www.youtube.com/watch?v=yBThHM2pBbE" data-thumbnail="https://www.youtube.com/embed/VIDEO_ID7" data-type="youtube">
-                        <img src="https://www.youtube.com/embed/VIDEO_ID8" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div>
-                    </div>
-                    <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio">
-                        <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div>
-                    </div>
-                </div>
-                <div class="media-input-area">
-                    <h4>Load Media into Player:</h4>
-                    <div class="media-input-container">
-                        <input type="text" id="media-url-input" placeholder="Paste YouTube or SoundCloud URL...">
-                        <button id="load-media-btn" class="btn-success">Load Media</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <div class="resizer" id="drag-handle"></div>
-
-        <section id="right-column">
-            <div class="widget-tabs">
-                 <button class="widget-tab-btn active" data-widget="checklist">Checklist</button>
-                <button class="widget-tab-btn" data-widget="notes">Notes</button>
-                <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button>
-                <button class="widget-tab-btn" data-widget="stickynotes">Sticky Notes</button>
-            </div>
-            <div class="widget-content-area">
-                 <div class="checklist-widget widget-card active-widget" id="checklist-widget">
-                    <div class="checklist-input-container">
-                        <input type="text" id="checklist-item-input" placeholder="Add a new task...">
-                        <button id="add-checklist-item-btn" class="btn-primary">Add</button>
-                    </div>
-                    <ul id="checklist"></ul>
-                </div>
-                <div class="notes-widget widget-card" id="notes-widget" style="display: none;">
-                     <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
-                </div>
-                <div class="flashcards-widget widget-card" id="flashcards-widget" style="display: none;">
-                    <h3>Flashcards</h3>
-                    <div class="flashcard-display-area" id="flashcard-display" tabindex="0">
-                        <div class="flashcard-face flashcard-front" id="flashcard-front">Term</div>
-                        <div class="flashcard-face flashcard-back" id="flashcard-back">Definition</div>
-                    </div>
-                    <div class="flashcard-nav">
-                        <button id="prev-flashcard-btn" class="btn-secondary">⬅️ Previous</button>
-                        <span id="current-card-info">0/0</span>
-                        <button id="next-flashcard-btn" class="btn-secondary">Next ➡️</button>
-                    </div>
-                     <div class="flashcard-nav">
-                        <button id="flip-flashcard-btn" class="btn-secondary" style="width:100%; margin-top:5px;">Show Answer / Flip</button>
-                    </div>
-                    <div class="add-flashcard-area">
-                        <h4>Add New Flashcard</h4>
-                        <div>
-                            <label for="flashcard-term-input">Term (Front):</label>
-                            <input type="text" id="flashcard-term-input" placeholder="e.g., Photosynthesis">
-                        </div>
-                        <div>
-                            <label for="flashcard-definition-input">Definition (Back):</label>
-                            <textarea id="flashcard-definition-input" placeholder="e.g., Process used by plants..."></textarea>
-                        </div>
-                        <button id="add-new-flashcard-btn" class="btn-success">Add Card</button>
-                    </div>
-                    <div class="flashcard-term-list-container">
-                        <h4>Your Flashcard Terms:</h4>
-                        <ul id="flashcard-term-list"></ul>
-                    </div>
-                </div>
-                 <div class="stickynotes-widget widget-card" id="stickynotes-widget" style="display: none;">
-                    <h3>Sticky Notes</h3>
-                     <div id="sticky-notes-controls">
-                         <button id="add-sticky-note-btn" class="btn-primary">Add New Sticky Note</button>
-                     </div>
-                    <div id="sticky-notes-board">
-                        </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <script>
-        // --- COLUMN RESIZER JavaScript ---
-        const leftColumn = document.getElementById('left-column');
-        const rightColumn = document.getElementById('right-column');
-        const dragHandle = document.getElementById('drag-handle');
-        let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; }
-            const containerWidth = leftColumn.parentElement.offsetWidth;
-            const initialLeftPercent = 35;
-            // Use parseFloat for minWidth, provide default 0 if style is not set
-            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 300; // Updated min-width default
-            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; // Updated min-width default
-            const resizerWidth = dragHandle.offsetWidth || 10;
-            let initialLeftPx = (containerWidth * initialLeftPercent) / 100;
-            // Ensure initial respects min widths
-            initialLeftPx = Math.max(leftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth));
-            leftColumn.style.flexBasis = `${initialLeftPx}px`;
-        });
-        if (dragHandle) {
-            dragHandle.addEventListener('mousedown', function(e) {
-                e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth;
-                document.addEventListener('mousemove', handleResizerMouseMove);
-                document.addEventListener('mouseup', handleResizerMouseUp);
-                document.body.style.userSelect = 'none'; document.body.style.cursor = 'ew-resize';
-            });
-        }
-        function handleResizerMouseMove(e) {
-            if (!isResizing) return;
-            const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX;
-            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 300;
-            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350;
-            const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10;
-            newLeftWidth = Math.max(leftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth));
-            leftColumn.style.flexBasis = `${newLeftWidth}px`;
-        }
-        function handleResizerMouseUp() {
-            if (!isResizing) return; isResizing = false;
-            document.removeEventListener('mousemove', handleResizerMouseMove);
-            document.removeEventListener('mouseup', handleResizerMouseUp);
-            document.body.style.userSelect = ''; document.body.style.cursor = '';
-        }
-
-        // --- MEDIA PLAYER (Audio, YouTube, SoundCloud Placeholder) ---
-        // ... (Media player JS remains largely the same as the previous working version) ...
-        const playBtn = document.getElementById('play-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const progressBarElem = document.getElementById('progress');
-        const progressBarContainer = document.getElementById('progress-bar');
-        const currentTimeElem = document.getElementById('current-time');
-        const durationElem = document.getElementById('duration');
-        const playlistItemsJS = document.querySelectorAll('.playlist-item');
-        const volumeSlider = document.getElementById('volume-slider');
-        const volumeThumb = volumeSlider.querySelector('.volume-thumb');
-        const songTitleElem = document.getElementById('song-title');
-        const mainVideoPlayerContainer = document.getElementById('main-video-player');
-        const playerControlsArea = document.querySelector('.player-controls-area');
-        const mediaUrlInput = document.getElementById('media-url-input');
-        const loadMediaBtn = document.getElementById('load-media-btn');
-        let audio = new Audio(); let currentTrackIndex = 0; let currentMediaType = 'audio';
-        let activeMediaFrame = null;
-        const tracks = Array.from(playlistItemsJS).map(item => ({ src: item.dataset.src, title: item.querySelector('div').textContent.trim(), thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/200/DDDDDD/808080?Text=Media', type: item.dataset.type || 'audio' }));
-        let isDraggingProgress = false; let isDraggingVolume = false;
-        function clearPlayerScreen() { mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } // Reset height too
-        function getYouTubeVideoID(url) { const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; }
-        function isSoundCloudUrl(url) { return url.includes('soundcloud.com'); }
-        function loadMediaToPlayer(url, type, title = "Loading...") {
-            clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title;
-            if (type === 'youtube') {
-                const videoID = getYouTubeVideoID(url);
-                if (videoID) {
-                    activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none';
-                } else { songTitleElem.textContent = "Invalid YouTube URL"; }
-            } else if (type === 'soundcloud') {
-                activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true`; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none';
-            } else { audio.src = url; audio.load(); const trackData = tracks.find(t => t.src === url && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); }
-        }
-        if(loadMediaBtn) { loadMediaBtn.addEventListener('click', () => { const url = mediaUrlInput.value.trim(); if (url === "") return; let type = 'unknown'; if (getYouTubeVideoID(url)) type = 'youtube'; else if (isSoundCloudUrl(url)) type = 'soundcloud'; if (type !== 'unknown') { loadMediaToPlayer(url, type, "User Loaded Media"); } else { alert("Could not determine media type. Please use a valid YouTube or SoundCloud URL."); } mediaUrlInput.value = ''; }); }
-        if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
-        function loadTrackFromPlaylist(index) { const track = tracks[index]; if (track) loadMediaToPlayer(track.src, track.type, track.title); playlistItemsJS.forEach(item => item.classList.remove('active-track')); if(playlistItemsJS[index]) playlistItemsJS[index].classList.add('active-track'); }
-        function playCurrentMedia() { if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } }
-        function pauseCurrentMedia() { if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; }
-        if(playBtn) playBtn.addEventListener('click', playCurrentMedia);
-        if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia);
-        audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()});
-        function updateProgressBar() { if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } }
-        function formatTime(seconds) { if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; }
-        if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
-        if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
-        playlistItemsJS.forEach((item, index) => { item.addEventListener('click', () => { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); }); });
-        if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); });
-        window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); });
-        window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; });
-        function handleProgressBarSeek(e) { if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); }
-        if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); });
-        window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); });
-        window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; });
-        function handleVolumeSliderDrag(e) { const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;}
-        function setInitialVolume() { const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
-
-        // --- WIDGET TAB Switching ---
-        const widgetTabs = document.querySelectorAll('.widget-tab-btn');
-        const widgetContents = document.querySelectorAll('.widget-content-area .widget-card');
-        widgetTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                widgetTabs.forEach(t => t.classList.remove('active'));
-                widgetContents.forEach(c => c.style.display = 'none');
-                tab.classList.add('active');
-                const widgetName = tab.dataset.widget;
-                const activeWidgetContent = document.getElementById(`${widgetName}-widget`);
-                if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; // Use flex as widget-card is display:flex
-            });
-        });
-
-        // --- CHECKLIST JavaScript ---
-        const checklistItemInput = document.getElementById('checklist-item-input');
-        const addChecklistItemBtn = document.getElementById('add-checklist-item-btn');
-        const checklist = document.getElementById('checklist');
-        let checklistItemIdCounter = 0;
-        function addChecklistItem(taskText = null, isChecked = false) { const itemText = taskText || (checklistItemInput ? checklistItemInput.value.trim() : ""); if (itemText === "" && !taskText) { alert("Please enter a task!"); return; } const listItem = document.createElement('li'); const checkboxId = `task-${checklistItemIdCounter++}`; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked; const label = document.createElement('label'); label.htmlFor = checkboxId; label.textContent = itemText; if(isChecked) { label.style.textDecoration = 'line-through'; label.style.color = '#aaa'; } checkbox.addEventListener('change', function() { label.style.textDecoration = this.checked ? 'line-through' : 'none'; label.style.color = this.checked ? '#aaa' : '#333'; }); const deleteBtn = document.createElement('button'); deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Delete task'; deleteBtn.addEventListener('click', function() { listItem.remove(); }); listItem.appendChild(checkbox); listItem.appendChild(label); listItem.appendChild(deleteBtn); if(checklist) checklist.appendChild(listItem); if (!taskText && checklistItemInput) checklistItemInput.value = ""; }
-        if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
-        if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
-
-        // --- FLASHCARDS JavaScript ---
-        const flashcardDisplay = document.getElementById('flashcard-display');
-        const flashcardFront = document.getElementById('flashcard-front');
-        const flashcardBack = document.getElementById('flashcard-back');
-        const prevFlashcardBtn = document.getElementById('prev-flashcard-btn');
-        const nextFlashcardBtn = document.getElementById('next-flashcard-btn');
-        const flipFlashcardBtn = document.getElementById('flip-flashcard-btn');
-        const currentCardInfo = document.getElementById('current-card-info');
-        const flashcardTermInput = document.getElementById('flashcard-term-input');
-        const flashcardDefinitionInput = document.getElementById('flashcard-definition-input');
-        const addNewFlashcardBtn = document.getElementById('add-new-flashcard-btn');
-        const flashcardTermListUL = document.getElementById('flashcard-term-list');
-
-        let flashcards = []; 
-        let currentFlashcardIndex = -1; 
-        let isFlashcardFlipped = false; // State for which side is showing
-
-        function renderFlashcard() {
-            if (!flashcardDisplay || !flashcardFront || !flashcardBack || !currentCardInfo) return;
-            if (flashcards.length === 0) {
-                flashcardFront.textContent = "No cards yet!"; flashcardBack.textContent = "Add some cards below.";
-                flashcardDisplay.classList.remove('is-flipped'); isFlashcardFlipped = false;
-                currentCardInfo.textContent = "0/0";
-                if(prevFlashcardBtn) prevFlashcardBtn.disabled = true; if(nextFlashcardBtn) nextFlashcardBtn.disabled = true; if(flipFlashcardBtn) flipFlashcardBtn.disabled = true;
-                return;
-            }
-            if(prevFlashcardBtn) prevFlashcardBtn.disabled = currentFlashcardIndex === 0;
-            if(nextFlashcardBtn) nextFlashcardBtn.disabled = currentFlashcardIndex === flashcards.length - 1;
-            if(flipFlashcardBtn) flipFlashcardBtn.disabled = false;
-
-            const card = flashcards[currentFlashcardIndex];
-            flashcardFront.textContent = card.term; flashcardBack.textContent = card.definition;
-            // Apply the class based on the state, CSS handles the transform
-            if (isFlashcardFlipped) { flashcardDisplay.classList.add('is-flipped'); } 
-            else { flashcardDisplay.classList.remove('is-flipped'); }
-            currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`;
-        }
-
-        function flipCurrentFlashcard() { // Simplified flip logic
-            if (flashcards.length === 0) return;
-            isFlashcardFlipped = !isFlashcardFlipped;
-            // Toggle the class, CSS animation does the work
-            if (flashcardDisplay) flashcardDisplay.classList.toggle('is-flipped', isFlashcardFlipped); 
-        }
-
-        function renderFlashcardTermList() {
-            if (!flashcardTermListUL) return;
-            flashcardTermListUL.innerHTML = ''; 
-            const sortedFlashcards = [...flashcards].sort((a, b) => a.term.localeCompare(b.term));
-            sortedFlashcards.forEach(card => {
-                const listItem = document.createElement('li');
-                listItem.dataset.originalIndex = flashcards.indexOf(card); 
-                
-                const termSpan = document.createElement('span');
-                termSpan.className = 'term';
-                termSpan.textContent = card.term;
-                
-                const defSpan = document.createElement('span');
-                defSpan.className = 'definition';
-                defSpan.textContent = card.definition;
-                
-                listItem.appendChild(termSpan);
-                listItem.appendChild(defSpan);
-
-                listItem.addEventListener('click', function() {
-                    currentFlashcardIndex = parseInt(this.dataset.originalIndex);
-                    isFlashcardFlipped = false; // Show front when jumping
-                    renderFlashcard();
-                });
-                flashcardTermListUL.appendChild(listItem);
-            });
-        }
-        if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard);
-        if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard);
-        if(prevFlashcardBtn) { prevFlashcardBtn.addEventListener('click', () => { if (currentFlashcardIndex > 0) { currentFlashcardIndex--; isFlashcardFlipped = false; renderFlashcard(); } }); }
-        if(nextFlashcardBtn) { nextFlashcardBtn.addEventListener('click', () => { if (currentFlashcardIndex < flashcards.length - 1) { currentFlashcardIndex++; isFlashcardFlipped = false; renderFlashcard(); } }); }
-        if(addNewFlashcardBtn) {
-            addNewFlashcardBtn.addEventListener('click', () => {
-                const term = flashcardTermInput.value.trim(); const definition = flashcardDefinitionInput.value.trim();
-                if (term && definition) {
-                    flashcards.push({ term, definition });
-                    flashcardTermInput.value = ''; flashcardDefinitionInput.value = '';
-                    if (currentFlashcardIndex === -1) currentFlashcardIndex = 0; else currentFlashcardIndex = flashcards.length - 1;
-                    isFlashcardFlipped = false;
-                    renderFlashcard(); renderFlashcardTermList(); 
-                    if(flashcardTermInput) flashcardTermInput.focus();
-                } else { alert("Please enter both a term and a definition."); }
-            });
-        }
-        document.addEventListener('keydown', function(e) {
-            const flashcardsTab = document.querySelector('.widget-tab-btn[data-widget="flashcards"]');
-            if (flashcardsTab && flashcardsTab.classList.contains('active') && e.code === 'Space') {
-                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); flipCurrentFlashcard(); }
-            }
-        });
-
-        // --- STICKY NOTES JavaScript ---
-        const addStickyNoteBtn = document.getElementById('add-sticky-note-btn');
-        const stickyNotesBoard = document.getElementById('sticky-notes-board');
-        let stickyNoteZIndex = 1; // To bring dragged note to front
-
-        function createStickyNote(id = Date.now(), content = '', top = '20px', left = '20px') {
-            const note = document.createElement('div');
-            note.classList.add('sticky-note');
-            note.style.top = top;
-            note.style.left = left;
-            note.dataset.id = id;
-
-            const header = document.createElement('div');
-            header.className = 'sticky-note-header';
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '&times;'; // Multiplication sign as close button
-            deleteBtn.className = 'delete-sticky-btn';
-            deleteBtn.title = "Delete Note";
-            deleteBtn.addEventListener('click', (e) => {
-                 e.stopPropagation(); // Prevent drag from starting
-                 if (confirm('Delete this sticky note?')) {
-                     note.remove();
-                     // Add code here later to remove from localStorage if saving
-                 }
-            });
-
-            header.appendChild(deleteBtn);
-            note.appendChild(header);
-
-            const textarea = document.createElement('textarea');
-            textarea.value = content;
-            textarea.placeholder = "Write something...";
-            textarea.addEventListener('input', () => {
-                 // Add code here later to save content change to localStorage
-            });
-             textarea.addEventListener('mousedown', (e) => {
-                 // Prevent dragging when clicking inside textarea
-                  e.stopPropagation();
-            });
-
-
-            note.appendChild(textarea);
-            
-            // Drag and Drop Logic for Sticky Note
-            let isDraggingNote = false;
-            let noteStartX, noteStartY, initialMouseX, initialMouseY;
-
-            note.addEventListener('mousedown', (e) => {
-                 // Don't drag if clicking on delete button or textarea
-                if (e.target === deleteBtn || e.target === textarea) return;
-
-                isDraggingNote = true;
-                noteStartX = note.offsetLeft;
-                noteStartY = note.offsetTop;
-                initialMouseX = e.clientX;
-                initialMouseY = e.clientY;
-                note.style.zIndex = ++stickyNoteZIndex; // Bring to front
-                note.style.cursor = 'grabbing';
-                document.addEventListener('mousemove', handleStickyMouseMove);
-                document.addEventListener('mouseup', handleStickyMouseUp);
-            });
-
-            function handleStickyMouseMove(e) {
-                if (!isDraggingNote) return;
-                const dx = e.clientX - initialMouseX;
-                const dy = e.clientY - initialMouseY;
-                // Boundary checks (optional, keep within board)
-                // const boardRect = stickyNotesBoard.getBoundingClientRect();
-                // let newLeft = Math.max(0, Math.min(boardRect.width - note.offsetWidth, noteStartX + dx));
-                // let newTop = Math.max(0, Math.min(boardRect.height - note.offsetHeight, noteStartY + dy));
-                note.style.left = `${noteStartX + dx}px`;
-                note.style.top = `${noteStartY + dy}px`;
-            }
-
-            function handleStickyMouseUp() {
-                if (!isDraggingNote) return;
-                isDraggingNote = false;
-                note.style.cursor = 'move';
-                document.removeEventListener('mousemove', handleStickyMouseMove);
-                document.removeEventListener('mouseup', handleStickyMouseUp);
-                 // Add code here later to save new position to localStorage
-            }
-
-            if(stickyNotesBoard) stickyNotesBoard.appendChild(note);
-        }
-
-        if(addStickyNoteBtn) {
-            addStickyNoteBtn.addEventListener('click', () => {
-                createStickyNote(); // Create with default position/content
-            });
-        }
-
-
-        // --- INITIAL LOAD ---
-        if (tracks.length > 0) { loadTrackFromPlaylist(currentTrackIndex); }
-        else { if(songTitleElem) songTitleElem.textContent = "No tracks in playlist"; if(mainVideoPlayerContainer) mainVideoPlayerContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; }
-        setInitialVolume();
-        updateProgressBar();
-        renderFlashcard(); 
-        renderFlashcardTermList();
-
-    </script>
-</body>
-</html>
+        #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color:
