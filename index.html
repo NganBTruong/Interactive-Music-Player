@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Music, Notes, & Video</title>
+    <title>Study Hub - Resizable Columns</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,16 +13,21 @@
             background-color: #f0f2f5;
             display: flex;
             min-height: 100vh;
+            overflow: hidden; /* Prevent body scrollbars during resize */
         }
 
         .main-container {
             display: flex;
             width: 100%;
             height: 100vh;
+            overflow: hidden; /* Important for resizer */
         }
 
-        .music-player-section {
-            width: 35%;
+        #left-column { /* Was .music-player-section */
+            /* flex-basis will be set by JS, acts like width for flex items */
+            /* Default width can be set here or by JS on load */
+            /* Example: flex-basis: 35%; */
+            min-width: 250px; /* Minimum width for the music player */
             padding: 20px;
             background-color: #f9f9f9;
             overflow-y: auto;
@@ -32,137 +37,124 @@
             box-sizing: border-box;
         }
 
-        .widgets-section {
-            width: 65%;
+        .resizer {
+            width: 10px;
+            background-color: #c1c1c1; /* Light gray for visibility */
+            cursor: ew-resize; /* East-west resize cursor */
+            flex-shrink: 0; /* Prevent the resizer from shrinking */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10; /* Ensure it's above other content if overlapping occurs */
+        }
+        .resizer::after { /* Optional: visual cue on the handle */
+            content: '⋮';
+            font-size: 18px;
+            color: #555;
+            line-height: 0;
+        }
+
+
+        #right-column { /* Was .widgets-section */
+            flex-grow: 1; /* Takes up the remaining space */
+            min-width: 300px; /* Minimum width for widgets */
             padding: 20px;
             background-color: #ffffff;
             overflow-y: auto;
             display: flex;
-            flex-direction: column; /* Ensures widgets stack vertically */
+            flex-direction: column;
             box-sizing: border-box;
-            gap: 20px; /* Adds space between widgets */
+            gap: 20px;
         }
 
         /* Music Player Styles */
         .music-player-container {
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 100%;
-            box-sizing: border-box;
+            margin: 0 auto; background-color: #ffffff; border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 20px;
+            width: 100%; box-sizing: border-box;
         }
-
         .video-container {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            border-radius: 10px;
-            overflow: hidden;
-            background-color: #ddd;
-            margin-bottom: 15px;
-            background-size: cover;
-            background-position: center;
+            position: relative; width: 100%; height: 200px; border-radius: 10px;
+            overflow: hidden; background-color: #ddd; margin-bottom: 15px;
+            background-size: cover; background-position: center;
         }
-
-        .song-title {
-            margin: 10px 0; font-size: 18px; font-weight: bold;
-            color: #333; text-align: center;
-        }
+        .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; }
         .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
         .control-btn {
-            border: none; background: #ddd; width: 40px; height: 40px;
-            display: flex; justify-content: center; align-items: center;
-            color: #333; font-size: 14px; margin: 0 5px;
-            cursor: pointer; border-radius: 5px;
+            border: none; background: #ddd; width: 40px; height: 40px; display: flex;
+            justify-content: center; align-items: center; color: #333; font-size: 14px;
+            margin: 0 5px; cursor: pointer; border-radius: 5px;
         }
         .progress-container { display: flex; align-items: center; justify-content: center; margin-top: 15px; }
         .progress-bar {
-            width: 70%; height: 15px; background-color: #ddd;
-            border-radius: 10px; position: relative; overflow: hidden; cursor: pointer;
+            width: 70%; height: 15px; background-color: #ddd; border-radius: 10px;
+            position: relative; overflow: hidden; cursor: pointer;
         }
         .progress { height: 100%; background-color: #888; width: 0%; transition: width 0.3s ease; border-radius: 10px; }
         .time { font-size: 14px; margin: 0 10px; color: #555; }
         .playlist-container {
-            margin-top: 20px; max-height: 200px; overflow-y: auto;
-            border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; padding: 10px;
+            margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd;
+            border-radius: 10px; background: #f9f9f9; padding: 10px;
         }
         .playlist-container::-webkit-scrollbar { width: 0.5em; }
         .playlist-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .playlist-container::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
         .playlist-container::-webkit-scrollbar-thumb:hover { background: #555; }
         .playlist-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px; margin-bottom: 5px; cursor: pointer; background-color: #fff;
-            border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s;
+            display: flex; justify-content: space-between; align-items: center; padding: 10px;
+            margin-bottom: 5px; cursor: pointer; background-color: #fff; border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s;
         }
         .playlist-item:hover { background-color: #f0f0f0; }
         .playlist-item.active-track { background-color: #d1e7ff; border-left: 4px solid #007bff; }
         .playlist-item img {
-            width: 40px; height: 40px; background-color: #ddd;
-            display: flex; justify-content: center; align-items: center;
-            color: #555; border-radius: 5px; margin-right: 10px;
+            width: 40px; height: 40px; background-color: #ddd; display: flex;
+            justify-content: center; align-items: center; color: #555;
+            border-radius: 5px; margin-right: 10px;
         }
         .volume-container { display: flex; align-items: center; margin-left: 15px; }
         .volume-slider-container {
-            width: 80px; height: 15px; background-color: #ddd;
-            border-radius: 5px; position: relative; cursor: pointer;
+            width: 80px; height: 15px; background-color: #ddd; border-radius: 5px;
+            position: relative; cursor: pointer;
         }
         .volume-thumb {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            width: 12px; height: 12px; background-color: #888;
-            border-radius: 50%; left: 50%;
+            position: absolute; top: 50%; transform: translateY(-50%); width: 12px;
+            height: 12px; background-color: #888; border-radius: 50%; left: 50%;
         }
 
         /* General Widget Styling */
         .widget-card {
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background-color: #fdfdfd;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
+            padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px;
+            background-color: #fdfdfd; box-sizing: border-box; display: flex; flex-direction: column;
         }
         .widget-card h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #333;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            margin-top: 0; margin-bottom: 15px; color: #333;
+            padding-bottom: 10px; border-bottom: 1px solid #eee;
         }
 
         /* Notes Widget Styles */
-        .notes-widget { /* Now uses .widget-card */
-            min-height: 200px; /* Suggest a min height */
-        }
+        .notes-widget { min-height: 200px; }
         #notes-area {
-            width: 100%;
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc; border-radius: 5px; font-size: 15px;
-            resize: vertical; box-sizing: border-box; min-height: 150px;
+            width: 100%; flex-grow: 1; padding: 10px; border: 1px solid #ccc;
+            border-radius: 5px; font-size: 15px; resize: vertical;
+            box-sizing: border-box; min-height: 150px;
         }
 
         /* Checklist Widget Styles */
-        .checklist-widget { /* Now uses .widget-card */
-            min-height: 200px; /* Suggest a min height */
-        }
+        .checklist-widget { min-height: 200px; }
         .checklist-input-container { display: flex; margin-bottom: 15px; }
         #checklist-item-input {
             flex-grow: 1; padding: 10px; border: 1px solid #ccc;
             border-radius: 5px 0 0 5px; font-size: 15px;
         }
         #add-checklist-item-btn {
-            padding: 10px 15px; border: 1px solid #007bff;
-            background-color: #007bff; color: white;
-            border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
+            padding: 10px 15px; border: 1px solid #007bff; background-color: #007bff;
+            color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
         }
         #add-checklist-item-btn:hover { background-color: #0056b3; }
         #checklist {
-            list-style: none; padding: 0; margin: 0;
-            flex-grow: 1; overflow-y: auto; min-height: 100px;
+            list-style: none; padding: 0; margin: 0; flex-grow: 1;
+            overflow-y: auto; min-height: 100px;
         }
         #checklist li {
             display: flex; align-items: center; padding: 10px 0;
@@ -171,65 +163,49 @@
         #checklist li:last-child { border-bottom: none; }
         #checklist input[type="checkbox"] {
             appearance: none; -webkit-appearance: none; -moz-appearance: none;
-            width: 20px; height: 20px; border: 2px solid #888;
-            border-radius: 50%; margin-right: 12px; cursor: pointer;
-            position: relative; outline: none; flex-shrink: 0;
+            width: 20px; height: 20px; border: 2px solid #888; border-radius: 50%;
+            margin-right: 12px; cursor: pointer; position: relative;
+            outline: none; flex-shrink: 0;
         }
         #checklist input[type="checkbox"]:checked { background-color: #007bff; border-color: #007bff; }
         #checklist input[type="checkbox"]:checked::before {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 8px; height: 8px; background-color: white;
-            border-radius: 50%; transform: translate(-50%, -50%);
+            content: ''; position: absolute; top: 50%; left: 50%; width: 8px;
+            height: 8px; background-color: white; border-radius: 50%;
+            transform: translate(-50%, -50%);
         }
         #checklist label { flex-grow: 1; cursor: pointer; color: #333; word-break: break-word; }
         #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color: #aaa; }
         .delete-item-btn {
-            background: none; border: none; color: #ff4d4d;
-            cursor: pointer; font-size: 16px; margin-left: 10px;
-            padding: 5px; line-height: 1; flex-shrink: 0;
+            background: none; border: none; color: #ff4d4d; cursor: pointer;
+            font-size: 16px; margin-left: 10px; padding: 5px;
+            line-height: 1; flex-shrink: 0;
         }
         .delete-item-btn:hover { color: #cc0000; }
 
         /* YouTube Player Widget Styles */
-        .youtube-widget { /* Now uses .widget-card */
-             min-height: 300px; /* Suggest a min height */
-        }
+        .youtube-widget { min-height: 300px; }
         .youtube-input-container { display: flex; margin-bottom: 15px; }
         #youtube-url-input {
             flex-grow: 1; padding: 10px; border: 1px solid #ccc;
             border-radius: 5px 0 0 5px; font-size: 15px;
         }
         #load-youtube-video-btn {
-            padding: 10px 15px; border: 1px solid #c9302c;
-            background-color: #d9534f; color: white;
-            border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
+            padding: 10px 15px; border: 1px solid #c9302c; background-color: #d9534f;
+            color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
         }
         #load-youtube-video-btn:hover { background-color: #c9302c; }
         .youtube-player-container {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            height: 0;
-            overflow: hidden;
-            width: 100%;
-            background-color: #000; /* Fallback background */
-            border-radius: 5px;
+            position: relative; padding-bottom: 56.25%; height: 0;
+            overflow: hidden; width: 100%; background-color: #000; border-radius: 5px;
         }
         .youtube-player-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
         }
-
     </style>
 </head>
-
 <body>
     <div class="main-container">
-        <section class="music-player-section">
-            <div class="music-player-container">
+        <section id="left-column"> <div class="music-player-container">
                 <div class="video-container"></div>
                 <div class="song-title">Select a Song</div>
                 <div class="controls">
@@ -260,12 +236,10 @@
             </div>
         </section>
 
-        <section class="widgets-section">
-            <div class="notes-widget widget-card" id="notes-widget-content">
+        <div class="resizer" id="drag-handle"></div> <section id="right-column"> <div class="notes-widget widget-card" id="notes-widget-content">
                 <h3>My Notes</h3>
                 <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
             </div>
-
             <div class="checklist-widget widget-card" id="checklist-widget-content">
                 <h3>My Study Checklist</h3>
                 <div class="checklist-input-container">
@@ -274,20 +248,97 @@
                 </div>
                 <ul id="checklist"></ul>
             </div>
-
             <div class="youtube-widget widget-card" id="youtube-widget-content">
                 <h3>Study Video</h3>
                 <div class="youtube-input-container">
                     <input type="text" id="youtube-url-input" placeholder="Paste YouTube Video URL...">
                     <button id="load-youtube-video-btn">Load Video</button>
                 </div>
-                <div class="youtube-player-container" id="youtube-player">
-                    </div>
+                <div class="youtube-player-container" id="youtube-player"></div>
             </div>
         </section>
     </div>
 
     <script>
+        // --- COLUMN RESIZER JavaScript ---
+        const leftColumn = document.getElementById('left-column');
+        const rightColumn = document.getElementById('right-column'); // We might not directly manipulate this if using flex-grow
+        const dragHandle = document.getElementById('drag-handle');
+
+        let isResizing = false;
+        let initialPosX = 0;
+        let initialLeftWidth = 0;
+
+        // Set initial widths on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const containerWidth = leftColumn.parentElement.offsetWidth;
+            // Initial percentage for left column (e.g., 35%)
+            const initialLeftPercent = 35; 
+            let initialLeftPx = (containerWidth * initialLeftPercent) / 100;
+
+            // Ensure it respects min-width on initial load
+            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth);
+            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth);
+            const resizerWidth = dragHandle.offsetWidth;
+
+            if (initialLeftPx < leftMinWidth) {
+                initialLeftPx = leftMinWidth;
+            }
+            if (containerWidth - initialLeftPx - resizerWidth < rightMinWidth) {
+                initialLeftPx = containerWidth - rightMinWidth - resizerWidth;
+            }
+            leftColumn.style.flexBasis = `${initialLeftPx}px`;
+        });
+
+
+        dragHandle.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // Prevent text selection during drag
+            isResizing = true;
+            initialPosX = e.clientX;
+            initialLeftWidth = leftColumn.offsetWidth; // Get current width
+
+            // Attach listeners to the document to capture mouse move everywhere
+            document.addEventListener('mousemove', handleResizerMouseMove);
+            document.addEventListener('mouseup', handleResizerMouseUp);
+            // Add user-select: none to body to prevent text selection during drag
+            document.body.style.userSelect = 'none';
+        });
+
+        function handleResizerMouseMove(e) {
+            if (!isResizing) return;
+
+            const deltaX = e.clientX - initialPosX;
+            let newLeftWidth = initialLeftWidth + deltaX;
+
+            // Enforce min-width constraints
+            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth); // Use parseFloat
+            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth); // Use parseFloat
+            const containerWidth = leftColumn.parentElement.offsetWidth;
+            const resizerWidth = dragHandle.offsetWidth;
+
+            if (newLeftWidth < leftMinWidth) {
+                newLeftWidth = leftMinWidth;
+            }
+            // Check if right column would be too small
+            if (containerWidth - newLeftWidth - resizerWidth < rightMinWidth) {
+                newLeftWidth = containerWidth - rightMinWidth - resizerWidth;
+                // If after adjusting for right, left is still too small (very narrow window)
+                 if (newLeftWidth < leftMinWidth) newLeftWidth = leftMinWidth;
+            }
+            
+            leftColumn.style.flexBasis = `${newLeftWidth}px`;
+            // rightColumn will adjust automatically due to flex-grow: 1
+        }
+
+        function handleResizerMouseUp() {
+            if (!isResizing) return;
+            isResizing = false;
+            document.removeEventListener('mousemove', handleResizerMouseMove);
+            document.removeEventListener('mouseup', handleResizerMouseUp);
+            document.body.style.userSelect = ''; // Re-enable text selection
+        }
+
+
         // --- MUSIC PLAYER JavaScript (mostly unchanged) ---
         const playBtn = document.getElementById('play-btn');
         const pauseBtn = document.getElementById('pause-btn');
@@ -380,7 +431,7 @@
         }
         volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); });
         window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); });
-        window.addEventListener('mouseup', () => { isDraggingVolume = false; });
+        window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; });
         function handleVolumeSliderDrag(e) {
             const rect = volumeSlider.getBoundingClientRect();
             let offsetX = e.clientX - rect.left;
@@ -427,39 +478,28 @@
         const youtubeUrlInput = document.getElementById('youtube-url-input');
         const loadYoutubeVideoBtn = document.getElementById('load-youtube-video-btn');
         const youtubePlayerContainer = document.getElementById('youtube-player');
-
         function getYouTubeVideoID(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const regExp = /^.*(https://www.youtube.com/watch?v=EctTGfBL9OE\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
+            return (match && match[2].length === 11) ? match.pop() : null;
         }
-
         function loadYoutubeVideo() {
             const url = youtubeUrlInput.value.trim();
             const videoID = getYouTubeVideoID(url);
-
-            youtubePlayerContainer.innerHTML = ''; // Clear previous video
-
+            youtubePlayerContainer.innerHTML = ''; 
             if (videoID) {
                 const iframe = document.createElement('iframe');
-                iframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0`; // Added autoplay, modestbranding, rel=0
-                iframe.width = "100%"; // Redundant due to CSS, but good fallback
-                iframe.height = "100%"; // Redundant due to CSS, but good fallback
+                iframe.src = `https://www.youtube.com/watch?v=qgYWCXCzGnw{videoID}?autoplay=1&modestbranding=1&rel=0`;
                 iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
                 iframe.allowFullscreen = true;
                 youtubePlayerContainer.appendChild(iframe);
-                youtubeUrlInput.value = ''; // Clear input field
-            } else if (url !== "") { // Only alert if URL was entered but invalid
+                youtubeUrlInput.value = ''; 
+            } else if (url !== "") { 
                 alert("Invalid YouTube URL. Please enter a valid video link.");
             }
         }
-
         loadYoutubeVideoBtn.addEventListener('click', loadYoutubeVideo);
-        youtubeUrlInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                loadYoutubeVideo();
-            }
-        });
+        youtubeUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadYoutubeVideo(); });
 
         // --- INITIAL LOAD ---
         if (tracks.length > 0) { loadTrack(currentTrackIndex); }
