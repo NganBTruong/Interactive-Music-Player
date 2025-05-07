@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Refinements!</title>
+    <title>Study Hub - Final Polish!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +14,9 @@
         .main-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
 
         #left-column {
-            min-width: 300px; padding: 20px; background-color: #f9f9f9;
+            /* Fallback min-width, JS will try to calculate more precisely */
+            min-width: 320px; 
+            padding: 20px; background-color: #f9f9f9;
             overflow-y: auto; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
             display: flex; flex-direction: column; box-sizing: border-box;
         }
@@ -51,24 +53,24 @@
         .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden; background-color: #ddd; margin-bottom: 15px; background-size: cover; background-position: center; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; }
-        .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+        .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 5px;} /* Allow controls wrap */
         .progress-container { display: flex; align-items: center; justify-content: center; margin-top: 15px; }
-        .progress-bar { width: 70%; height: 15px; background-color: #ddd; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; }
-        .progress { height: 100%; background-color: #888; width: 0%; transition: width 0.3s ease; border-radius: 10px; }
-        .time { font-size: 14px; margin: 0 10px; color: #555; }
+        .progress-bar { width: 70%; height: 15px; background-color: #ddd; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; flex-grow: 1; /* Allow shrink/grow */}
+        .time { font-size: 14px; margin: 0 10px; color: #555; flex-shrink: 0; }
         .playlist-container { margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; padding: 10px; flex-shrink: 0; }
         .playlist-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 5px; cursor: pointer; background-color: #fff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s; }
         .playlist-item:hover { background-color: #f0f0f0; }
         .playlist-item.active-track { background-color: #d1e7ff; border-left: 4px solid #007bff; }
-        .playlist-item img { width: 40px; height: 40px; background-color: #ddd; display: flex; justify-content: center; align-items: center; color: #555; border-radius: 5px; margin-right: 10px; }
+        .playlist-item img { width: 40px; height: 40px; background-color: #ddd; display: flex; justify-content: center; align-items: center; color: #555; border-radius: 5px; margin-right: 10px; flex-shrink: 0;}
+        .playlist-item div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Prevent long titles breaking layout */
         .volume-container { display: flex; align-items: center; margin-left: 15px; }
         .volume-slider-container { width: 80px; height: 15px; background-color: #ddd; border-radius: 5px; position: relative; cursor: pointer; }
         .volume-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background-color: #888; border-radius: 50%; left: 50%; }
         .media-input-area { margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; }
         .media-input-area h4 { margin-top:0; margin-bottom: 10px; font-size: 1em; color: #555;}
         .media-input-container { display: flex; margin-bottom: 5px; }
-        #media-url-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 14px; }
-        #load-media-btn { border-radius: 0 5px 5px 0; }
+        #media-url-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 14px; min-width: 100px; /* Prevent excessive shrinking */}
+        #load-media-btn { border-radius: 0 5px 5px 0; flex-shrink: 0; } /* Prevent button shrinking */
 
         /* Widget Tabs (Right Column) */
         .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
@@ -80,7 +82,7 @@
         .widget-card h3 { margin-top: 0; margin-bottom: 15px; color: #333; padding-bottom: 10px; border-bottom: 1px solid #eee; }
 
         /* Checklist Widget Styles */
-        .checklist-widget { /* Now the first widget */ }
+        .checklist-widget { /* First widget */ }
         .checklist-input-container { display: flex; margin-bottom: 15px; }
         #checklist-item-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 15px; }
         #add-checklist-item-btn { border-radius: 0 5px 5px 0; }
@@ -94,35 +96,17 @@
         #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color: #aaa; }
 
         /* Notes Widget Styles & Embedded Sticky Notes */
-        .notes-widget { flex-grow: 1; display: flex; flex-direction: column; } /* Ensure flex for children */
-        #notes-area { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: vertical; box-sizing: border-box; min-height: 200px; /* Give notes decent starting height */ flex-shrink: 0; /* Prevent shrinking too much */ }
-        .sticky-notes-section { /* Container for sticky stuff under notes */
-            margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;
-            flex-grow: 1; /* Takes remaining vertical space */
-            display: flex; flex-direction: column;
-        }
+        .notes-widget { flex-grow: 1; display: flex; flex-direction: column; }
+        #notes-area { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: vertical; box-sizing: border-box; min-height: 200px; flex-shrink: 0; }
+        .sticky-notes-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; }
         .sticky-notes-section h4 { margin-top: 0; margin-bottom: 10px;}
         #sticky-notes-controls { margin-bottom: 10px; }
-        #sticky-notes-board {
-            flex-grow: 1; border: 1px dashed #ccc; border-radius: 5px;
-            position: relative; overflow: auto; /* Add scrollbars if needed */
-            background-color: #fdfdfd; min-height: 250px;
-        }
-        .sticky-note {
-            position: absolute; width: 180px; height: 180px;
-            background-color: #ffc; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            padding: 0; /* Padding handled by textarea/header */
-            box-sizing: border-box; cursor: move; display: flex; flex-direction: column;
-            border: 1px solid #e6e6a1; overflow: hidden; /* Prevent textarea resize overflow */
-        }
+        #sticky-notes-board { flex-grow: 1; border: 1px dashed #ccc; border-radius: 5px; position: relative; overflow: auto; background-color: #fdfdfd; min-height: 250px; }
+        .sticky-note { position: absolute; width: 180px; height: 180px; background-color: #ffc; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); padding: 0; box-sizing: border-box; cursor: move; display: flex; flex-direction: column; border: 1px solid #e6e6a1; overflow: hidden; }
         .sticky-note-header { display: flex; justify-content: flex-end; height: 20px; padding: 2px 5px; background-color: rgba(0,0,0,0.05); flex-shrink: 0;}
         .delete-sticky-btn { font-size: 14px; width: 18px; height: 18px; line-height: 16px; padding: 0; background: rgba(0,0,0,0.1); color: #333; border: none; border-radius: 50%; cursor: pointer; opacity: 0.5; }
         .sticky-note:hover .delete-sticky-btn { opacity: 1; }
-        .sticky-note textarea {
-            flex-grow: 1; border: none; background-color: transparent;
-            resize: none; outline: none; font-family: 'Architects Daughter', cursive;
-            font-size: 1em; padding: 8px; box-sizing: border-box;
-        }
+        .sticky-note textarea { flex-grow: 1; border: none; background-color: transparent; resize: none; outline: none; font-family: 'Architects Daughter', cursive; font-size: 1em; padding: 8px; box-sizing: border-box; }
 
         /* Flashcards Widget Styles */
         .flashcards-widget { display: flex; flex-direction: column; gap: 15px; flex-grow:1; }
@@ -130,8 +114,8 @@
         .flashcard-face { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transition: transform 0.7s ease-in-out; position: absolute; overflow-wrap: break-word; word-wrap: break-word; padding: 10px; box-sizing: border-box; }
         .flashcard-front { transform: rotateY(0deg); }
         .flashcard-back { transform: rotateY(180deg); background-color: #e8f4fd; border-radius: 8px;}
-        .flashcard-display-area.is-flipped .flashcard-front { transform: rotateY(180deg); } /* Corrected flip */
-        .flashcard-display-area.is-flipped .flashcard-back { transform: rotateY(0deg); } /* Corrected flip */
+        .flashcard-display-area.is-flipped .flashcard-front { transform: rotateY(180deg); } 
+        .flashcard-display-area.is-flipped .flashcard-back { transform: rotateY(0deg); } 
         .flashcard-nav { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;}
         #current-card-info { font-size: 0.9em; color: #666; margin: 0 10px; }
         #flip-flashcard-btn { width:100%; margin-top:5px; }
@@ -143,15 +127,11 @@
         .flashcard-term-list-container { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; min-height: 100px; }
         .flashcard-term-list-container h4 { margin-top:0; margin-bottom: 10px; }
         #flashcard-term-list { list-style-type: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; border: 1px solid #eee; border-radius: 4px; }
-        #flashcard-term-list li { /* Updated for side-by-side */
-            padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
-            display: flex; justify-content: space-between; align-items: baseline; /* Align text baselines */
-            gap: 15px; /* Space between term and definition */
-        }
+        #flashcard-term-list li { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: baseline; gap: 15px; }
         #flashcard-term-list li:last-child { border-bottom: none; }
         #flashcard-term-list li:hover { background-color: #e9ecef; }
-        #flashcard-term-list li span.term { font-weight: bold; flex-shrink: 0; /* Prevent term from shrinking too much */ margin-right: 10px;}
-        #flashcard-term-list li span.definition { font-size: 0.9em; color: #555; text-align: right; flex-grow: 1; /* Allow definition to take space */ word-break: break-word; }
+        #flashcard-term-list li span.term { font-weight: bold; flex-shrink: 0; margin-right: 10px;}
+        #flashcard-term-list li span.definition { font-size: 0.9em; color: #555; text-align: right; flex-grow: 1; word-break: break-word; }
 
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -184,8 +164,8 @@
                      <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio">
                         <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div>
                     </div>
-                    <div class="playlist-item" data-src="https://www.youtube.com/embed/VIDEO_ID9" data-thumbnail="youtu.be0" data-type="youtube">
-                        <img src="youtu.be1" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div>
+                    <div class="playlist-item" data-src="youtu.be2" data-thumbnail="youtu.be3" data-type="youtube">
+                        <img src="youtu.be4" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div>
                     </div>
                     <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio">
                         <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div>
@@ -205,10 +185,9 @@
 
         <section id="right-column">
             <div class="widget-tabs">
-                 <button class="widget-tab-btn active" data-widget="checklist">Checklist</button>
-                <button class="widget-tab-btn" data-widget="notes">Notes</button>
-                <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button>
-                </div>
+                <button class="widget-tab-btn active" data-widget="checklist">Checklist</button>
+                <button class="widget-tab-btn" data-widget="notes">Notes</button> <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button>
+            </div>
             <div class="widget-content-area">
                  <div class="checklist-widget widget-card active-widget" id="checklist-widget">
                     <div class="checklist-input-container">
@@ -224,8 +203,7 @@
                          <div id="sticky-notes-controls">
                              <button id="add-sticky-note-btn" class="btn-primary">Add New Sticky Note</button>
                          </div>
-                        <div id="sticky-notes-board">
-                            </div>
+                        <div id="sticky-notes-board"></div>
                     </div>
                 </div>
                 <div class="flashcards-widget widget-card" id="flashcards-widget" style="display: none;">
@@ -244,14 +222,8 @@
                     </div>
                     <div class="add-flashcard-area">
                         <h4>Add New Flashcard</h4>
-                        <div>
-                            <label for="flashcard-term-input">Term (Front):</label>
-                            <input type="text" id="flashcard-term-input" placeholder="e.g., Photosynthesis">
-                        </div>
-                        <div>
-                            <label for="flashcard-definition-input">Definition (Back):</label>
-                            <textarea id="flashcard-definition-input" placeholder="e.g., Process used by plants..."></textarea>
-                        </div>
+                        <div><label for="flashcard-term-input">Term (Front):</label><input type="text" id="flashcard-term-input"></div>
+                        <div><label for="flashcard-definition-input">Definition (Back):</label><textarea id="flashcard-definition-input"></textarea></div>
                         <button id="add-new-flashcard-btn" class="btn-success">Add Card</button>
                     </div>
                     <div class="flashcard-term-list-container">
@@ -259,7 +231,7 @@
                         <ul id="flashcard-term-list"></ul>
                     </div>
                 </div>
-                 </div>
+            </div>
         </section>
     </div>
 
@@ -269,26 +241,63 @@
         const rightColumn = document.getElementById('right-column');
         const dragHandle = document.getElementById('drag-handle');
         let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0;
+        let calculatedLeftMinWidth = 320; // Start with fallback
 
-        document.addEventListener('DOMContentLoaded', () => { /* ... Resizer init code ... */
+        function calculateLeftMinWidth() {
+             // Calculate required width for essential elements like media input
+             const mediaInputArea = document.querySelector('.media-input-area');
+             const controlsArea = document.querySelector('.controls'); // Get player controls too
+             let requiredWidth = 0;
+             if(mediaInputArea) {
+                  requiredWidth = mediaInputArea.offsetWidth + 40; // Element width + padding of container
+             }
+             if(controlsArea) {
+                  // Sum widths of control buttons + gaps
+                 let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; // 10px gap, 20px padding estimate
+                 requiredWidth = Math.max(requiredWidth, controlsWidth);
+             }
+             // Use the calculated width or the CSS min-width, whichever is larger
+             const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320;
+             calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); // Ensure at least 320px
+             // console.log("Calculated Min Width:", calculatedLeftMinWidth);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
             if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; }
-            const containerWidth = leftColumn.parentElement.offsetWidth; const initialLeftPercent = 35;
-            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 300;
+            
+            // Calculate min width after elements are potentially rendered
+            calculateLeftMinWidth(); 
+
+            const containerWidth = leftColumn.parentElement.offsetWidth;
+            const initialLeftPercent = 35;
             const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350;
             const resizerWidth = dragHandle.offsetWidth || 10;
             let initialLeftPx = (containerWidth * initialLeftPercent) / 100;
-            initialLeftPx = Math.max(leftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth));
+            // Use calculated min width for initial setting too
+            initialLeftPx = Math.max(calculatedLeftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth));
             leftColumn.style.flexBasis = `${initialLeftPx}px`;
         });
-        if (dragHandle) { /* ... Resizer mouse listeners ... */
-            dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); document.body.style.userSelect = 'none'; document.body.style.cursor = 'ew-resize'; }); }
-        function handleResizerMouseMove(e) { /* ... Resizer move logic with boundary checks ... */ if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 300; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(leftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; }
+        if (dragHandle) { 
+            dragHandle.addEventListener('mousedown', function(e) { 
+                e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; 
+                calculateLeftMinWidth(); // Recalculate min width on drag start, in case window resized
+                document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); document.body.style.userSelect = 'none'; document.body.style.cursor = 'ew-resize'; }); 
+        }
+        function handleResizerMouseMove(e) { 
+            if (!isResizing) return; 
+            const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; 
+            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; 
+            const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; 
+            // Use calculated min width from drag start
+            newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); 
+            leftColumn.style.flexBasis = `${newLeftWidth}px`; 
+        }
         function handleResizerMouseUp() { /* ... Resizer mouseup cleanup ... */ if (!isResizing) return; isResizing = false; document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); document.body.style.userSelect = ''; document.body.style.cursor = ''; }
 
-
         // --- MEDIA PLAYER (Audio, YouTube, SoundCloud Placeholder) ---
-        // ... (Media player JS unchanged from previous version) ...
+        // ... (Media player JS unchanged) ...
         const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); const playlistItemsJS = document.querySelectorAll('.playlist-item'); const volumeSlider = document.getElementById('volume-slider'); const volumeThumb = volumeSlider.querySelector('.volume-thumb'); const songTitleElem = document.getElementById('song-title'); const mainVideoPlayerContainer = document.getElementById('main-video-player'); const playerControlsArea = document.querySelector('.player-controls-area'); const mediaUrlInput = document.getElementById('media-url-input'); const loadMediaBtn = document.getElementById('load-media-btn'); let audio = new Audio(); let currentTrackIndex = 0; let currentMediaType = 'audio'; let activeMediaFrame = null; const tracks = Array.from(playlistItemsJS).map(item => ({ src: item.dataset.src, title: item.querySelector('div').textContent.trim(), thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/200/DDDDDD/808080?Text=Media', type: item.dataset.type || 'audio' })); let isDraggingProgress = false; let isDraggingVolume = false; function clearPlayerScreen() { mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } function getYouTubeVideoID(url) { const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; } function isSoundCloudUrl(url) { return url.includes('soundcloud.com'); } function loadMediaToPlayer(url, type, title = "Loading...") { clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title; if (type === 'youtube') { const videoID = getYouTubeVideoID(url); if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid YouTube URL"; } } else if (type === 'soundcloud') { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true`; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { audio.src = url; audio.load(); const trackData = tracks.find(t => t.src === url && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); } } if(loadMediaBtn) { loadMediaBtn.addEventListener('click', () => { const url = mediaUrlInput.value.trim(); if (url === "") return; let type = 'unknown'; if (getYouTubeVideoID(url)) type = 'youtube'; else if (isSoundCloudUrl(url)) type = 'soundcloud'; if (type !== 'unknown') { loadMediaToPlayer(url, type, "User Loaded Media"); } else { alert("Could not determine media type. Please use a valid YouTube or SoundCloud URL."); } mediaUrlInput.value = ''; }); } if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); }); function loadTrackFromPlaylist(index) { const track = tracks[index]; if (track) loadMediaToPlayer(track.src, track.type, track.title); playlistItemsJS.forEach(item => item.classList.remove('active-track')); if(playlistItemsJS[index]) playlistItemsJS[index].classList.add('active-track'); } function playCurrentMedia() { if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } } function pauseCurrentMedia() { if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; } if(playBtn) playBtn.addEventListener('click', playCurrentMedia); if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()}); function updateProgressBar() { if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } } function formatTime(seconds) { if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; } if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); playlistItemsJS.forEach((item, index) => { item.addEventListener('click', () => { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); }); }); if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); }); window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; }); function handleProgressBarSeek(e) { if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); } if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); function handleVolumeSliderDrag(e) { const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;} function setInitialVolume() { const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
+
 
         // --- WIDGET TAB Switching ---
         const widgetTabs = document.querySelectorAll('.widget-tab-btn');
@@ -296,20 +305,19 @@
         widgetTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 widgetTabs.forEach(t => t.classList.remove('active'));
-                widgetContents.forEach(c => c.style.display = 'none'); // Hide all content cards
+                widgetContents.forEach(c => c.style.display = 'none'); 
                 tab.classList.add('active');
                 const widgetName = tab.dataset.widget;
                 const activeWidgetContent = document.getElementById(`${widgetName}-widget`);
-                if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; // Show the active one
+                if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; 
             });
         });
-        // Ensure initial active tab content is shown (Checklist is now first)
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => { // Run tab init after resizer init
              const initialActiveTab = document.querySelector('.widget-tab-btn.active');
              if(initialActiveTab) {
                  const initialWidgetName = initialActiveTab.dataset.widget;
                  const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`);
-                  widgetContents.forEach(c => c.style.display = 'none'); // Hide all first
+                  widgetContents.forEach(c => c.style.display = 'none'); 
                  if(initialWidgetContent) initialWidgetContent.style.display = 'flex';
              }
         });
@@ -340,157 +348,54 @@
 
         let flashcards = []; 
         let currentFlashcardIndex = -1; 
-        let isFlashcardFlipped = false; // Tracks current visual state
+        let isFlashcardFlipped = false; 
 
-        function renderFlashcard() {
+        function renderFlashcard() { /* ... Flashcard render logic ... */
             if (!flashcardDisplay || !flashcardFront || !flashcardBack || !currentCardInfo) return;
-            if (flashcards.length === 0) {
-                flashcardFront.textContent = "No cards yet!"; flashcardBack.textContent = "Add some cards below.";
-                flashcardDisplay.classList.remove('is-flipped'); isFlashcardFlipped = false;
-                currentCardInfo.textContent = "0/0";
-                if(prevFlashcardBtn) prevFlashcardBtn.disabled = true; if(nextFlashcardBtn) nextFlashcardBtn.disabled = true; if(flipFlashcardBtn) flipFlashcardBtn.disabled = true;
-                return;
-            }
-            if(prevFlashcardBtn) prevFlashcardBtn.disabled = currentFlashcardIndex === 0;
-            if(nextFlashcardBtn) nextFlashcardBtn.disabled = currentFlashcardIndex === flashcards.length - 1;
-            if(flipFlashcardBtn) flipFlashcardBtn.disabled = false;
-
-            const card = flashcards[currentFlashcardIndex];
-            flashcardFront.textContent = card.term; flashcardBack.textContent = card.definition;
-            // Apply the class based on the current state
-            flashcardDisplay.classList.toggle('is-flipped', isFlashcardFlipped);
-            currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`;
-        }
-
-        function flipCurrentFlashcard() { 
-            if (flashcards.length === 0) return;
-            isFlashcardFlipped = !isFlashcardFlipped; // Toggle the state
-            renderFlashcard(); // Re-render based on the new state
-        }
-
-        function renderFlashcardTermList() {
-            if (!flashcardTermListUL) return;
-            flashcardTermListUL.innerHTML = ''; 
-            // Sort a copy, keep original flashcards array order for navigation
-            const sortedForDisplay = [...flashcards].sort((a, b) => a.term.localeCompare(b.term)); 
-            
-            sortedForDisplay.forEach(card => {
-                const originalIndex = flashcards.findIndex(fc => fc === card); // Find index in original array
-                const listItem = document.createElement('li');
-                listItem.dataset.originalIndex = originalIndex; 
-                
-                const termSpan = document.createElement('span');
-                termSpan.className = 'term'; termSpan.textContent = card.term;
-                
-                const defSpan = document.createElement('span');
-                defSpan.className = 'definition'; defSpan.textContent = card.definition;
-                
-                listItem.appendChild(termSpan); listItem.appendChild(defSpan);
-
-                listItem.addEventListener('click', function() {
-                    currentFlashcardIndex = parseInt(this.dataset.originalIndex);
-                    // isFlashcardFlipped = false; // ** REMOVED ** Keep current flip state when navigating from list
-                    renderFlashcard();
-                });
-                flashcardTermListUL.appendChild(listItem);
-            });
-        }
+            if (flashcards.length === 0) { flashcardFront.textContent = "No cards yet!"; flashcardBack.textContent = "Add some cards below."; flashcardDisplay.classList.remove('is-flipped'); isFlashcardFlipped = false; currentCardInfo.textContent = "0/0"; if(prevFlashcardBtn) prevFlashcardBtn.disabled = true; if(nextFlashcardBtn) nextFlashcardBtn.disabled = true; if(flipFlashcardBtn) flipFlashcardBtn.disabled = true; return; }
+            if(prevFlashcardBtn) prevFlashcardBtn.disabled = currentFlashcardIndex === 0; if(nextFlashcardBtn) nextFlashcardBtn.disabled = currentFlashcardIndex === flashcards.length - 1; if(flipFlashcardBtn) flipFlashcardBtn.disabled = false;
+            const card = flashcards[currentFlashcardIndex]; flashcardFront.textContent = card.term; flashcardBack.textContent = card.definition;
+            flashcardDisplay.classList.toggle('is-flipped', isFlashcardFlipped); currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`; }
+        function flipCurrentFlashcard() { if (flashcards.length === 0) return; isFlashcardFlipped = !isFlashcardFlipped; renderFlashcard(); }
+        function renderFlashcardTermList() { /* ... Term list render logic with side-by-side def ... */
+            if (!flashcardTermListUL) return; flashcardTermListUL.innerHTML = ''; const sortedForDisplay = [...flashcards].sort((a, b) => a.term.localeCompare(b.term)); 
+            sortedForDisplay.forEach(card => { const originalIndex = flashcards.findIndex(fc => fc === card); const listItem = document.createElement('li'); listItem.dataset.originalIndex = originalIndex; const termSpan = document.createElement('span'); termSpan.className = 'term'; termSpan.textContent = card.term; const defSpan = document.createElement('span'); defSpan.className = 'definition'; defSpan.textContent = card.definition; listItem.appendChild(termSpan); listItem.appendChild(defSpan); listItem.addEventListener('click', function() { currentFlashcardIndex = parseInt(this.dataset.originalIndex); /* isFlashcardFlipped = false; REMOVED */ renderFlashcard(); }); flashcardTermListUL.appendChild(listItem); }); }
         if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard);
         if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard);
-        if(prevFlashcardBtn) { 
-            prevFlashcardBtn.addEventListener('click', () => { 
-                if (currentFlashcardIndex > 0) { 
-                    currentFlashcardIndex--; 
-                    // isFlashcardFlipped = false; // ** REMOVED ** Keep flip state
-                    renderFlashcard(); 
-                } 
-            }); 
-        }
-        if(nextFlashcardBtn) { 
-            nextFlashcardBtn.addEventListener('click', () => { 
-                if (currentFlashcardIndex < flashcards.length - 1) { 
-                    currentFlashcardIndex++; 
-                    // isFlashcardFlipped = false; // ** REMOVED ** Keep flip state
-                    renderFlashcard(); 
-                } 
-            }); 
-        }
-        if(addNewFlashcardBtn) {
-            addNewFlashcardBtn.addEventListener('click', () => {
-                const term = flashcardTermInput.value.trim(); const definition = flashcardDefinitionInput.value.trim();
-                if (term && definition) {
-                    flashcards.push({ term, definition });
-                    flashcardTermInput.value = ''; flashcardDefinitionInput.value = '';
-                    // Optionally jump to the new card or stay put
-                    // currentFlashcardIndex = flashcards.length - 1; 
-                    if (currentFlashcardIndex === -1) currentFlashcardIndex = 0; // Handle first card added
-                    isFlashcardFlipped = false; // Show front of newly added card concept
-                    renderFlashcard(); renderFlashcardTermList(); 
-                    if(flashcardTermInput) flashcardTermInput.focus();
-                } else { alert("Please enter both a term and a definition."); }
-            });
-        }
-        document.addEventListener('keydown', function(e) {
-            const flashcardsTab = document.querySelector('.widget-tab-btn[data-widget="flashcards"]');
-            if (flashcardsTab && flashcardsTab.classList.contains('active') && e.code === 'Space') {
-                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); flipCurrentFlashcard(); }
-            }
-        });
+        if(prevFlashcardBtn) { prevFlashcardBtn.addEventListener('click', () => { if (currentFlashcardIndex > 0) { currentFlashcardIndex--; /* isFlashcardFlipped = false; REMOVED */ renderFlashcard(); } }); }
+        if(nextFlashcardBtn) { nextFlashcardBtn.addEventListener('click', () => { if (currentFlashcardIndex < flashcards.length - 1) { currentFlashcardIndex++; /* isFlashcardFlipped = false; REMOVED */ renderFlashcard(); } }); }
+        if(addNewFlashcardBtn) { addNewFlashcardBtn.addEventListener('click', () => { const term = flashcardTermInput.value.trim(); const definition = flashcardDefinitionInput.value.trim(); if (term && definition) { flashcards.push({ term, definition }); flashcardTermInput.value = ''; flashcardDefinitionInput.value = ''; if (currentFlashcardIndex === -1) currentFlashcardIndex = 0; else currentFlashcardIndex = flashcards.length - 1; isFlashcardFlipped = false; renderFlashcard(); renderFlashcardTermList(); if(flashcardTermInput) flashcardTermInput.focus(); } else { alert("Please enter both a term and a definition."); } }); }
+        document.addEventListener('keydown', function(e) { const flashcardsTab = document.querySelector('.widget-tab-btn[data-widget="flashcards"]'); if (flashcardsTab && flashcardsTab.classList.contains('active') && e.code === 'Space') { if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); flipCurrentFlashcard(); } } });
 
         // --- STICKY NOTES JavaScript ---
         const addStickyNoteBtn = document.getElementById('add-sticky-note-btn');
         const stickyNotesBoard = document.getElementById('sticky-notes-board');
         let stickyNoteZIndex = 1; 
 
-        function createStickyNote(id = Date.now(), content = '', top = 20, left = 20) { // Use numbers for position
-            const note = document.createElement('div');
-            note.classList.add('sticky-note');
-            // Ensure initial position is within bounds if possible
-            const boardRect = stickyNotesBoard.getBoundingClientRect();
-            note.style.top = `${Math.min(top, boardRect.height - 180)}px`; // Use note height
-            note.style.left = `${Math.min(left, boardRect.width - 180)}px`; // Use note width
-            note.dataset.id = id;
-
-            const header = document.createElement('div'); header.className = 'sticky-note-header';
-            const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '×'; deleteBtn.className = 'delete-sticky-btn'; deleteBtn.title = "Delete Note";
-            deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); if (confirm('Delete this sticky note?')) note.remove(); });
-            header.appendChild(deleteBtn); note.appendChild(header);
-
-            const textarea = document.createElement('textarea'); textarea.value = content; textarea.placeholder = "Write something...";
-            textarea.addEventListener('input', () => { /* Save content later */ });
-            textarea.addEventListener('mousedown', (e) => e.stopPropagation());
-            note.appendChild(textarea);
-            
+        function createStickyNote(id = Date.now(), content = '', top = 20, left = 20) { /* ... Sticky note creation logic ... */
+            const note = document.createElement('div'); note.classList.add('sticky-note'); note.style.top = `${top}px`; note.style.left = `${left}px`; note.dataset.id = id;
+            const header = document.createElement('div'); header.className = 'sticky-note-header'; const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '×'; deleteBtn.className = 'delete-sticky-btn'; deleteBtn.title = "Delete Note"; deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); if (confirm('Delete this sticky note?')) note.remove(); }); header.appendChild(deleteBtn); note.appendChild(header);
+            const textarea = document.createElement('textarea'); textarea.value = content; textarea.placeholder = "Write something..."; textarea.addEventListener('input', () => { /* Save content later */ }); textarea.addEventListener('mousedown', (e) => e.stopPropagation()); note.appendChild(textarea);
             let isDraggingNote = false; let noteStartX, noteStartY, initialMouseX, initialMouseY;
-            note.addEventListener('mousedown', (e) => {
-                if (e.target === deleteBtn || e.target === textarea) return;
-                isDraggingNote = true; noteStartX = note.offsetLeft; noteStartY = note.offsetTop;
-                initialMouseX = e.clientX; initialMouseY = e.clientY; note.style.zIndex = ++stickyNoteZIndex;
-                note.style.cursor = 'grabbing'; document.addEventListener('mousemove', handleStickyMouseMove); document.addEventListener('mouseup', handleStickyMouseUp);
-            });
-            function handleStickyMouseMove(e) {
-                if (!isDraggingNote) return;
+            note.addEventListener('mousedown', (e) => { if (e.target === deleteBtn || e.target === textarea) return; isDraggingNote = true; noteStartX = note.offsetLeft; noteStartY = note.offsetTop; initialMouseX = e.clientX; initialMouseY = e.clientY; note.style.zIndex = ++stickyNoteZIndex; note.style.cursor = 'grabbing'; document.addEventListener('mousemove', handleStickyMouseMove); document.addEventListener('mouseup', handleStickyMouseUp); });
+            function handleStickyMouseMove(e) { /* ... Sticky drag logic with boundary checks ... */
+                if (!isDraggingNote || !stickyNotesBoard) return; // Check if board exists
                 const dx = e.clientX - initialMouseX; const dy = e.clientY - initialMouseY;
-                const boardRect = stickyNotesBoard.getBoundingClientRect();
-                // Constrain position within the board's bounds
-                let newLeft = Math.max(0, Math.min(noteStartX + dx, stickyNotesBoard.scrollWidth - note.offsetWidth)); // Use scrollWidth for content width
-                let newTop = Math.max(0, Math.min(noteStartY + dy, stickyNotesBoard.scrollHeight - note.offsetHeight)); // Use scrollHeight for content height
-                note.style.left = `${newLeft}px`; note.style.top = `${newTop}px`;
-            }
-            function handleStickyMouseUp() {
-                if (!isDraggingNote) return; isDraggingNote = false; note.style.cursor = 'move';
-                document.removeEventListener('mousemove', handleStickyMouseMove); document.removeEventListener('mouseup', handleStickyMouseUp);
-            }
-
-            if(stickyNotesBoard) stickyNotesBoard.appendChild(note);
-        }
+                // Use scrollWidth/Height in case content makes board scrollable
+                const boardWidth = stickyNotesBoard.scrollWidth; 
+                const boardHeight = stickyNotesBoard.scrollHeight;
+                let newLeft = Math.max(0, Math.min(noteStartX + dx, boardWidth - note.offsetWidth)); 
+                let newTop = Math.max(0, Math.min(noteStartY + dy, boardHeight - note.offsetHeight));
+                note.style.left = `${newLeft}px`; note.style.top = `${newTop}px`; }
+            function handleStickyMouseUp() { if (!isDraggingNote) return; isDraggingNote = false; note.style.cursor = 'move'; document.removeEventListener('mousemove', handleStickyMouseMove); document.removeEventListener('mouseup', handleStickyMouseUp); }
+            if(stickyNotesBoard) stickyNotesBoard.appendChild(note); }
         if(addStickyNoteBtn) { addStickyNoteBtn.addEventListener('click', () => createStickyNote()); }
 
 
         // --- INITIAL LOAD ---
         if (tracks.length > 0) { loadTrackFromPlaylist(currentTrackIndex); }
         else { if(songTitleElem) songTitleElem.textContent = "No tracks in playlist"; if(mainVideoPlayerContainer) mainVideoPlayerContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; }
-        setInitialVolume();
+        if(volumeSlider) setInitialVolume(); 
         updateProgressBar();
         renderFlashcard(); 
         renderFlashcardTermList();
