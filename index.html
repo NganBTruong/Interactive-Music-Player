@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Flashcards & More!</title>
+    <title>Study Hub - Enhanced Flashcards!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,6 +30,42 @@
             flex-direction: column; box-sizing: border-box;
         }
 
+        /* --- Consistent Button Styles --- */
+        button, .button-like { /* General class for button-like elements if needed */
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-align: center;
+            font-weight: bold;
+        }
+        button:hover, .button-like:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        /* Player control buttons specific styling */
+        .control-btn {
+            background: #e0e0e0; color: #333; border-color: #ccc;
+            width: 40px; height: 40px; display: flex;
+            justify-content: center; align-items: center; margin: 0 5px;
+        }
+        .control-btn:hover { background: #d0d0d0; }
+
+        /* Primary action buttons (e.g., Add, Load) */
+        .btn-primary { background-color: #007bff; color: white; border-color: #007bff;}
+        .btn-primary:hover { background-color: #0056b3; border-color: #0056b3;}
+        
+        .btn-danger { background-color: #d9534f; color: white; border-color: #d9534f;}
+        .btn-danger:hover { background-color: #c9302c; border-color: #c9302c;}
+
+        .btn-success { background-color: #28a745; color: white; border-color: #28a745;}
+        .btn-success:hover { background-color: #218838; border-color: #218838;}
+        
+        .btn-secondary { background-color: #6c757d; color: white; border-color: #6c757d;}
+        .btn-secondary:hover { background-color: #5a6268; border-color: #545b62;}
+
+
         /* Music Player & Integrated YouTube Styles */
         .music-player-container {
             flex-grow: 1; display: flex; flex-direction: column;
@@ -45,11 +81,7 @@
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; }
         .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
-        .control-btn {
-            border: none; background: #ddd; width: 40px; height: 40px; display: flex;
-            justify-content: center; align-items: center; color: #333; font-size: 14px;
-            margin: 0 5px; cursor: pointer; border-radius: 5px;
-        }
+        /* .control-btn already styled above */
         .progress-container { display: flex; align-items: center; justify-content: center; margin-top: 15px; }
         .progress-bar {
             width: 70%; height: 15px; background-color: #ddd; border-radius: 10px;
@@ -85,24 +117,21 @@
         .youtube-input-area { margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; }
         .youtube-input-area h4 { margin-top:0; margin-bottom: 10px; font-size: 1em; color: #555;}
         .youtube-input-container { display: flex; margin-bottom: 5px; }
-        #youtube-url-input {
+        #media-url-input { /* Updated ID */
             flex-grow: 1; padding: 10px; border: 1px solid #ccc;
             border-radius: 5px 0 0 5px; font-size: 14px;
         }
-        #load-youtube-video-btn { /* Will be generic "Load Media" */
-            padding: 10px 15px; border: 1px solid #5cb85c; background-color: #5cb85c;
-            color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 14px;
+        #load-media-btn { /* Uses .btn-success now from general button styles */
+            border-radius: 0 5px 5px 0; /* Keep specific corner for group */
         }
-        #load-youtube-video-btn:hover { background-color: #4cae4c; }
-
 
         /* Widget Tabs (Right Column) */
         .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; }
-        .widget-tab-btn {
-            padding: 10px 15px; cursor: pointer; border: 1px solid transparent;
-            border-bottom: none; background-color: #f0f0f0;
-            border-radius: 5px 5px 0 0; margin-right: 5px;
-            font-size: 15px; position: relative; bottom: -1px;
+        .widget-tab-btn { /* General button styles applied, some overrides here */
+            background-color: #f0f0f0; color:#333; border-color:transparent;
+            border-bottom: none; border-radius: 5px 5px 0 0; 
+            margin-right: 5px; position: relative; bottom: -1px;
+            padding: 10px 15px; /* Specific padding for tabs */
         }
         .widget-tab-btn:hover { background-color: #e7e7e7; }
         .widget-tab-btn.active {
@@ -113,7 +142,7 @@
              border: 1px solid #ddd; border-top: none; padding: 15px;
              flex-grow: 1; display: flex; flex-direction: column;
         }
-        .widget-card { /* Each tab's content area */
+        .widget-card {
             background-color: #fff; box-sizing: border-box; display: flex;
             flex-direction: column; height: 100%;
         }
@@ -135,11 +164,9 @@
             flex-grow: 1; padding: 10px; border: 1px solid #ccc;
             border-radius: 5px 0 0 5px; font-size: 15px;
         }
-        #add-checklist-item-btn {
-            padding: 10px 15px; border: 1px solid #007bff; background-color: #007bff;
-            color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
+        #add-checklist-item-btn { /* Uses .btn-primary */
+             border-radius: 0 5px 5px 0;
         }
-        #add-checklist-item-btn:hover { background-color: #0056b3; }
         #checklist { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; min-height: 100px; }
         #checklist li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 16px; }
         #checklist li:last-child { border-bottom: none; }
@@ -155,61 +182,68 @@
         }
         #checklist label { flex-grow: 1; cursor: pointer; color: #333; word-break: break-word; }
         #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color: #aaa; }
-        .delete-item-btn {
-            background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 16px;
-            margin-left: 10px; padding: 5px; line-height: 1; flex-shrink: 0;
+        .delete-item-btn { /* Uses general button style, specific color */
+            color: #d9534f; background: none; border: none;
+            padding: 5px; line-height: 1; flex-shrink: 0;
         }
-        .delete-item-btn:hover { color: #cc0000; }
+        .delete-item-btn:hover { color: #c9302c; background: #f0f0f0;}
+
 
         /* Flashcards Widget Styles */
-        .flashcards-widget { display: flex; flex-direction: column; gap: 20px; }
+        .flashcards-widget { display: flex; flex-direction: column; gap: 15px; flex-grow:1; }
         .flashcard-display-area {
-            height: 200px; /* Or make it flexible */
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            font-size: 1.5em;
-            cursor: pointer; /* For flipping */
-            background-color: #f9f9f9;
-            position: relative; /* For front/back */
-            perspective: 1000px; /* For 3D flip (optional enhancement) */
+            min-height: 180px; 
+            border: 1px solid #ccc; border-radius: 8px; display: flex;
+            align-items: center; justify-content: center; text-align: center;
+            padding: 20px; font-size: 1.4em; cursor: pointer; 
+            background-color: #f9f9f9; position: relative; 
+            perspective: 1000px; 
         }
         .flashcard-face {
             width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            backface-visibility: hidden; /* For 3D flip */
-            transition: transform 0.6s; /* For 3D flip */
-            position: absolute; /* For stacking front/back */
+            backface-visibility: hidden; 
+            transition: transform 0.7s ease-in-out; /* Smoother transition */
+            position: absolute; 
+            overflow-wrap: break-word; word-wrap: break-word; padding: 5px;
         }
         .flashcard-front { transform: rotateY(0deg); }
-        .flashcard-back { transform: rotateY(180deg); background-color: #e8f4fd; }
+        .flashcard-back { transform: rotateY(180deg); background-color: #e8f4fd; border-radius: 8px;}
         .flashcard-display-area.is-flipped .flashcard-front { transform: rotateY(-180deg); }
         .flashcard-display-area.is-flipped .flashcard-back { transform: rotateY(0deg); }
 
-        .flashcard-nav { display: flex; justify-content: space-around; align-items: center; }
-        .flashcard-nav button { padding: 8px 15px; cursor: pointer; }
-        #current-card-info { font-size: 0.9em; color: #666; }
+        .flashcard-nav { display: flex; justify-content: space-between; align-items: center; }
+        .flashcard-nav button { /* Uses .btn-secondary */ margin: 0 5px; }
+        #current-card-info { font-size: 0.9em; color: #666; margin: 0 10px; }
+        #flip-flashcard-btn { width:calc(100% - 10px); margin-top:5px; } /* Uses .btn-secondary */
 
-        .add-flashcard-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;}
+        .add-flashcard-area { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;}
         .add-flashcard-area div { margin-bottom: 10px; }
         .add-flashcard-area label { display: block; margin-bottom: 5px; font-weight: bold;}
         .add-flashcard-area input[type="text"], .add-flashcard-area textarea {
-            width: calc(100% - 22px); /* Account for padding/border */
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
+            width: calc(100% - 22px); padding: 10px;
+            border: 1px solid #ccc; border-radius: 4px; font-size: 1em;
         }
         .add-flashcard-area textarea { min-height: 60px; resize: vertical; }
-        .add-flashcard-area button {
-            padding: 10px 20px; background-color: #28a745; color: white;
-            border: none; border-radius: 4px; cursor: pointer; font-size: 1em;
+        #add-new-flashcard-btn {} /* Uses .btn-success */
+
+        .flashcard-term-list-container {
+            margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;
+            flex-grow: 1; display: flex; flex-direction: column;
         }
-        .add-flashcard-area button:hover { background-color: #218838; }
+        .flashcard-term-list-container h4 { margin-top:0; margin-bottom: 10px; }
+        #flashcard-term-list {
+            list-style-type: none; padding: 0; margin: 0;
+            overflow-y: auto; max-height: 150px; /* Or make it flex-grow if no other content below */
+            border: 1px solid #eee; border-radius: 4px;
+        }
+        #flashcard-term-list li {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        #flashcard-term-list li:last-child { border-bottom: none; }
+        #flashcard-term-list li:hover { background-color: #e9ecef; }
 
     </style>
 </head>
@@ -239,8 +273,8 @@
                     <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio">
                         <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div>
                     </div>
-                    <div class="playlist-item" data-src="https://youtu.be/VIDEO_ID7" data-thumbnail="https://youtu.be/VIDEO_ID8" data-type="youtube">
-                        <img src="https://youtu.be/VIDEO_ID9" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div>
+                    <div class="playlist-item" data-src="https://www.youtube.com/embed/VIDEO_ID0" data-thumbnail="https://www.youtube.com/embed/VIDEO_ID1" data-type="youtube">
+                        <img src="https://www.youtube.com/embed/VIDEO_ID2" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div>
                     </div>
                     <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio">
                         <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div>
@@ -250,7 +284,7 @@
                     <h4>Load Media into Player:</h4>
                     <div class="youtube-input-container">
                         <input type="text" id="media-url-input" placeholder="Paste YouTube or SoundCloud URL...">
-                        <button id="load-media-btn">Load Media</button>
+                        <button id="load-media-btn" class="btn-success">Load Media</button>
                     </div>
                 </div>
             </div>
@@ -271,21 +305,22 @@
                 <div class="checklist-widget widget-card" id="checklist-widget" style="display: none;">
                     <div class="checklist-input-container">
                         <input type="text" id="checklist-item-input" placeholder="Add a new task...">
-                        <button id="add-checklist-item-btn">Add</button>
+                        <button id="add-checklist-item-btn" class="btn-primary">Add</button>
                     </div>
                     <ul id="checklist"></ul>
                 </div>
                 <div class="flashcards-widget widget-card" id="flashcards-widget" style="display: none;">
-                    <h3>Flashcards</h3>
-                    <div class="flashcard-display-area" id="flashcard-display" tabindex="0"> <div class="flashcard-face flashcard-front" id="flashcard-front">Term</div>
+                    <div class="flashcard-display-area" id="flashcard-display" tabindex="0">
+                        <div class="flashcard-face flashcard-front" id="flashcard-front">Term</div>
                         <div class="flashcard-face flashcard-back" id="flashcard-back">Definition</div>
                     </div>
                     <div class="flashcard-nav">
-                        <button id="prev-flashcard-btn">⬅️ Previous</button>
+                        <button id="prev-flashcard-btn" class="btn-secondary">⬅️ Previous</button>
                         <span id="current-card-info">0/0</span>
-                        <button id="next-flashcard-btn">Next ➡️</button>
+                        <button id="next-flashcard-btn" class="btn-secondary">Next ➡️</button>
                     </div>
-                     <div class="flashcard-nav"> <button id="flip-flashcard-btn" style="width:100%; margin-top:5px;">Show Answer / Flip</button>
+                     <div class="flashcard-nav">
+                        <button id="flip-flashcard-btn" class="btn-secondary" style="width:100%; margin-top:5px;">Show Answer / Flip</button>
                     </div>
                     <div class="add-flashcard-area">
                         <h4>Add New Flashcard</h4>
@@ -297,7 +332,12 @@
                             <label for="flashcard-definition-input">Definition (Back):</label>
                             <textarea id="flashcard-definition-input" placeholder="e.g., Process used by plants..."></textarea>
                         </div>
-                        <button id="add-new-flashcard-btn">Add Card</button>
+                        <button id="add-new-flashcard-btn" class="btn-success">Add Card</button>
+                    </div>
+                    <div class="flashcard-term-list-container">
+                        <h4>Your Flashcard Terms:</h4>
+                        <ul id="flashcard-term-list">
+                            </ul>
                     </div>
                 </div>
             </div>
@@ -346,7 +386,7 @@
             document.body.style.userSelect = '';
         }
 
-        // --- MEDIA PLAYER (Audio, YouTube) ---
+        // --- MEDIA PLAYER (Audio, YouTube, SoundCloud Placeholder) ---
         const playBtn = document.getElementById('play-btn');
         const pauseBtn = document.getElementById('pause-btn');
         const prevBtn = document.getElementById('prev-btn');
@@ -355,21 +395,20 @@
         const progressBarContainer = document.getElementById('progress-bar');
         const currentTimeElem = document.getElementById('current-time');
         const durationElem = document.getElementById('duration');
-        const playlistItemsJS = document.querySelectorAll('.playlist-item'); // Renamed to avoid conflict
+        const playlistItemsJS = document.querySelectorAll('.playlist-item');
         const volumeSlider = document.getElementById('volume-slider');
         const volumeThumb = volumeSlider.querySelector('.volume-thumb');
         const songTitleElem = document.getElementById('song-title');
         const mainVideoPlayerContainer = document.getElementById('main-video-player');
         const playerControlsArea = document.querySelector('.player-controls-area');
 
-        const mediaUrlInput = document.getElementById('media-url-input'); // Renamed
-        const loadMediaBtn = document.getElementById('load-media-btn'); // Renamed
+        const mediaUrlInput = document.getElementById('media-url-input'); 
+        const loadMediaBtn = document.getElementById('load-media-btn'); 
 
         let audio = new Audio();
         let currentTrackIndex = 0;
         let currentMediaType = 'audio';
-        let youtubeIframe = null;
-        let soundcloudIframe = null;
+        let activeMediaFrame = null; // To hold YT or SC iframe
 
         const tracks = Array.from(playlistItemsJS).map(item => ({
             src: item.dataset.src,
@@ -382,8 +421,8 @@
         function clearPlayerScreen() {
             mainVideoPlayerContainer.innerHTML = '';
             mainVideoPlayerContainer.style.backgroundImage = 'none';
-            if (youtubeIframe) youtubeIframe = null;
-            if (soundcloudIframe) soundcloudIframe = null;
+            mainVideoPlayerContainer.style.paddingBottom = "56.25%"; // Default back to 16:9 for album art/YT
+            activeMediaFrame = null;
         }
 
         function getYouTubeVideoID(url) {
@@ -396,51 +435,44 @@
             return url.includes('soundcloud.com');
         }
 
-        function loadMediaToPlayer(url, type) {
+        function loadMediaToPlayer(url, type, title = "Loading...") {
             clearPlayerScreen();
             audio.pause(); 
-            songTitleElem.textContent = "Loading Media...";
+            songTitleElem.textContent = title;
 
             if (type === 'youtube') {
                 const videoID = getYouTubeVideoID(url);
                 if (videoID) {
-                    youtubeIframe = document.createElement('iframe');
-                    youtubeIframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1`;
-                    youtubeIframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-                    youtubeIframe.allowFullscreen = true;
-                    mainVideoPlayerContainer.appendChild(youtubeIframe);
-                    songTitleElem.textContent = "YouTube Video"; 
+                    activeMediaFrame = document.createElement('iframe');
+                    activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`;
+                    activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                    activeMediaFrame.allowFullscreen = true;
+                    mainVideoPlayerContainer.appendChild(activeMediaFrame);
                     currentMediaType = 'youtube';
                     if(playerControlsArea) playerControlsArea.style.display = 'none';
-                } else {
-                     songTitleElem.textContent = "Invalid YouTube URL";
-                }
+                } else { songTitleElem.textContent = "Invalid YouTube URL"; }
             } else if (type === 'soundcloud') {
-                // Use SoundCloud oEmbed to get iframe code (requires fetch, more complex for client-side without backend proxy)
-                // Simple approach: direct iframe if possible, or use their widget API if needed.
-                // For now, a basic iframe embed if the URL is directly embeddable (often isn't for tracks without API)
-                // This is a placeholder - robust SoundCloud embedding needs more work (oEmbed or their JS SDK)
-                soundcloudIframe = document.createElement('iframe');
-                // Example: "https://w.soundcloud.com/player/?url=YOUR_TRACK_URL&..."
-                // User needs to provide embeddable URL or we need more logic to get it
-                soundcloudIframe.width = "100%";
-                soundcloudIframe.height = "100%"; // Or fixed height for SoundCloud player
-                soundcloudIframe.scrolling="no";
-                soundcloudIframe.frameborder="no";
-                soundcloudIframe.allow="autoplay";
-                soundcloudIframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=true&visual=true`;
-                mainVideoPlayerContainer.style.paddingBottom = "166px"; // typical SC player height
-                mainVideoPlayerContainer.appendChild(soundcloudIframe);
-                songTitleElem.textContent = "SoundCloud Track"; 
+                activeMediaFrame = document.createElement('iframe');
+                activeMediaFrame.width = "100%";
+                activeMediaFrame.height = "166"; // Fixed height for standard SC widget
+                activeMediaFrame.scrolling="no";
+                activeMediaFrame.frameborder="no";
+                activeMediaFrame.allow="autoplay";
+                // Note: Visual player might not work without specific API key or proper track URL.
+                // This requires URL to be embeddable or fetched via oEmbed.
+                activeMediaFrame.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=true&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true`; // Removed visual=true as it often needs specific track types
+                mainVideoPlayerContainer.style.paddingBottom = "0"; // Remove padding for fixed height iframe
+                mainVideoPlayerContainer.style.height = "166px"; // Set fixed height
+                mainVideoPlayerContainer.appendChild(activeMediaFrame);
                 currentMediaType = 'soundcloud';
-                if(playerControlsArea) playerControlsArea.style.display = 'none'; // Hide our controls for SC too
-
+                if(playerControlsArea) playerControlsArea.style.display = 'none';
             } else { // audio
                 audio.src = url;
                 audio.load();
-                const trackData = tracks.find(t => t.src === url && t.type === 'audio'); // find original thumbnail
+                const trackData = tracks.find(t => t.src === url && t.type === 'audio');
                 mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`;
-                mainVideoPlayerContainer.style.paddingBottom = "56.25%"; // Reset for album art
+                mainVideoPlayerContainer.style.height = "0"; // Reset height if it was fixed for SC
+                mainVideoPlayerContainer.style.paddingBottom = "56.25%"; 
                 currentMediaType = 'audio';
                 if(playerControlsArea) playerControlsArea.style.display = 'block';
                 updateProgressBar();
@@ -451,61 +483,42 @@
             loadMediaBtn.addEventListener('click', () => {
                 const url = mediaUrlInput.value.trim();
                 if (url === "") return;
-
-                let type = 'audio'; // Default assumption
-                if (getYouTubeVideoID(url)) {
-                    type = 'youtube';
-                } else if (isSoundCloudUrl(url)) {
-                    type = 'soundcloud';
+                let type = 'unknown';
+                if (getYouTubeVideoID(url)) type = 'youtube';
+                else if (isSoundCloudUrl(url)) type = 'soundcloud';
+                
+                if (type !== 'unknown') {
+                    loadMediaToPlayer(url, type, "User Loaded Media");
+                } else {
+                    alert("Could not determine media type. Please use a valid YouTube or SoundCloud URL.");
                 }
-                // For audio, this direct load won't have thumbnail unless it's in playlist
-                // For now, it mainly supports YT/SC ad-hoc.
-                loadMediaToPlayer(url, type); 
-                // Ideally, if it's YT/SC, add it to the playlist too or offer to.
                 mediaUrlInput.value = '';
             });
         }
         if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
 
         function loadTrackFromPlaylist(index) {
-            clearPlayerScreen();
             const track = tracks[index];
-            if (track) {
-                currentMediaType = track.type;
-                songTitleElem.textContent = track.title;
-
-                if (currentMediaType === 'youtube') {
-                    loadMediaToPlayer(track.src, 'youtube');
-                } else if (currentMediaType === 'soundcloud') {
-                    loadMediaToPlayer(track.src, 'soundcloud');
-                } else { // audio
-                    loadMediaToPlayer(track.src, 'audio');
-                }
-                playlistItemsJS.forEach(item => item.classList.remove('active-track'));
-                if(playlistItemsJS[index]) playlistItemsJS[index].classList.add('active-track');
+            if (track) loadMediaToPlayer(track.src, track.type, track.title);
+            playlistItemsJS.forEach(item => item.classList.remove('active-track'));
+            if(playlistItemsJS[index]) playlistItemsJS[index].classList.add('active-track');
+        }
+        function playCurrentMedia() { /* ... as before ... */ 
+            if (currentMediaType === 'audio') {
+                audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error));
+            } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) {
+                activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block';
+            } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) {
+                // SC autoplay is on; manual play might need SDK.
+                if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block';
             }
         }
-        function playCurrentMedia() {
-            if (currentMediaType === 'audio') {
-                audio.play().then(() => {
-                    if(playBtn) playBtn.style.display = 'none';
-                    if(pauseBtn) pauseBtn.style.display = 'inline-block';
-                }).catch(error => console.error("Error playing audio:", error));
-            } else { // For YT/SC, autoplay is attempted. These buttons might not have direct control without more API work.
-                if(playBtn) playBtn.style.display = 'none'; 
-                if(pauseBtn) pauseBtn.style.display = 'inline-block'; 
-            }
-        }
-        function pauseCurrentMedia() {
-            if (currentMediaType === 'audio') {
-                audio.pause();
-            } else if (currentMediaType === 'youtube' && youtubeIframe && youtubeIframe.contentWindow) {
-                 youtubeIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-            } else if (currentMediaType === 'soundcloud' && soundcloudIframe && soundcloudIframe.contentWindow) {
-                // SoundCloud widget API is different, might need SDK or specific postMessage
-            }
-            if(playBtn) playBtn.style.display = 'inline-block';
-            if(pauseBtn) pauseBtn.style.display = 'none';
+        function pauseCurrentMedia() { /* ... as before ... */
+             if (currentMediaType === 'audio') { audio.pause(); }
+             else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');}
+             else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ }
+             if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none';
         }
 
         if(playBtn) playBtn.addEventListener('click', playCurrentMedia);
@@ -514,58 +527,31 @@
         audio.addEventListener('durationchange', updateProgressBar);
         audio.addEventListener('timeupdate', updateProgressBar);
         audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()});
-
-        function updateProgressBar() {
+        function updateProgressBar() { /* ... as before ... */ 
             if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) {
                 const progressPercent = (audio.currentTime / audio.duration) * 100;
                 if(progressBarElem) progressBarElem.style.width = progressPercent + '%';
                 if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime);
                 if(durationElem) durationElem.textContent = formatTime(audio.duration);
             } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') {
-                if(progressBarElem) progressBarElem.style.width = '0%';
-                if(currentTimeElem) currentTimeElem.textContent = "-:--";
-                if(durationElem) durationElem.textContent = "-:--";
+                if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--";
             } else {
-                if(progressBarElem) progressBarElem.style.width = '0%';
-                if(currentTimeElem) currentTimeElem.textContent = "0:00";
-                if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00";
+                if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00";
             }
         }
-        function formatTime(seconds) {
-            if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00";
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
+        function formatTime(seconds) { /* ... as before ... */ if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; }
         if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
         if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
-        playlistItemsJS.forEach((item, index) => {
-            item.addEventListener('click', () => { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); });
-        });
+        playlistItemsJS.forEach((item, index) => { item.addEventListener('click', () => { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); }); });
         if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); });
         window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); });
         window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; });
-        function handleProgressBarSeek(e) {
-            if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return;
-            const rect = progressBarContainer.getBoundingClientRect();
-            const offsetX = e.clientX - rect.left;
-            const progressWidth = Math.min(Math.max(offsetX, 0), rect.width);
-            audio.currentTime = (progressWidth / rect.width) * audio.duration;
-            updateProgressBar();
-        }
+        function handleProgressBarSeek(e) { /* ... as before ... */ if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); }
         if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); });
         window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); });
         window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; });
-        function handleVolumeSliderDrag(e) {
-            const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left;
-            offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width;
-            if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;
-        }
-        function setInitialVolume() {
-            const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return;
-            const rect = volumeSlider.getBoundingClientRect();
-            volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;
-        }
+        function handleVolumeSliderDrag(e) { /* ... as before ... */ const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;}
+        function setInitialVolume() { /* ... as before ... */ const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
 
         // --- WIDGET TAB Switching ---
         const widgetTabs = document.querySelectorAll('.widget-tab-btn');
@@ -586,27 +572,7 @@
         const addChecklistItemBtn = document.getElementById('add-checklist-item-btn');
         const checklist = document.getElementById('checklist');
         let checklistItemIdCounter = 0;
-        function addChecklistItem(taskText = null, isChecked = false) {
-            const itemText = taskText || (checklistItemInput ? checklistItemInput.value.trim() : "");
-            if (itemText === "" && !taskText) { alert("Please enter a task!"); return; }
-            const listItem = document.createElement('li');
-            const checkboxId = `task-${checklistItemIdCounter++}`;
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked;
-            const label = document.createElement('label');
-            label.htmlFor = checkboxId; label.textContent = itemText;
-            if(isChecked) { label.style.textDecoration = 'line-through'; label.style.color = '#aaa'; }
-            checkbox.addEventListener('change', function() {
-                label.style.textDecoration = this.checked ? 'line-through' : 'none';
-                label.style.color = this.checked ? '#aaa' : '#333';
-            });
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Delete task';
-            deleteBtn.addEventListener('click', function() { listItem.remove(); });
-            listItem.appendChild(checkbox); listItem.appendChild(label); listItem.appendChild(deleteBtn);
-            if(checklist) checklist.appendChild(listItem);
-            if (!taskText && checklistItemInput) checklistItemInput.value = "";
-        }
+        function addChecklistItem(taskText = null, isChecked = false) { /* ... as before ... */ const itemText = taskText || (checklistItemInput ? checklistItemInput.value.trim() : ""); if (itemText === "" && !taskText) { alert("Please enter a task!"); return; } const listItem = document.createElement('li'); const checkboxId = `task-${checklistItemIdCounter++}`; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked; const label = document.createElement('label'); label.htmlFor = checkboxId; label.textContent = itemText; if(isChecked) { label.style.textDecoration = 'line-through'; label.style.color = '#aaa'; } checkbox.addEventListener('change', function() { label.style.textDecoration = this.checked ? 'line-through' : 'none'; label.style.color = this.checked ? '#aaa' : '#333'; }); const deleteBtn = document.createElement('button'); deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Delete task'; deleteBtn.addEventListener('click', function() { listItem.remove(); }); listItem.appendChild(checkbox); listItem.appendChild(label); listItem.appendChild(deleteBtn); if(checklist) checklist.appendChild(listItem); if (!taskText && checklistItemInput) checklistItemInput.value = ""; }
         if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
         if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
@@ -618,22 +584,25 @@
         const nextFlashcardBtn = document.getElementById('next-flashcard-btn');
         const flipFlashcardBtn = document.getElementById('flip-flashcard-btn');
         const currentCardInfo = document.getElementById('current-card-info');
-
         const flashcardTermInput = document.getElementById('flashcard-term-input');
         const flashcardDefinitionInput = document.getElementById('flashcard-definition-input');
         const addNewFlashcardBtn = document.getElementById('add-new-flashcard-btn');
+        const flashcardTermListUL = document.getElementById('flashcard-term-list');
 
-        let flashcards = []; // Array to store {term, definition} objects
-        let currentFlashcardIndex = -1; // -1 if no cards
+        let flashcards = []; 
+        let currentFlashcardIndex = -1; 
         let isFlashcardFlipped = false;
+        let currentCardRotation = 0; // For continuous flip
 
         function renderFlashcard() {
             if (!flashcardDisplay || !flashcardFront || !flashcardBack || !currentCardInfo) return;
-
-            if (flashcards.length === 0 || currentFlashcardIndex === -1) {
+            if (flashcards.length === 0) {
                 flashcardFront.textContent = "No cards yet!";
                 flashcardBack.textContent = "Add some cards below.";
-                flashcardDisplay.classList.remove('is-flipped');
+                flashcardDisplay.classList.remove('is-flipped'); // Legacy for simple flip
+                flashcardFront.style.transform = 'rotateY(0deg)'; // Reset rotation
+                flashcardBack.style.transform = 'rotateY(180deg)'; // Reset rotation
+                currentCardRotation = 0;
                 isFlashcardFlipped = false;
                 currentCardInfo.textContent = "0/0";
                 if(prevFlashcardBtn) prevFlashcardBtn.disabled = true;
@@ -641,20 +610,21 @@
                 if(flipFlashcardBtn) flipFlashcardBtn.disabled = true;
                 return;
             }
-            
             if(prevFlashcardBtn) prevFlashcardBtn.disabled = currentFlashcardIndex === 0;
             if(nextFlashcardBtn) nextFlashcardBtn.disabled = currentFlashcardIndex === flashcards.length - 1;
             if(flipFlashcardBtn) flipFlashcardBtn.disabled = false;
 
-
             const card = flashcards[currentFlashcardIndex];
             flashcardFront.textContent = card.term;
             flashcardBack.textContent = card.definition;
-
-            if (isFlashcardFlipped) {
-                flashcardDisplay.classList.add('is-flipped');
-            } else {
-                flashcardDisplay.classList.remove('is-flipped');
+            
+            // Apply rotation based on isFlashcardFlipped
+            if (isFlashcardFlipped) { // Showing back
+                flashcardFront.style.transform = `rotateY(${currentCardRotation - 180}deg)`;
+                flashcardBack.style.transform = `rotateY(${currentCardRotation}deg)`;
+            } else { // Showing front
+                flashcardFront.style.transform = `rotateY(${currentCardRotation}deg)`;
+                flashcardBack.style.transform = `rotateY(${currentCardRotation + 180}deg)`;
             }
             currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`;
         }
@@ -662,71 +632,76 @@
         function flipCurrentFlashcard() {
             if (flashcards.length === 0) return;
             isFlashcardFlipped = !isFlashcardFlipped;
+            if(isFlashcardFlipped) { // Flipped to back
+                currentCardRotation += 180;
+            } else { // Flipped back to front
+                currentCardRotation += 180; // Continue rotating forward
+            }
+            // Normalize rotation to avoid huge numbers, though visually it's the same
+            // currentCardRotation = currentCardRotation % 360; 
             renderFlashcard();
         }
 
+        function renderFlashcardTermList() {
+            if (!flashcardTermListUL) return;
+            flashcardTermListUL.innerHTML = ''; // Clear existing list
+            const sortedFlashcards = [...flashcards].sort((a, b) => a.term.localeCompare(b.term));
+            
+            sortedFlashcards.forEach((card, sortedIndex) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = card.term;
+                listItem.dataset.originalIndex = flashcards.indexOf(card); // Store original index to jump to
+                listItem.addEventListener('click', function() {
+                    currentFlashcardIndex = parseInt(this.dataset.originalIndex);
+                    isFlashcardFlipped = false;
+                    currentCardRotation = 0; // Reset rotation when jumping
+                    renderFlashcard();
+                });
+                flashcardTermListUL.appendChild(listItem);
+            });
+        }
+
+
         if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard);
         if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard);
-
         if(prevFlashcardBtn) {
             prevFlashcardBtn.addEventListener('click', () => {
                 if (currentFlashcardIndex > 0) {
-                    currentFlashcardIndex--;
-                    isFlashcardFlipped = false; // Show front of new card
-                    renderFlashcard();
+                    currentFlashcardIndex--; isFlashcardFlipped = false; currentCardRotation = 0; renderFlashcard();
                 }
             });
         }
-
         if(nextFlashcardBtn) {
             nextFlashcardBtn.addEventListener('click', () => {
                 if (currentFlashcardIndex < flashcards.length - 1) {
-                    currentFlashcardIndex++;
-                    isFlashcardFlipped = false; // Show front of new card
-                    renderFlashcard();
+                    currentFlashcardIndex++; isFlashcardFlipped = false; currentCardRotation = 0; renderFlashcard();
                 }
             });
         }
-        
         if(addNewFlashcardBtn) {
             addNewFlashcardBtn.addEventListener('click', () => {
                 const term = flashcardTermInput.value.trim();
                 const definition = flashcardDefinitionInput.value.trim();
-
                 if (term && definition) {
                     flashcards.push({ term, definition });
-                    flashcardTermInput.value = '';
-                    flashcardDefinitionInput.value = '';
-                    if (currentFlashcardIndex === -1 && flashcards.length > 0) { // If it's the first card
-                        currentFlashcardIndex = 0;
-                    } else if (flashcards.length > 0) { // If adding more cards, go to the new card
-                         currentFlashcardIndex = flashcards.length - 1;
-                    }
-                    isFlashcardFlipped = false;
+                    flashcardTermInput.value = ''; flashcardDefinitionInput.value = '';
+                    if (currentFlashcardIndex === -1) currentFlashcardIndex = 0;
+                    else currentFlashcardIndex = flashcards.length - 1; // Go to new card
+                    isFlashcardFlipped = false; currentCardRotation = 0;
                     renderFlashcard();
-                    flashcardTermInput.focus(); // Focus back on term input
-                } else {
-                    alert("Please enter both a term and a definition.");
-                }
+                    renderFlashcardTermList(); // Update the list
+                    flashcardTermInput.focus();
+                } else { alert("Please enter both a term and a definition."); }
             });
         }
-
-        // Spacebar to flip flashcard if the display area or its tab is active
         document.addEventListener('keydown', function(e) {
             const flashcardsTab = document.querySelector('.widget-tab-btn[data-widget="flashcards"]');
             if (flashcardsTab && flashcardsTab.classList.contains('active') && e.code === 'Space') {
-                 // Check if focus is not on an input/textarea field
-                if (document.activeElement !== flashcardTermInput &&
-                    document.activeElement !== flashcardDefinitionInput &&
-                    document.activeElement !== checklistItemInput &&
-                    document.activeElement !== mediaUrlInput &&
-                    document.activeElement !== document.getElementById('notes-area')) {
-                    e.preventDefault(); // Prevent page scroll
-                    flipCurrentFlashcard();
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault(); flipCurrentFlashcard();
                 }
             }
         });
-
 
         // --- INITIAL LOAD ---
         if (tracks.length > 0) { loadTrackFromPlaylist(currentTrackIndex); }
@@ -736,7 +711,8 @@
         }
         setInitialVolume();
         updateProgressBar();
-        renderFlashcard(); // Initial render for flashcards
+        renderFlashcard(); 
+        renderFlashcardTermList();
 
     </script>
 </body>
