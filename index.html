@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Resizable Columns</title>
+    <title>Study Hub - Resizable Columns (Corrected)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,11 +23,8 @@
             overflow: hidden; /* Important for resizer */
         }
 
-        #left-column { /* Was .music-player-section */
-            /* flex-basis will be set by JS, acts like width for flex items */
-            /* Default width can be set here or by JS on load */
-            /* Example: flex-basis: 35%; */
-            min-width: 250px; /* Minimum width for the music player */
+        #left-column {
+            min-width: 250px; 
             padding: 20px;
             background-color: #f9f9f9;
             overflow-y: auto;
@@ -39,25 +36,24 @@
 
         .resizer {
             width: 10px;
-            background-color: #c1c1c1; /* Light gray for visibility */
-            cursor: ew-resize; /* East-west resize cursor */
-            flex-shrink: 0; /* Prevent the resizer from shrinking */
+            background-color: #c1c1c1; 
+            cursor: ew-resize; 
+            flex-shrink: 0; 
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10; /* Ensure it's above other content if overlapping occurs */
+            z-index: 10; 
         }
-        .resizer::after { /* Optional: visual cue on the handle */
+        .resizer::after { 
             content: '⋮';
             font-size: 18px;
             color: #555;
             line-height: 0;
         }
 
-
-        #right-column { /* Was .widgets-section */
-            flex-grow: 1; /* Takes up the remaining space */
-            min-width: 300px; /* Minimum width for widgets */
+        #right-column { 
+            flex-grow: 1; 
+            min-width: 300px; 
             padding: 20px;
             background-color: #ffffff;
             overflow-y: auto;
@@ -96,10 +92,6 @@
             margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd;
             border-radius: 10px; background: #f9f9f9; padding: 10px;
         }
-        .playlist-container::-webkit-scrollbar { width: 0.5em; }
-        .playlist-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .playlist-container::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
-        .playlist-container::-webkit-scrollbar-thumb:hover { background: #555; }
         .playlist-item {
             display: flex; justify-content: space-between; align-items: center; padding: 10px;
             margin-bottom: 5px; cursor: pointer; background-color: #fff; border-radius: 5px;
@@ -205,7 +197,8 @@
 </head>
 <body>
     <div class="main-container">
-        <section id="left-column"> <div class="music-player-container">
+        <section id="left-column"> 
+            <div class="music-player-container">
                 <div class="video-container"></div>
                 <div class="song-title">Select a Song</div>
                 <div class="controls">
@@ -236,7 +229,10 @@
             </div>
         </section>
 
-        <div class="resizer" id="drag-handle"></div> <section id="right-column"> <div class="notes-widget widget-card" id="notes-widget-content">
+        <div class="resizer" id="drag-handle"></div> 
+
+        <section id="right-column"> 
+            <div class="notes-widget widget-card" id="notes-widget-content">
                 <h3>My Notes</h3>
                 <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
             </div>
@@ -262,24 +258,25 @@
     <script>
         // --- COLUMN RESIZER JavaScript ---
         const leftColumn = document.getElementById('left-column');
-        const rightColumn = document.getElementById('right-column'); // We might not directly manipulate this if using flex-grow
+        const rightColumn = document.getElementById('right-column'); 
         const dragHandle = document.getElementById('drag-handle');
 
         let isResizing = false;
         let initialPosX = 0;
         let initialLeftWidth = 0;
 
-        // Set initial widths on page load
         document.addEventListener('DOMContentLoaded', () => {
+            if (!leftColumn || !rightColumn || !dragHandle) {
+                console.error("Resizer elements not found!");
+                return;
+            }
             const containerWidth = leftColumn.parentElement.offsetWidth;
-            // Initial percentage for left column (e.g., 35%)
             const initialLeftPercent = 35; 
             let initialLeftPx = (containerWidth * initialLeftPercent) / 100;
 
-            // Ensure it respects min-width on initial load
-            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth);
-            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth);
-            const resizerWidth = dragHandle.offsetWidth;
+            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 0;
+            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 0;
+            const resizerWidth = dragHandle.offsetWidth || 10; // Default if not rendered
 
             if (initialLeftPx < leftMinWidth) {
                 initialLeftPx = leftMinWidth;
@@ -287,22 +284,26 @@
             if (containerWidth - initialLeftPx - resizerWidth < rightMinWidth) {
                 initialLeftPx = containerWidth - rightMinWidth - resizerWidth;
             }
+             if (initialLeftPx < leftMinWidth && (leftMinWidth + resizerWidth + rightMinWidth <= containerWidth) ) { // ensure total min widths fit
+                initialLeftPx = leftMinWidth;
+            }
+
             leftColumn.style.flexBasis = `${initialLeftPx}px`;
         });
 
+        if (dragHandle) { // Check if dragHandle exists before adding listener
+            dragHandle.addEventListener('mousedown', function(e) {
+                e.preventDefault(); 
+                isResizing = true;
+                initialPosX = e.clientX;
+                initialLeftWidth = leftColumn.offsetWidth; 
 
-        dragHandle.addEventListener('mousedown', function(e) {
-            e.preventDefault(); // Prevent text selection during drag
-            isResizing = true;
-            initialPosX = e.clientX;
-            initialLeftWidth = leftColumn.offsetWidth; // Get current width
+                document.addEventListener('mousemove', handleResizerMouseMove);
+                document.addEventListener('mouseup', handleResizerMouseUp);
+                document.body.style.userSelect = 'none';
+            });
+        }
 
-            // Attach listeners to the document to capture mouse move everywhere
-            document.addEventListener('mousemove', handleResizerMouseMove);
-            document.addEventListener('mouseup', handleResizerMouseUp);
-            // Add user-select: none to body to prevent text selection during drag
-            document.body.style.userSelect = 'none';
-        });
 
         function handleResizerMouseMove(e) {
             if (!isResizing) return;
@@ -310,24 +311,18 @@
             const deltaX = e.clientX - initialPosX;
             let newLeftWidth = initialLeftWidth + deltaX;
 
-            // Enforce min-width constraints
-            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth); // Use parseFloat
-            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth); // Use parseFloat
+            const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 0;
+            const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 0;
             const containerWidth = leftColumn.parentElement.offsetWidth;
-            const resizerWidth = dragHandle.offsetWidth;
+            const resizerWidth = dragHandle.offsetWidth || 10;
 
-            if (newLeftWidth < leftMinWidth) {
-                newLeftWidth = leftMinWidth;
-            }
-            // Check if right column would be too small
-            if (containerWidth - newLeftWidth - resizerWidth < rightMinWidth) {
-                newLeftWidth = containerWidth - rightMinWidth - resizerWidth;
-                // If after adjusting for right, left is still too small (very narrow window)
-                 if (newLeftWidth < leftMinWidth) newLeftWidth = leftMinWidth;
-            }
+            // Clamp newLeftWidth based on left column's minWidth
+            newLeftWidth = Math.max(leftMinWidth, newLeftWidth);
+            
+            // Clamp newLeftWidth based on right column's minWidth
+            newLeftWidth = Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth);
             
             leftColumn.style.flexBasis = `${newLeftWidth}px`;
-            // rightColumn will adjust automatically due to flex-grow: 1
         }
 
         function handleResizerMouseUp() {
@@ -335,13 +330,15 @@
             isResizing = false;
             document.removeEventListener('mousemove', handleResizerMouseMove);
             document.removeEventListener('mouseup', handleResizerMouseUp);
-            document.body.style.userSelect = ''; // Re-enable text selection
+            document.body.style.userSelect = ''; 
         }
 
 
-        // --- MUSIC PLAYER JavaScript (mostly unchanged) ---
+        // --- MUSIC PLAYER JavaScript ---
         const playBtn = document.getElementById('play-btn');
         const pauseBtn = document.getElementById('pause-btn');
+        // ... (rest of the music player, checklist, and YouTube JS is the same as your last working version) ...
+        // ... Ensure it's all here ...
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
         const progressBarElem = document.getElementById('progress');
@@ -445,7 +442,7 @@
             volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;
         }
 
-        // --- CHECKLIST JavaScript (mostly unchanged) ---
+        // --- CHECKLIST JavaScript ---
         const checklistItemInput = document.getElementById('checklist-item-input');
         const addChecklistItemBtn = document.getElementById('add-checklist-item-btn');
         const checklist = document.getElementById('checklist');
@@ -474,37 +471,53 @@
         addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
         checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
-        // --- YOUTUBE PLAYER JavaScript ---
+        // --- YOUTUBE PLAYER JavaScript (CORRECTED) ---
         const youtubeUrlInput = document.getElementById('youtube-url-input');
         const loadYoutubeVideoBtn = document.getElementById('load-youtube-video-btn');
         const youtubePlayerContainer = document.getElementById('youtube-player');
+        
         function getYouTubeVideoID(url) {
-            const regExp = /^.*(https://www.youtube.com/watch?v=EctTGfBL9OE\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            // More robust regex to capture video ID from various YouTube URL formats
+            const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match.pop() : null;
+            return (match && match[2] && match[2].length === 11) ? match[2] : null;
         }
+
         function loadYoutubeVideo() {
+            if (!youtubeUrlInput || !youtubePlayerContainer) { // Check if elements exist
+                 console.error("YouTube player elements not found");
+                 return;
+            }
             const url = youtubeUrlInput.value.trim();
             const videoID = getYouTubeVideoID(url);
             youtubePlayerContainer.innerHTML = ''; 
             if (videoID) {
                 const iframe = document.createElement('iframe');
-                iframe.src = `https://www.youtube.com/watch?v=qgYWCXCzGnw{videoID}?autoplay=1&modestbranding=1&rel=0`;
+                // CORRECTED TEMPLATE LITERAL:
+                iframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0`; 
                 iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
                 iframe.allowFullscreen = true;
                 youtubePlayerContainer.appendChild(iframe);
                 youtubeUrlInput.value = ''; 
             } else if (url !== "") { 
-                alert("Invalid YouTube URL. Please enter a valid video link.");
+                alert("Invalid YouTube URL. Please enter a valid video link (e.g., https://www.youtube.com/watch?v=EctTGfBL9OE or https://www.youtube.com/watch?v=VIDEO_ID).");
             }
         }
-        loadYoutubeVideoBtn.addEventListener('click', loadYoutubeVideo);
-        youtubeUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadYoutubeVideo(); });
+        if (loadYoutubeVideoBtn) { // Check if button exists
+            loadYoutubeVideoBtn.addEventListener('click', loadYoutubeVideo);
+        }
+        if (youtubeUrlInput) { // Check if input exists
+             youtubeUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadYoutubeVideo(); });
+        }
+
 
         // --- INITIAL LOAD ---
         if (tracks.length > 0) { loadTrack(currentTrackIndex); }
-        else { songTitleElem.textContent = "No tracks in playlist"; videoContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; }
-        setInitialVolume();
+        else { 
+            if(songTitleElem) songTitleElem.textContent = "No tracks in playlist"; 
+            if(videoContainer) videoContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; 
+        }
+        if(volumeSlider) setInitialVolume(); // Check if volumeSlider exists
         updateProgressBar();
     </script>
 </body>
