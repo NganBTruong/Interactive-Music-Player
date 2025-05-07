@@ -4,77 +4,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Resizable Columns (Corrected)</title>
+    <title>Study Hub - Integrated Player & Tabs</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5;
-            display: flex;
-            min-height: 100vh;
-            overflow: hidden; /* Prevent body scrollbars during resize */
+            margin: 0; padding: 0; background-color: #f0f2f5;
+            display: flex; min-height: 100vh; overflow: hidden;
         }
-
-        .main-container {
-            display: flex;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden; /* Important for resizer */
-        }
+        .main-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
 
         #left-column {
-            min-width: 250px; 
-            padding: 20px;
-            background-color: #f9f9f9;
-            overflow-y: auto;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+            min-width: 250px; padding: 20px; background-color: #f9f9f9;
+            overflow-y: auto; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            display: flex; flex-direction: column; box-sizing: border-box;
         }
-
         .resizer {
-            width: 10px;
-            background-color: #c1c1c1; 
-            cursor: ew-resize; 
-            flex-shrink: 0; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10; 
+            width: 10px; background-color: #c1c1c1; cursor: ew-resize;
+            flex-shrink: 0; display: flex; align-items: center;
+            justify-content: center; z-index: 10;
         }
-        .resizer::after { 
-            content: '⋮';
-            font-size: 18px;
-            color: #555;
-            line-height: 0;
+        .resizer::after { content: '⋮'; font-size: 18px; color: #555; line-height: 0; }
+        #right-column {
+            flex-grow: 1; min-width: 300px; padding: 20px;
+            background-color: #ffffff; overflow-y: auto; display: flex;
+            flex-direction: column; box-sizing: border-box;
+            /* Removed gap, tabs will manage spacing */
         }
 
-        #right-column { 
-            flex-grow: 1; 
-            min-width: 300px; 
-            padding: 20px;
-            background-color: #ffffff;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            gap: 20px;
-        }
-
-        /* Music Player Styles */
+        /* Music Player & Integrated YouTube Styles */
         .music-player-container {
+            flex-grow: 1; /* Allow it to take space for youtube input */
+            display: flex; flex-direction: column;
             margin: 0 auto; background-color: #ffffff; border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 20px;
             width: 100%; box-sizing: border-box;
         }
-        .video-container {
-            position: relative; width: 100%; height: 200px; border-radius: 10px;
-            overflow: hidden; background-color: #ddd; margin-bottom: 15px;
+        .video-container { /* Will display album art OR YouTube video */
+            position: relative; width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio for video */
+            height: 0; /* Height set by padding-bottom */
+            border-radius: 10px; overflow: hidden;
+            background-color: #ddd; margin-bottom: 15px;
             background-size: cover; background-position: center;
         }
+        .video-container iframe { /* For YouTube video */
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; border: 0;
+        }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; }
+        .player-controls-area { /* Wraps audio controls */
+             /* Styles if needed to hide/show based on content type */
+        }
         .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
         .control-btn {
             border: none; background: #ddd; width: 40px; height: 40px; display: flex;
@@ -91,6 +71,7 @@
         .playlist-container {
             margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd;
             border-radius: 10px; background: #f9f9f9; padding: 10px;
+            flex-shrink: 0; /* Prevent shrinking if content above grows */
         }
         .playlist-item {
             display: flex; justify-content: space-between; align-items: center; padding: 10px;
@@ -113,19 +94,74 @@
             position: absolute; top: 50%; transform: translateY(-50%); width: 12px;
             height: 12px; background-color: #888; border-radius: 50%; left: 50%;
         }
-
-        /* General Widget Styling */
-        .widget-card {
-            padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px;
-            background-color: #fdfdfd; box-sizing: border-box; display: flex; flex-direction: column;
+        .youtube-input-area { /* For the input at the bottom of the player */
+            margin-top: auto; /* Pushes to the bottom if player-container is flex-column */
+            padding-top: 15px; border-top: 1px solid #eee;
         }
-        .widget-card h3 {
+        .youtube-input-area h4 { margin-top:0; margin-bottom: 10px; font-size: 1em; color: #555;}
+        .youtube-input-container { display: flex; margin-bottom: 5px; }
+        #youtube-url-input {
+            flex-grow: 1; padding: 10px; border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px; font-size: 14px;
+        }
+        #load-youtube-video-btn {
+            padding: 10px 15px; border: 1px solid #c9302c; background-color: #d9534f;
+            color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 14px;
+        }
+        #load-youtube-video-btn:hover { background-color: #c9302c; }
+
+
+        /* Widget Tabs (Right Column) */
+        .widget-tabs {
+            display: flex;
+            margin-bottom: 0; /* Tabs will be flush against content typically */
+            border-bottom: 1px solid #ddd;
+        }
+        .widget-tab-btn {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none; /* Remove bottom border for all */
+            background-color: #f0f0f0;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            font-size: 15px;
+            position: relative;
+            bottom: -1px; /* To make active tab merge with border */
+        }
+        .widget-tab-btn:hover { background-color: #e7e7e7; }
+        .widget-tab-btn.active {
+            background-color: #fff;
+            border-color: #ddd #ddd transparent #ddd; /* Border on top, left, right */
+            font-weight: bold;
+            border-bottom: 1px solid #fff; /* To cover the main border */
+        }
+        .widget-content-area {
+             border: 1px solid #ddd;
+             border-top: none; /* Top border handled by tabs */
+             padding: 15px;
+             flex-grow: 1; /* Takes available space in right column */
+             display: flex; /* To allow child to grow */
+             flex-direction: column;
+        }
+        .widget-card { /* Each tab's content area */
+            /* padding: 15px; No padding needed if .widget-content-area has it */
+            /* border: 1px solid #e0e0e0; No border, handled by .widget-content-area */
+            border-radius: 0 0 8px 8px; /* Only bottom radius if top is flush */
+            background-color: #fff; /* Was fdfdfd */
+            box-sizing: border-box;
+            display: flex; /* For internal layout */
+            flex-direction: column;
+            height: 100%; /* Fill the .widget-content-area */
+        }
+         .widget-card h3 { /* Keep headers for individual widgets if desired, or remove if tab name is enough */
             margin-top: 0; margin-bottom: 15px; color: #333;
             padding-bottom: 10px; border-bottom: 1px solid #eee;
         }
 
+
         /* Notes Widget Styles */
-        .notes-widget { min-height: 200px; }
+        .notes-widget { /* min-height: 200px; */ }
         #notes-area {
             width: 100%; flex-grow: 1; padding: 10px; border: 1px solid #ccc;
             border-radius: 5px; font-size: 15px; resize: vertical;
@@ -133,7 +169,7 @@
         }
 
         /* Checklist Widget Styles */
-        .checklist-widget { min-height: 200px; }
+        .checklist-widget { /* min-height: 200px; */ }
         .checklist-input-container { display: flex; margin-bottom: 15px; }
         #checklist-item-input {
             flex-grow: 1; padding: 10px; border: 1px solid #ccc;
@@ -174,83 +210,78 @@
         }
         .delete-item-btn:hover { color: #cc0000; }
 
-        /* YouTube Player Widget Styles */
-        .youtube-widget { min-height: 300px; }
-        .youtube-input-container { display: flex; margin-bottom: 15px; }
-        #youtube-url-input {
-            flex-grow: 1; padding: 10px; border: 1px solid #ccc;
-            border-radius: 5px 0 0 5px; font-size: 15px;
-        }
-        #load-youtube-video-btn {
-            padding: 10px 15px; border: 1px solid #c9302c; background-color: #d9534f;
-            color: white; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 15px;
-        }
-        #load-youtube-video-btn:hover { background-color: #c9302c; }
-        .youtube-player-container {
-            position: relative; padding-bottom: 56.25%; height: 0;
-            overflow: hidden; width: 100%; background-color: #000; border-radius: 5px;
-        }
-        .youtube-player-container iframe {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
-        }
+        /* Flashcards Widget Styles (Placeholder) */
+        .flashcards-widget { /* min-height: 300px; */ display: flex; align-items: center; justify-content: center; }
+
     </style>
 </head>
 <body>
     <div class="main-container">
-        <section id="left-column"> 
+        <section id="left-column">
             <div class="music-player-container">
-                <div class="video-container"></div>
-                <div class="song-title">Select a Song</div>
-                <div class="controls">
-                    <button id="prev-btn" class="control-btn">⏮</button>
-                    <button id="play-btn" class="control-btn">▶</button>
-                    <button id="pause-btn" class="control-btn" style="display: none;">⏸</button>
-                    <button id="next-btn" class="control-btn">⏭</button>
-                    <div class="volume-container">
-                        <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div>
+                <div class="video-container" id="main-video-player">
                     </div>
-                </div>
-                <div class="progress-container">
-                    <div class="time" id="current-time">0:00</div>
-                    <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div>
-                    <div class="time" id="duration">0:00</div>
+                <div class="song-title">Select a Song or Video</div>
+                <div class="player-controls-area">
+                    <div class="controls">
+                        <button id="prev-btn" class="control-btn">⏮</button>
+                        <button id="play-btn" class="control-btn">▶</button>
+                        <button id="pause-btn" class="control-btn" style="display: none;">⏸</button>
+                        <button id="next-btn" class="control-btn">⏭</button>
+                        <div class="volume-container">
+                            <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="time" id="current-time">0:00</div>
+                        <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div>
+                        <div class="time" id="duration">0:00</div>
+                    </div>
                 </div>
                 <div class="playlist-container">
-                    <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF">
-                        <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found</div>
+                    <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio">
+                        <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div>
                     </div>
-                    <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM">
-                        <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG</div>
+                    <div class="playlist-item" data-src="https://www.youtube.com/watch?v=-vPuhHv_7iw" data-thumbnail="https://img.youtube.com/vi/M7lc1qf-s7g/0.jpg" data-type="youtube">
+                        <img src="https://img.youtube.com/vi/M7lc1qf-s7g/default.jpg" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div>
                     </div>
-                    <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg" data-thumbnail="https://via.placeholder.com/40/e74c3c/FFFFFF?Text=EL">
-                        <img src="https://via.placeholder.com/40/e74c3c/FFFFFF?Text=EL" alt="Lepidoptera"><div>Epoq - Lepidoptera</div>
+                    <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio">
+                        <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div>
+                    </div>
+                </div>
+                <div class="youtube-input-area">
+                    <h4>Load YouTube Video into Player:</h4>
+                    <div class="youtube-input-container">
+                        <input type="text" id="youtube-url-input" placeholder="Paste YouTube Video URL...">
+                        <button id="load-youtube-video-btn">Load Video</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <div class="resizer" id="drag-handle"></div> 
+        <div class="resizer" id="drag-handle"></div>
 
-        <section id="right-column"> 
-            <div class="notes-widget widget-card" id="notes-widget-content">
-                <h3>My Notes</h3>
-                <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
+        <section id="right-column">
+            <div class="widget-tabs">
+                <button class="widget-tab-btn active" data-widget="notes">Notes</button>
+                <button class="widget-tab-btn" data-widget="checklist">Checklist</button>
+                <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button>
             </div>
-            <div class="checklist-widget widget-card" id="checklist-widget-content">
-                <h3>My Study Checklist</h3>
-                <div class="checklist-input-container">
-                    <input type="text" id="checklist-item-input" placeholder="Add a new task...">
-                    <button id="add-checklist-item-btn">Add</button>
+            <div class="widget-content-area">
+                <div class="notes-widget widget-card active-widget" id="notes-widget">
+                    <textarea id="notes-area" placeholder="Write your notes here..."></textarea>
                 </div>
-                <ul id="checklist"></ul>
-            </div>
-            <div class="youtube-widget widget-card" id="youtube-widget-content">
-                <h3>Study Video</h3>
-                <div class="youtube-input-container">
-                    <input type="text" id="youtube-url-input" placeholder="Paste YouTube Video URL...">
-                    <button id="load-youtube-video-btn">Load Video</button>
+                <div class="checklist-widget widget-card" id="checklist-widget" style="display: none;">
+                    <div class="checklist-input-container">
+                        <input type="text" id="checklist-item-input" placeholder="Add a new task...">
+                        <button id="add-checklist-item-btn">Add</button>
+                    </div>
+                    <ul id="checklist"></ul>
                 </div>
-                <div class="youtube-player-container" id="youtube-player"></div>
+                <div class="flashcards-widget widget-card" id="flashcards-widget" style="display: none;">
+                    <h3>Flashcards</h3>
+                    <p>Flashcard functionality will go here!</p>
+                    </div>
             </div>
         </section>
     </div>
@@ -258,87 +289,48 @@
     <script>
         // --- COLUMN RESIZER JavaScript ---
         const leftColumn = document.getElementById('left-column');
-        const rightColumn = document.getElementById('right-column'); 
+        const rightColumn = document.getElementById('right-column');
         const dragHandle = document.getElementById('drag-handle');
-
-        let isResizing = false;
-        let initialPosX = 0;
-        let initialLeftWidth = 0;
+        let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0;
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (!leftColumn || !rightColumn || !dragHandle) {
-                console.error("Resizer elements not found!");
-                return;
-            }
+            if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; }
             const containerWidth = leftColumn.parentElement.offsetWidth;
-            const initialLeftPercent = 35; 
+            const initialLeftPercent = 35;
             let initialLeftPx = (containerWidth * initialLeftPercent) / 100;
-
             const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 0;
             const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 0;
-            const resizerWidth = dragHandle.offsetWidth || 10; // Default if not rendered
-
-            if (initialLeftPx < leftMinWidth) {
-                initialLeftPx = leftMinWidth;
-            }
-            if (containerWidth - initialLeftPx - resizerWidth < rightMinWidth) {
-                initialLeftPx = containerWidth - rightMinWidth - resizerWidth;
-            }
-             if (initialLeftPx < leftMinWidth && (leftMinWidth + resizerWidth + rightMinWidth <= containerWidth) ) { // ensure total min widths fit
-                initialLeftPx = leftMinWidth;
-            }
-
+            const resizerWidth = dragHandle.offsetWidth || 10;
+            initialLeftPx = Math.max(leftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth));
             leftColumn.style.flexBasis = `${initialLeftPx}px`;
         });
-
-        if (dragHandle) { // Check if dragHandle exists before adding listener
+        if (dragHandle) {
             dragHandle.addEventListener('mousedown', function(e) {
-                e.preventDefault(); 
-                isResizing = true;
-                initialPosX = e.clientX;
-                initialLeftWidth = leftColumn.offsetWidth; 
-
+                e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth;
                 document.addEventListener('mousemove', handleResizerMouseMove);
                 document.addEventListener('mouseup', handleResizerMouseUp);
                 document.body.style.userSelect = 'none';
             });
         }
-
-
         function handleResizerMouseMove(e) {
             if (!isResizing) return;
-
-            const deltaX = e.clientX - initialPosX;
-            let newLeftWidth = initialLeftWidth + deltaX;
-
+            const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX;
             const leftMinWidth = parseFloat(getComputedStyle(leftColumn).minWidth) || 0;
             const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 0;
-            const containerWidth = leftColumn.parentElement.offsetWidth;
-            const resizerWidth = dragHandle.offsetWidth || 10;
-
-            // Clamp newLeftWidth based on left column's minWidth
-            newLeftWidth = Math.max(leftMinWidth, newLeftWidth);
-            
-            // Clamp newLeftWidth based on right column's minWidth
-            newLeftWidth = Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth);
-            
+            const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10;
+            newLeftWidth = Math.max(leftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth));
             leftColumn.style.flexBasis = `${newLeftWidth}px`;
         }
-
         function handleResizerMouseUp() {
-            if (!isResizing) return;
-            isResizing = false;
+            if (!isResizing) return; isResizing = false;
             document.removeEventListener('mousemove', handleResizerMouseMove);
             document.removeEventListener('mouseup', handleResizerMouseUp);
-            document.body.style.userSelect = ''; 
+            document.body.style.userSelect = '';
         }
 
-
-        // --- MUSIC PLAYER JavaScript ---
+        // --- MEDIA PLAYER (Audio & YouTube Integrated) ---
         const playBtn = document.getElementById('play-btn');
         const pauseBtn = document.getElementById('pause-btn');
-        // ... (rest of the music player, checklist, and YouTube JS is the same as your last working version) ...
-        // ... Ensure it's all here ...
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
         const progressBarElem = document.getElementById('progress');
@@ -349,77 +341,168 @@
         const volumeSlider = document.getElementById('volume-slider');
         const volumeThumb = volumeSlider.querySelector('.volume-thumb');
         const songTitleElem = document.querySelector('.song-title');
-        const videoContainer = document.querySelector('.video-container');
+        const mainVideoPlayerContainer = document.getElementById('main-video-player'); // Player screen
+        const playerControlsArea = document.querySelector('.player-controls-area'); // To show/hide audio controls
+
+        const youtubeUrlInput = document.getElementById('youtube-url-input');
+        const loadYoutubeVideoBtn = document.getElementById('load-youtube-video-btn');
 
         let audio = new Audio();
         let currentTrackIndex = 0;
+        let currentMediaType = 'audio'; // 'audio' or 'youtube'
+        let youtubeIframe = null; // To keep reference to the YT iframe
+
         const tracks = Array.from(playlistItems).map(item => ({
             src: item.dataset.src,
             title: item.querySelector('div').textContent.trim(),
-            thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/200/DDDDDD/808080?Text=Music'
+            thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/200/DDDDDD/808080?Text=Media',
+            type: item.dataset.type || 'audio' // Default to audio
         }));
-        let isDraggingProgress = false;
-        let isDraggingVolume = false;
+        let isDraggingProgress = false; let isDraggingVolume = false;
+
+        function clearPlayerScreen() {
+            mainVideoPlayerContainer.innerHTML = ''; // Clear any iframe or other content
+            mainVideoPlayerContainer.style.backgroundImage = ''; // Clear background image
+            if (youtubeIframe) youtubeIframe = null;
+        }
+
+        function getYouTubeVideoID(url) {
+            const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2] && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadYoutubeVideoToPlayer(videoID) {
+            clearPlayerScreen();
+            audio.pause(); // Pause any playing audio
+
+            youtubeIframe = document.createElement('iframe');
+            youtubeIframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1`;
+            youtubeIframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+            youtubeIframe.allowFullscreen = true;
+            mainVideoPlayerContainer.appendChild(youtubeIframe);
+            
+            songTitleElem.textContent = "YouTube Video"; // Or fetch title later
+            currentMediaType = 'youtube';
+            playerControlsArea.style.display = 'none'; // Hide audio controls for YT video
+        }
+
+        loadYoutubeVideoBtn.addEventListener('click', () => {
+            const url = youtubeUrlInput.value.trim();
+            const videoID = getYouTubeVideoID(url);
+            if (videoID) {
+                loadYoutubeVideoToPlayer(videoID);
+                songTitleElem.textContent = "YouTube Video (Loading...)"; // Placeholder
+                // Potentially add this to playlist or just play ad-hoc
+                youtubeUrlInput.value = '';
+            } else if (url !== "") {
+                alert("Invalid YouTube URL.");
+            }
+        });
+         youtubeUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadYoutubeVideoBtn.click(); });
+
 
         function loadTrack(index) {
-            if (tracks[index]) {
-                audio.src = tracks[index].src;
-                audio.load();
-                songTitleElem.textContent = tracks[index].title;
-                const activePlaylistItem = playlistItems[index];
-                if (activePlaylistItem) {
-                    const artSrc = activePlaylistItem.dataset.thumbnail || tracks[index].thumbnail;
-                    videoContainer.style.backgroundImage = `url('${artSrc}')`;
-                } else { videoContainer.style.backgroundImage = `url('${tracks[index].thumbnail}')`; }
+            clearPlayerScreen();
+            const track = tracks[index];
+            if (track) {
+                currentMediaType = track.type;
+                songTitleElem.textContent = track.title;
+
+                if (currentMediaType === 'youtube') {
+                    const videoID = getYouTubeVideoID(track.src); // Assuming src is a YT URL for type 'youtube'
+                    if (videoID) {
+                        loadYoutubeVideoToPlayer(videoID);
+                    } else {
+                        songTitleElem.textContent = "Invalid YouTube Link in Playlist";
+                        mainVideoPlayerContainer.style.backgroundImage = `url('https://via.placeholder.com/200/DDDDDD/808080?Text=Error')`;
+                        playerControlsArea.style.display = 'none';
+                    }
+                } else { // Default to audio
+                    audio.src = track.src;
+                    audio.load();
+                    mainVideoPlayerContainer.style.backgroundImage = `url('${track.thumbnail}')`;
+                    playerControlsArea.style.display = 'block'; // Show audio controls
+                    updateProgressBar();
+                }
                 playlistItems.forEach(item => item.classList.remove('active-track'));
-                if(activePlaylistItem) activePlaylistItem.classList.add('active-track');
-                updateProgressBar();
+                if(playlistItems[index]) playlistItems[index].classList.add('active-track');
             }
         }
-        function playTrack() {
-            audio.play().then(() => {
-                playBtn.style.display = 'none';
-                pauseBtn.style.display = 'inline-block';
-            }).catch(error => console.error("Error playing audio:", error));
+
+        function playCurrentMedia() {
+            if (currentMediaType === 'audio') {
+                audio.play().then(() => {
+                    playBtn.style.display = 'none';
+                    pauseBtn.style.display = 'inline-block';
+                }).catch(error => console.error("Error playing audio:", error));
+            } else if (currentMediaType === 'youtube' && youtubeIframe && youtubeIframe.contentWindow) {
+                // For YT, autoplay is on. This button might control iframe's player if API is used.
+                // Simple approach: play/pause on audio element is for audio type only.
+                // Advanced: Use YouTube Iframe API to control YT player.
+                playBtn.style.display = 'none'; // Assuming YT autoplays
+                pauseBtn.style.display = 'inline-block'; // Needs YT API for actual pause
+            }
         }
-        function pauseTrack() {
-            audio.pause();
+
+        function pauseCurrentMedia() {
+            if (currentMediaType === 'audio') {
+                audio.pause();
+            } else if (currentMediaType === 'youtube' && youtubeIframe && youtubeIframe.contentWindow) {
+                // Needs YT Iframe API to send 'pauseVideo' command
+                 youtubeIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            }
             playBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
         }
-        function updateProgressBar() {
-            if (audio.duration && isFinite(audio.duration)) {
+
+
+        playBtn.addEventListener('click', playCurrentMedia);
+        pauseBtn.addEventListener('click', pauseCurrentMedia);
+
+        // Audio specific updates and controls
+        audio.addEventListener('loadedmetadata', updateProgressBar);
+        audio.addEventListener('durationchange', updateProgressBar);
+        audio.addEventListener('timeupdate', updateProgressBar);
+        audio.addEventListener('ended', () => nextBtn.click());
+
+        function updateProgressBar() { // Primarily for audio
+            if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) {
                 const progressPercent = (audio.currentTime / audio.duration) * 100;
                 progressBarElem.style.width = progressPercent + '%';
                 currentTimeElem.textContent = formatTime(audio.currentTime);
                 durationElem.textContent = formatTime(audio.duration);
+            } else if (currentMediaType === 'youtube') {
+                progressBarElem.style.width = '0%'; // Or try to sync with YT API
+                currentTimeElem.textContent = "-:--";
+                durationElem.textContent = "-:--";
             } else {
                 progressBarElem.style.width = '0%';
                 currentTimeElem.textContent = "0:00";
                 durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00";
             }
         }
-        audio.addEventListener('loadedmetadata', updateProgressBar);
-        audio.addEventListener('durationchange', updateProgressBar);
         function formatTime(seconds) {
             if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00";
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
-        playBtn.addEventListener('click', playTrack);
-        pauseBtn.addEventListener('click', pauseTrack);
-        prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrack(currentTrackIndex); playTrack(); });
-        nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrack(currentTrackIndex); playTrack(); });
-        playlistItems.forEach((item, index) => { item.addEventListener('click', () => { currentTrackIndex = index; loadTrack(currentTrackIndex); playTrack(); }); });
-        audio.addEventListener('timeupdate', updateProgressBar);
-        audio.addEventListener('ended', () => nextBtn.click());
-
-        progressBarContainer.addEventListener('mousedown', (e) => { if (!audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); });
-        window.addEventListener('mousemove', (e) => { if (isDraggingProgress) handleProgressBarSeek(e); });
+        prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrack(currentTrackIndex); if(tracks[currentTrackIndex].type === 'audio') playCurrentMedia(); });
+        nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrack(currentTrackIndex); if(tracks[currentTrackIndex].type === 'audio') playCurrentMedia(); });
+        playlistItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                currentTrackIndex = index;
+                loadTrack(currentTrackIndex);
+                // Autoplay only if it's an audio track or rely on YouTube's autoplay
+                if(tracks[currentTrackIndex].type === 'audio') playCurrentMedia();
+            });
+        });
+        progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); });
+        window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); });
         window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; });
         function handleProgressBarSeek(e) {
-            if (!isDraggingProgress || !audio.duration || !isFinite(audio.duration)) return;
+            if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return;
             const rect = progressBarContainer.getBoundingClientRect();
             const offsetX = e.clientX - rect.left;
             const progressWidth = Math.min(Math.max(offsetX, 0), rect.width);
@@ -428,19 +511,40 @@
         }
         volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); });
         window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); });
-        window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; });
-        function handleVolumeSliderDrag(e) {
+        window.addEventListener('mouseup', () => { isDraggingVolume = false; });
+        function handleVolumeSliderDrag(e) { // Volume affects master audio element; YT has its own
             const rect = volumeSlider.getBoundingClientRect();
             let offsetX = e.clientX - rect.left;
             offsetX = Math.max(0, Math.min(offsetX, rect.width));
-            audio.volume = offsetX / rect.width;
+            audio.volume = offsetX / rect.width; // This will affect MP3s
             volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;
         }
         function setInitialVolume() {
             const initialVolume = 0.5; audio.volume = initialVolume;
+            if (!volumeSlider || !volumeThumb) return;
             const rect = volumeSlider.getBoundingClientRect();
             volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;
         }
+
+        // --- WIDGET TAB Switching ---
+        const widgetTabs = document.querySelectorAll('.widget-tab-btn');
+        const widgetContents = document.querySelectorAll('.widget-content-area .widget-card');
+
+        widgetTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Deactivate all tabs and hide all content
+                widgetTabs.forEach(t => t.classList.remove('active'));
+                widgetContents.forEach(c => c.style.display = 'none');
+
+                // Activate clicked tab and show its content
+                tab.classList.add('active');
+                const widgetName = tab.dataset.widget;
+                const activeWidgetContent = document.getElementById(`${widgetName}-widget`);
+                if (activeWidgetContent) {
+                    activeWidgetContent.style.display = 'flex'; // Since .widget-card is display:flex
+                }
+            });
+        });
 
         // --- CHECKLIST JavaScript ---
         const checklistItemInput = document.getElementById('checklist-item-input');
@@ -468,57 +572,20 @@
             checklist.appendChild(listItem);
             if (!taskText) checklistItemInput.value = "";
         }
-        addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
-        checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
+        if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
+        if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
-        // --- YOUTUBE PLAYER JavaScript (CORRECTED) ---
-        const youtubeUrlInput = document.getElementById('youtube-url-input');
-        const loadYoutubeVideoBtn = document.getElementById('load-youtube-video-btn');
-        const youtubePlayerContainer = document.getElementById('youtube-player');
-        
-        function getYouTubeVideoID(url) {
-            // More robust regex to capture video ID from various YouTube URL formats
-            const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2] && match[2].length === 11) ? match[2] : null;
-        }
-
-        function loadYoutubeVideo() {
-            if (!youtubeUrlInput || !youtubePlayerContainer) { // Check if elements exist
-                 console.error("YouTube player elements not found");
-                 return;
-            }
-            const url = youtubeUrlInput.value.trim();
-            const videoID = getYouTubeVideoID(url);
-            youtubePlayerContainer.innerHTML = ''; 
-            if (videoID) {
-                const iframe = document.createElement('iframe');
-                // CORRECTED TEMPLATE LITERAL:
-                iframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0`; 
-                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-                iframe.allowFullscreen = true;
-                youtubePlayerContainer.appendChild(iframe);
-                youtubeUrlInput.value = ''; 
-            } else if (url !== "") { 
-                alert("Invalid YouTube URL. Please enter a valid video link (e.g., https://www.youtube.com/watch?v=EctTGfBL9OE or https://www.youtube.com/watch?v=VIDEO_ID).");
-            }
-        }
-        if (loadYoutubeVideoBtn) { // Check if button exists
-            loadYoutubeVideoBtn.addEventListener('click', loadYoutubeVideo);
-        }
-        if (youtubeUrlInput) { // Check if input exists
-             youtubeUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadYoutubeVideo(); });
-        }
-
+        // --- Flashcards (Placeholder for now) ---
+        // const flashcardsWidget = document.getElementById('flashcards-widget');
 
         // --- INITIAL LOAD ---
         if (tracks.length > 0) { loadTrack(currentTrackIndex); }
-        else { 
-            if(songTitleElem) songTitleElem.textContent = "No tracks in playlist"; 
-            if(videoContainer) videoContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; 
+        else {
+            if(songTitleElem) songTitleElem.textContent = "No tracks in playlist";
+            if(mainVideoPlayerContainer) mainVideoPlayerContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')";
         }
-        if(volumeSlider) setInitialVolume(); // Check if volumeSlider exists
-        updateProgressBar();
+        setInitialVolume();
+        updateProgressBar(); // Initial call
     </script>
 </body>
 </html>
