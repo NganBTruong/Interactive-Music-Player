@@ -304,7 +304,61 @@ if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { 
 // --- FLASHCARDS JavaScript ---
 function renderFlashcard() { /* ... (This function should be here, unchanged from before) ... */ }
 function flipCurrentFlashcard() { /* ... (This function should be here, unchanged from before) ... */ }
-function renderFlashcardTermList() { /* ... (This function should be here, unchanged from before) ... */ }
+function renderFlashcardTermList() {
+    if (!flashcardTermListUL) return;
+    flashcardTermListUL.innerHTML = '';
+    // Sort by term for display purposes, but keep track of original index
+    const sortedForDisplay = flashcards.map((card, index) => ({ ...card, originalIndex: index }))
+                                     .sort((a, b) => a.term.localeCompare(b.term));
+
+    sortedForDisplay.forEach(cardData => {
+        const originalIndex = cardData.originalIndex; // Get index in the main 'flashcards' array
+
+        const listItem = document.createElement('li');
+        // Store original index on the list item for the click-to-view functionality
+        listItem.dataset.originalIndex = originalIndex;
+
+        const termSpan = document.createElement('span');
+        termSpan.className = 'term';
+        termSpan.textContent = cardData.term;
+
+        const defSpan = document.createElement('span');
+        defSpan.className = 'definition';
+        defSpan.textContent = cardData.definition;
+
+        // --- MODIFICATION START: Add Delete Button ---
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '🗑️'; // Trash can icon
+        deleteBtn.className = 'delete-item-btn'; // Reuse playlist style
+        deleteBtn.title = 'Delete Flashcard';
+        deleteBtn.style.marginLeft = '10px'; // Add some space
+
+        // Add event listener to the delete button
+        deleteBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent the li click handler from firing
+            // Call the delete function with the ORIGINAL index
+            deleteFlashcard(originalIndex);
+        });
+        // --- MODIFICATION END ---
+
+        listItem.appendChild(termSpan);
+        listItem.appendChild(defSpan);
+        listItem.appendChild(deleteBtn); // Append the delete button
+
+        // Click listener for viewing the card (keep this)
+        listItem.addEventListener('click', function() {
+            // Make sure we check if the click target WASN'T the delete button itself
+            if (event.target !== deleteBtn) {
+                 currentFlashcardIndex = parseInt(this.dataset.originalIndex);
+                 isFlashcardFlipped = false;
+                 renderFlashcard();
+                 saveState();
+            }
+        });
+
+        flashcardTermListUL.appendChild(listItem);
+    });
+}
 if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard);
 if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard);
 if(prevFlashcardBtn) { /* ... (This function should be here, unchanged from before) ... */ }
@@ -312,6 +366,49 @@ if(nextFlashcardBtn) { /* ... (This function should be here, unchanged from befo
 if(addNewFlashcardBtn) { /* ... (This function should be here, unchanged from before) ... */ }
 document.addEventListener('keydown', function(e) { /* ... (This function should be here, unchanged from before) ... */ });
 
+// --- FLASHCARDS: Function to Delete a Flashcard ---
+function deleteFlashcard(indexToDelete) {
+    if (indexToDelete < 0 || indexToDelete >= flashcards.length) {
+        console.error("Invalid index for deleting flashcard:", indexToDelete);
+        return;
+    }
+
+    // Get the card details *before* deleting for confirmation message
+    const cardToDelete = flashcards[indexToDelete];
+
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete the flashcard:\nTerm: "${cardToDelete.term}"\nDefinition: "${cardToDelete.definition.substring(0, 50)}..."?`)) {
+        return; // User cancelled
+    }
+
+    // Remove the flashcard from the array
+    flashcards.splice(indexToDelete, 1);
+
+    // Adjust the current index if necessary
+    if (flashcards.length === 0) {
+        // If list is now empty
+        currentFlashcardIndex = -1;
+        isFlashcardFlipped = false;
+    } else if (currentFlashcardIndex === indexToDelete) {
+        // If we deleted the card currently being viewed
+        // Go to the previous card, or the new last card if we deleted the first one
+        currentFlashcardIndex = Math.max(0, indexToDelete - 1);
+         // If the index was 0 and we deleted it, the new index 0 is the next item
+         // If index > 0 was deleted, index-1 shows the previous item
+         // Let's just reset to the first card for simplicity after delete:
+         // currentFlashcardIndex = 0;
+        isFlashcardFlipped = false; // Show the term side
+    } else if (currentFlashcardIndex > indexToDelete) {
+        // If we deleted a card before the current one, shift the current index back
+        currentFlashcardIndex--;
+    }
+     // If we deleted a card after the current one, currentFlashcardIndex remains correct.
+
+    // Update the UI
+    renderFlashcard(); // Update the main display
+    renderFlashcardTermList(); // Update the list
+    saveState(); // Save changes to localStorage
+}
 // --- STICKY NOTES JavaScript ---
 function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */ }
 if (addStickyNoteBtn) { /* ... (This function should be here, unchanged from before) ... */ }
