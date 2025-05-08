@@ -305,17 +305,21 @@ if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { 
 function renderFlashcard() { /* ... (This function should be here, unchanged from before) ... */ }
 function flipCurrentFlashcard() { /* ... (This function should be here, unchanged from before) ... */ }
 function renderFlashcardTermList() {
-    if (!flashcardTermListUL) return;
+    console.log("DEBUG: renderFlashcardTermList is running, flashcards count:", flashcards.length); // ADD THIS LINE
+
+    if (!flashcardTermListUL) {
+        console.error("DEBUG: flashcardTermListUL not found!"); // ADD THIS LINE
+        return;
+    }
     flashcardTermListUL.innerHTML = '';
-    // Sort by term for display purposes, but keep track of original index
     const sortedForDisplay = flashcards.map((card, index) => ({ ...card, originalIndex: index }))
                                      .sort((a, b) => a.term.localeCompare(b.term));
 
     sortedForDisplay.forEach(cardData => {
-        const originalIndex = cardData.originalIndex; // Get index in the main 'flashcards' array
+        console.log("DEBUG: Processing card in renderFlashcardTermList:", cardData.term); // ADD THIS LINE
+        const originalIndex = cardData.originalIndex;
 
         const listItem = document.createElement('li');
-        // Store original index on the list item for the click-to-view functionality
         listItem.dataset.originalIndex = originalIndex;
 
         const termSpan = document.createElement('span');
@@ -326,28 +330,23 @@ function renderFlashcardTermList() {
         defSpan.className = 'definition';
         defSpan.textContent = cardData.definition;
 
-        // --- MODIFICATION START: Add Delete Button ---
         const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '🗑️'; // Trash can icon
-        deleteBtn.className = 'delete-item-btn'; // Reuse playlist style
+        console.log("DEBUG: Creating delete button for card:", cardData.term); // ADD THIS LINE
+        deleteBtn.innerHTML = '🗑️';
+        deleteBtn.className = 'delete-item-btn';
         deleteBtn.title = 'Delete Flashcard';
-        deleteBtn.style.marginLeft = '10px'; // Add some space
+        deleteBtn.style.marginLeft = '10px';
 
-        // Add event listener to the delete button
         deleteBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent the li click handler from firing
-            // Call the delete function with the ORIGINAL index
+            event.stopPropagation();
             deleteFlashcard(originalIndex);
         });
-        // --- MODIFICATION END ---
 
         listItem.appendChild(termSpan);
         listItem.appendChild(defSpan);
-        listItem.appendChild(deleteBtn); // Append the delete button
+        listItem.appendChild(deleteBtn);
 
-        // Click listener for viewing the card (keep this)
-        listItem.addEventListener('click', function() {
-            // Make sure we check if the click target WASN'T the delete button itself
+        listItem.addEventListener('click', function(event) { // Added event to the parameters
             if (event.target !== deleteBtn) {
                  currentFlashcardIndex = parseInt(this.dataset.originalIndex);
                  isFlashcardFlipped = false;
@@ -355,7 +354,6 @@ function renderFlashcardTermList() {
                  saveState();
             }
         });
-
         flashcardTermListUL.appendChild(listItem);
     });
 }
