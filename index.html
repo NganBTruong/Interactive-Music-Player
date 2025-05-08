@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Playlist Editor Fix</title>
+    <title>Study Hub - Playlist Debugging</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha512-Eezs+g9Lq4TCCq0wae01s97ufKNPuts0LDbDbodDEzvPpzzfYTOKPzZAriCoH4LsPFwd+ERwmCRnA/4/Ome1fQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         /* --- CSS (No changes from last version) --- */
@@ -120,144 +120,121 @@
         // --- COLUMN RESIZER JavaScript ---
         const leftColumn = document.getElementById('left-column'); const rightColumn = document.getElementById('right-column'); const dragHandle = document.getElementById('drag-handle'); let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0; let calculatedLeftMinWidth = 320; function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); } document.addEventListener('DOMContentLoaded', () => { if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; } setTimeout(calculateLeftMinWidth, 100); const containerWidth = leftColumn.parentElement.offsetWidth; const initialLeftPercent = 35; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const resizerWidth = dragHandle.offsetWidth || 10; let initialLeftPx = (containerWidth * initialLeftPercent) / 100; initialLeftPx = Math.max(calculatedLeftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${initialLeftPx}px`; }); if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); }); } function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; } function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); }
 
-
         // --- LEFT PLAYER TABS ---
         const playerTabs = document.querySelectorAll('.player-tab-btn'); const playerTabContents = document.querySelectorAll('.player-tab-content'); playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
 
-
         // --- MEDIA PLAYER & PLAYLIST MANAGEMENT ---
-        const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); const playlistContainerDisplay = document.getElementById('playlist-container-display'); const playlistEditorList = document.getElementById('playlist-editor-list'); const volumeSlider = document.getElementById('volume-slider'); const volumeThumb = volumeSlider.querySelector('.volume-thumb'); const songTitleElem = document.getElementById('song-title'); const mainVideoPlayerContainer = document.getElementById('main-video-player'); const playerControlsArea = document.querySelector('.player-controls-area'); const mediaUrlInput = document.getElementById('media-url-input'); const loadMediaBtn = document.getElementById('load-media-btn'); 
+        const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); 
+        const playlistContainerDisplay = document.getElementById('playlist-container-display'); 
+        const playlistEditorList = document.getElementById('playlist-editor-list'); 
+        const volumeSlider = document.getElementById('volume-slider'); const volumeThumb = volumeSlider.querySelector('.volume-thumb'); const songTitleElem = document.getElementById('song-title'); const mainVideoPlayerContainer = document.getElementById('main-video-player'); const playerControlsArea = document.querySelector('.player-controls-area'); const mediaUrlInput = document.getElementById('media-url-input'); const loadMediaBtn = document.getElementById('load-media-btn'); 
         let audio = new Audio(); let currentTrackIndex = -1; let currentMediaType = null; let activeMediaFrame = null; 
-        let tracks = []; // Single source of truth
-        let isDraggingProgress = false; let isDraggingVolume = false; 
+        let tracks = []; let isDraggingProgress = false; let isDraggingVolume = false; 
 
         function renderPlaylistView(container, isEditable) {
-            if (!container) { console.error("Playlist container not found for rendering:", container); return; }
-            container.innerHTML = ''; 
-            console.log(`Rendering playlist (${isEditable ? 'Editor' : 'Display'}) with ${tracks.length} tracks.`);
-
+            if (!container) { console.error("Playlist container not found:", container); return; }
+            const fragment = document.createDocumentFragment(); // Use fragment for efficiency
+            
             if (tracks.length === 0) {
-                container.innerHTML = isEditable ? '<li>Playlist is empty. Add media below.</li>' : '<div>Playlist is empty. Add media in "Add & Organize" tab.</div>';
-                return;
-            }
+                const emptyMsg = document.createElement(isEditable ? 'li' : 'div');
+                emptyMsg.textContent = isEditable ? 'Playlist is empty. Add media below.' : 'Playlist is empty. Add media in "Add & Organize" tab.';
+                emptyMsg.style.padding = '10px'; emptyMsg.style.color = '#777';
+                fragment.appendChild(emptyMsg);
+            } else {
+                tracks.forEach((track, index) => {
+                    const item = document.createElement(isEditable ? 'li' : 'div'); 
+                    item.classList.add('playlist-item'); 
+                    item.dataset.index = index; 
+                    item.dataset.trackSrc = track.src; 
 
-            tracks.forEach((track, index) => {
-                const item = document.createElement(isEditable ? 'li' : 'div'); 
-                item.classList.add('playlist-item'); // Use same class for basic styling
-                item.dataset.index = index; 
-                item.dataset.trackSrc = track.src; // Store src for debugging/future use
+                    const img = document.createElement('img');
+                    img.src = track.thumbnail;
+                    img.alt = track.title ? track.title.substring(0, 10) : 'Track'; 
+                    img.onerror = function() { this.src = 'https://via.placeholder.com/40/DDDDDD/808080?Text=M'; }; // Fallback thumbnail
+                    item.appendChild(img);
 
-                const img = document.createElement('img');
-                img.src = track.thumbnail;
-                img.alt = track.title.substring(0, 10); 
-                item.appendChild(img);
+                    const titleDiv = document.createElement('div');
+                    titleDiv.textContent = track.title || "Unknown Title";
+                    item.appendChild(titleDiv);
 
-                const titleDiv = document.createElement('div');
-                titleDiv.textContent = track.title;
-                item.appendChild(titleDiv);
-
-                if (isEditable) {
-                    item.dataset.trackId = index; 
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerHTML = '🗑️';
-                    deleteBtn.className = 'delete-item-btn';
-                    deleteBtn.title = 'Remove from Playlist';
-                    deleteBtn.type = "button"; // Prevent form submission if wrapped in form
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation(); 
-                        if (confirm(`Remove "${track.title}" from playlist?`)) {
-                            deleteTrack(index);
+                    if (isEditable) {
+                        item.dataset.trackId = index; 
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.innerHTML = '🗑️';
+                        deleteBtn.className = 'delete-item-btn';
+                        deleteBtn.title = 'Remove from Playlist';
+                        deleteBtn.type = "button"; 
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation(); 
+                            if (confirm(`Remove "${track.title}" from playlist?`)) { deleteTrack(index); }
+                        });
+                        item.appendChild(deleteBtn);
+                    } else {
+                        // Add click listener ONLY to non-editable items
+                        item.addEventListener('click', () => {
+                            console.log(`Player Playlist Item Clicked! Index: ${index}, Track:`, tracks[index]?.title); 
+                            currentTrackIndex = index;
+                            loadTrackFromPlaylist(currentTrackIndex);
+                        });
+                        if (index === currentTrackIndex) {
+                            item.classList.add('active-track');
                         }
-                    });
-                    item.appendChild(deleteBtn);
-                } else {
-                    // Click listener for player view
-                    item.addEventListener('click', () => {
-                        console.log(`Clicked playlist item index: ${index}`);
-                        currentTrackIndex = index;
-                        loadTrackFromPlaylist(currentTrackIndex);
-                    });
-                    if (index === currentTrackIndex) {
-                        item.classList.add('active-track');
                     }
-                }
-                container.appendChild(item);
-            });
+                    fragment.appendChild(item);
+                });
+            }
+            container.innerHTML = ''; // Clear previous content
+            container.appendChild(fragment); // Append fragment once
         }
 
         function renderAllPlaylists() {
             console.log("Rendering both playlists...");
             renderPlaylistView(playlistContainerDisplay, false); 
             renderPlaylistView(playlistEditorList, true);    
-            // DO NOT Re-initialize SortableJS here, it breaks existing instance
-            // initializePlaylistEditorSortable(); 
         }
         
         function deleteTrack(index) { /* ... as before ... */ if (index >= 0 && index < tracks.length) { tracks.splice(index, 1); if (currentTrackIndex === index) { currentTrackIndex = -1; clearPlayerScreen(); songTitleElem.textContent = "Select a Song or Video"; if (tracks.length > 0) { currentTrackIndex = 0; loadTrackFromPlaylist(0); } } else if (currentTrackIndex > index) { currentTrackIndex--; } renderAllPlaylists(); updateProgressBar(); } }
 
-        function initializePlaylist() {
-             // Parse static HTML only if necessary (e.g., initial default items)
-             // It's better to define initial tracks in JS if possible
-             const initialItemsHTML = `
-                 <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio"> <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div> </div> 
-                 <div class="playlist-item" data-src="youtu.be14" data-thumbnail="youtu.be15" data-type="youtube"> <img src="youtu.be16" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div> </div> 
-                 <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio"> <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div> </div>
-             `;
-             const tempDiv = document.createElement('div');
-             tempDiv.innerHTML = initialItemsHTML;
-             tracks = Array.from(tempDiv.children).map(item => ({ 
-                 src: item.dataset.src, 
-                 title: item.querySelector('div') ? item.querySelector('div').textContent.trim() : "Unknown Title", 
-                 thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/40/DDDDDD/808080?Text=M',
-                 type: item.dataset.type || 'audio' 
-             }));
-            
-             renderAllPlaylists(); // Initial render from data
-             console.log("Initial playlist loaded and rendered:", tracks);
-
-             if (tracks.length > 0) { currentTrackIndex = 0; loadTrackFromPlaylist(currentTrackIndex); } 
-             else { if(songTitleElem) songTitleElem.textContent = "Playlist Empty"; }
-        }
+        function initializePlaylist() { /* ... same as before ... */ const initialItemsHTML = ` <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio"> <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div> </div> <div class="playlist-item" data-src="youtu.be17" data-thumbnail="youtu.be18" data-type="youtube"> <img src="youtu.be19" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div> </div> <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio"> <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div> </div> `; const tempDiv = document.createElement('div'); tempDiv.innerHTML = initialItemsHTML; tracks = Array.from(tempDiv.children).map(item => ({ src: item.dataset.src, title: item.querySelector('div') ? item.querySelector('div').textContent.trim() : "Unknown Title", thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/40/DDDDDD/808080?Text=M', type: item.dataset.type || 'audio' })); renderAllPlaylists(); console.log("Initial playlist loaded and rendered:", tracks); if (tracks.length > 0) { currentTrackIndex = 0; loadTrackFromPlaylist(currentTrackIndex); } else { if(songTitleElem) songTitleElem.textContent = "Playlist Empty"; } }
 
         let sortableInstance = null;
-        function initializePlaylistEditorSortable() {
-             if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; console.log("Destroyed old Sortable instance."); } // Destroy if exists
-             if (playlistEditorList) {
-                console.log("Initializing SortableJS on #playlist-editor-list");
-                try {
-                    sortableInstance = new Sortable(playlistEditorList, {
-                        animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', 
-                        onEnd: function (evt) {
-                            console.log('Sortable onEnd:', evt.oldIndex, '->', evt.newIndex);
-                            if (evt.oldIndex !== evt.newIndex) {
-                                const movedItem = tracks.splice(evt.oldIndex, 1)[0];
-                                tracks.splice(evt.newIndex, 0, movedItem);
-                                console.log("Updated tracks array:", tracks);
-                                if (currentTrackIndex === evt.oldIndex) currentTrackIndex = evt.newIndex;
-                                else if (currentTrackIndex > evt.oldIndex && currentTrackIndex <= evt.newIndex) currentTrackIndex--;
-                                else if (currentTrackIndex < evt.oldIndex && currentTrackIndex >= evt.newIndex) currentTrackIndex++;
-                                renderPlaylistView(playlistContainerDisplay, false); // Update player display list
-                                console.log("Playlist order updated in data and player view.");
-                            }
-                        },
-                    });
-                } catch (error) {
-                     console.error("Failed to initialize SortableJS:", error);
-                }
-            } else {
-                 console.error("Playlist editor list element not found for SortableJS.");
-            }
-        }
+        function initializePlaylistEditorSortable() { // MODIFIED: Only init once
+             if (playlistEditorList && !sortableInstance) { 
+                 console.log("Initializing SortableJS on #playlist-editor-list for the first time.");
+                 try {
+                     sortableInstance = new Sortable(playlistEditorList, {
+                         animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', 
+                         onEnd: function (evt) {
+                             console.log('Sortable onEnd:', evt.oldIndex, '->', evt.newIndex);
+                             if (evt.oldIndex !== evt.newIndex) {
+                                 const movedItem = tracks.splice(evt.oldIndex, 1)[0];
+                                 tracks.splice(evt.newIndex, 0, movedItem);
+                                 console.log("Updated tracks array:", tracks);
+                                 // Adjust currentTrackIndex logic
+                                 if (currentTrackIndex === evt.oldIndex) { currentTrackIndex = evt.newIndex; } 
+                                 else if (currentTrackIndex > evt.oldIndex && currentTrackIndex <= evt.newIndex) { currentTrackIndex--; } 
+                                 else if (currentTrackIndex < evt.oldIndex && currentTrackIndex >= evt.newIndex) { currentTrackIndex++; }
+                                 // ONLY re-render the OTHER list (Player display)
+                                 renderPlaylistView(playlistContainerDisplay, false); 
+                                 console.log("Player display playlist re-rendered.");
+                             }
+                         },
+                     });
+                 } catch (error) { console.error("Failed to initialize SortableJS:", error); }
+             } else if (sortableInstance) { console.log("SortableJS already initialized."); } 
+             else if (!playlistEditorList) { console.error("Playlist editor list element not found for SortableJS init."); }
+         }
 
-        function clearPlayerScreen() { /* ... as before ... */ mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } 
-        function getYouTubeVideoID(url) { /* ... as before ... */ const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; } 
-        function getSoundCloudEmbedSrc(iframeCode) { /* ... as before ... */ if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) { const match = iframeCode.match(/src="([^"]*)"/); if (match && match[1] && match[1].includes('w.soundcloud.com/player')) return match[1]; } return null; } 
-        function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... as before ... */ clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title; if (type === 'youtube') { const videoID = getYouTubeVideoID(urlOrId); if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid YouTube URL"; } } else if (type === 'soundcloud') { if(urlOrId.includes('w.soundcloud.com/player')) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = urlOrId; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid SoundCloud Embed SRC"; } } else { audio.src = urlOrId; audio.load(); const trackData = tracks.find(t => t.src === urlOrId && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); } } 
+        function clearPlayerScreen() { /* ... unchanged ... */ mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } 
+        function getYouTubeVideoID(url) { /* ... unchanged ... */ const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; } 
+        function getSoundCloudEmbedSrc(iframeCode) { /* ... unchanged ... */ if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) { const match = iframeCode.match(/src="([^"]*)"/); if (match && match[1] && match[1].includes('w.soundcloud.com/player')) return match[1]; } return null; } 
         
-        if(loadMediaBtn) { 
+        function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... unchanged ... */ clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title; if (type === 'youtube') { const videoID = getYouTubeVideoID(urlOrId); if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid YouTube URL"; } } else if (type === 'soundcloud') { if(urlOrId.includes('w.soundcloud.com/player')) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = urlOrId; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid SoundCloud Embed SRC"; } } else { audio.src = urlOrId; audio.load(); const trackData = tracks.find(t => t.src === urlOrId && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); } } 
+        
+        if(loadMediaBtn) { // Add Media Button Logic
              loadMediaBtn.addEventListener('click', () => { 
                  const inputVal = mediaUrlInput.value.trim(); if (inputVal === "") return; 
-                 console.log("Load media input:", inputVal);
+                 console.log("Load media button clicked. Input:", inputVal);
                  let type = 'unknown'; let src = inputVal; let title = "User Added Media"; let thumbnail = 'https://via.placeholder.com/40/DDDDDD/808080?Text=M'; 
                  const youtubeID = getYouTubeVideoID(inputVal); 
                  const soundcloudSrc = getSoundCloudEmbedSrc(inputVal); 
@@ -270,31 +247,30 @@
                      const newTrackData = { src, title, thumbnail, type }; 
                      console.log("Adding new track data:", newTrackData);
                      tracks.push(newTrackData); 
-                     renderAllPlaylists(); // Re-render both lists
-                     console.log("Playlists re-rendered.");
-                     alert(`${title} added to playlist! Check 'Player' tab or edit order here.`); 
+                     renderAllPlaylists(); // Re-render both playlist views
+                     console.log("Playlists re-rendered after add.");
+                     // alert(`${title} added to playlist!`); // Maybe remove alert?
                  } else { alert("Could not load. Please paste a valid YouTube URL or full SoundCloud Embed Code."); } 
                  mediaUrlInput.value = ''; 
              }); 
         } 
         if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
         
-        function loadTrackFromPlaylist(index) { /* ... as before ... */ console.log(`Loading track from playlist index: ${index}`); const track = tracks[index]; if (track) { loadMediaToPlayer(track.src, track.type, track.title); } else { console.error(`Track not found at index ${index}`); } const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item'); displayItems.forEach(item => item.classList.remove('active-track')); if(displayItems[index]) displayItems[index].classList.add('active-track'); } 
+        function loadTrackFromPlaylist(index) { /* ... unchanged (updates active class) ... */ console.log(`Attempting to load track from playlist. Index: ${index}`); const track = tracks[index]; if (track) { loadMediaToPlayer(track.src, track.type, track.title); } else { console.error(`Track not found at index ${index}`); clearPlayerScreen(); if(songTitleElem) songTitleElem.textContent = "Error: Track not found"; } const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item'); displayItems.forEach((item, itemIndex) => { item.classList.toggle('active-track', itemIndex === index); }); } 
         function playCurrentMedia() { /* ... unchanged ... */ if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } } 
         function pauseCurrentMedia() { /* ... unchanged ... */ if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; } 
         if(playBtn) playBtn.addEventListener('click', playCurrentMedia); if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()}); function updateProgressBar() { /* ... unchanged ... */ if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } } function formatTime(seconds) { /* ... unchanged ... */ if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; } 
-        if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
-        if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
+        if(prevBtn) prevBtn.addEventListener('click', () => { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
+        if(nextBtn) nextBtn.addEventListener('click', () => { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
         // Playlist item click listeners are added dynamically in renderPlaylistView
         if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); }); window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; }); function handleProgressBarSeek(e) { /* ... unchanged ... */ if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); } if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); function handleVolumeSliderDrag(e) { /* ... unchanged ... */ const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;} function setInitialVolume() { /* ... unchanged ... */ const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
 
+
         // --- RIGHT WIDGET TAB Switching ---
-        // ... (Widget tab JS unchanged) ...
         const widgetTabs = document.querySelectorAll('.widget-tab-btn'); const widgetContents = document.querySelectorAll('.widget-content-area .widget-card'); widgetTabs.forEach(tab => { tab.addEventListener('click', () => { widgetTabs.forEach(t => t.classList.remove('active')); widgetContents.forEach(c => c.style.display = 'none'); tab.classList.add('active'); const widgetName = tab.dataset.widget; const activeWidgetContent = document.getElementById(`${widgetName}-widget`); if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; }); }); 
 
         // --- CHECKLIST JavaScript ---
-        // ... (Checklist JS unchanged) ...
-        const checklistItemInput = document.getElementById('checklist-item-input'); const addChecklistItemBtn = document.getElementById('add-checklist-item-btn'); const checklist = document.getElementById('checklist'); let checklistItemIdCounter = 0; function addChecklistItem(taskText = null, isChecked = false) { const itemText = taskText || (checklistItemInput ? checklistItemInput.value.trim() : ""); if (itemText === "" && !taskText) { alert("Please enter a task!"); return; } const listItem = document.createElement('li'); const checkboxId = `task-${checklistItemIdCounter++}`; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked; const label = document.createElement('label'); label.htmlFor = checkboxId; label.textContent = itemText; if(isChecked) { label.style.textDecoration = 'line-through'; label.style.color = '#aaa'; } checkbox.addEventListener('change', function() { label.style.textDecoration = this.checked ? 'line-through' : 'none'; label.style.color = this.checked ? '#aaa' : '#333'; }); const deleteBtn = document.createElement('button'); deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Delete task'; deleteBtn.addEventListener('click', function() { listItem.remove(); }); listItem.appendChild(checkbox); listItem.appendChild(label); listItem.appendChild(deleteBtn); if(checklist) checklist.appendChild(listItem); if (!taskText && checklistItemInput) checklistItemInput.value = ""; } if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem()); if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
+        const checklistItemInput = document.getElementById('checklist-item-input'); const addChecklistItemBtn = document.getElementById('add-checklist-item-btn'); const checklist = document.getElementById('checklist'); let checklistItemIdCounter = 0; function addChecklistItem(taskText = null, isChecked = false) { /* ... unchanged ... */ const itemText = taskText || (checklistItemInput ? checklistItemInput.value.trim() : ""); if (itemText === "" && !taskText) { alert("Please enter a task!"); return; } const listItem = document.createElement('li'); const checkboxId = `task-${checklistItemIdCounter++}`; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked; const label = document.createElement('label'); label.htmlFor = checkboxId; label.textContent = itemText; if(isChecked) { label.style.textDecoration = 'line-through'; label.style.color = '#aaa'; } checkbox.addEventListener('change', function() { label.style.textDecoration = this.checked ? 'line-through' : 'none'; label.style.color = this.checked ? '#aaa' : '#333'; }); const deleteBtn = document.createElement('button'); deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Delete task'; deleteBtn.addEventListener('click', function() { listItem.remove(); }); listItem.appendChild(checkbox); listItem.appendChild(label); listItem.appendChild(deleteBtn); if(checklist) checklist.appendChild(listItem); if (!taskText && checklistItemInput) checklistItemInput.value = ""; } if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem()); if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
         // --- FLASHCARDS JavaScript ---
         // ... (Flashcard JS unchanged) ...
@@ -307,9 +283,8 @@
 
         // --- INITIAL LOAD ---
         document.addEventListener('DOMContentLoaded', () => { 
-             // Init Player Tabs Visibility FIRST
+             // Init Tabs Visibility FIRST
              const initialActivePlayerTab = document.querySelector('.player-tab-btn.active'); if(initialActivePlayerTab) { const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
-             // Init Widget Tabs Visibility
              const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveWidgetTab) { const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
              
              // Init other features AFTER tabs are potentially visible
