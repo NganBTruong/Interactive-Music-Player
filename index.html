@@ -100,7 +100,7 @@
         let flashcards = []; let currentFlashcardIndex = -1; let isFlashcardFlipped = false;
         let stickyNoteZIndex = 1;
 
-        let youtubePlayer = null; // For YouTube API if you decide to add deeper integration
+        // let youtubePlayer = null; // Not using full YT API for now
         let soundcloudWidget = null; // For SoundCloud Widget API
 
         const defaultThumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23eeeeee"/></svg>';
@@ -128,12 +128,10 @@
                 tracks.forEach((track, index) => {
                     const item = document.createElement(isEditable ? 'li' : 'div');
                     item.classList.add('playlist-item');
-                    // Apply active-track class only to non-editable player view and if it's the current track
                     if (!isEditable && index === currentTrackIndex) {
                         item.classList.add('active-track');
                     }
                     item.dataset.index = index;
-                    // item.dataset.trackSrc = track.src; // Already in HTML, but good for JS access if needed
 
                     const img = document.createElement('img');
                     img.src = track.thumbnail || defaultThumbnail;
@@ -142,7 +140,7 @@
                     item.appendChild(img);
 
                     const titleDiv = document.createElement('div');
-                    titleDiv.classList.add('playlist-item-title-display'); // Class for targeting title
+                    titleDiv.classList.add('playlist-item-title-display');
                     titleDiv.textContent = track.title || "Unknown Title";
                     item.appendChild(titleDiv);
 
@@ -151,7 +149,7 @@
                         deleteBtn.innerHTML = '🗑️'; deleteBtn.className = 'delete-item-btn';
                         deleteBtn.title = 'Remove from Playlist'; deleteBtn.type = "button";
                         deleteBtn.addEventListener('click', (e) => {
-                            e.stopPropagation(); // Prevent dblclick or other parent events
+                            e.stopPropagation();
                             if (confirm(`Remove "${track.title}" from playlist?`)) {
                                 deleteTrack(index);
                             }
@@ -161,22 +159,21 @@
                     fragment.appendChild(item);
                 });
             }
-            container.innerHTML = ''; // Clear previous content
+            container.innerHTML = '';
             container.appendChild(fragment);
         }
 
         function startRenameMode(titleElement, trackIndex) {
             const currentTitle = tracks[trackIndex].title;
-            titleElement.style.display = 'none'; // Hide the original title div
+            titleElement.style.display = 'none';
 
             const input = document.createElement('input');
             input.type = 'text';
             input.value = currentTitle;
             input.classList.add('playlist-item-rename-input');
-            input.style.flexGrow = '1'; // Take available space
-            input.style.marginRight = '5px'; // Space before delete button in editor
+            input.style.flexGrow = '1';
+            input.style.marginRight = '5px';
 
-            // Insert input into the DOM, typically where titleElement was
             titleElement.parentNode.insertBefore(input, titleElement.nextSibling);
             input.focus();
             input.select();
@@ -191,155 +188,77 @@
                         }
                     }
                 }
-                // Cleanup is now primarily handled by re-rendering the lists
-                if(input.parentNode) input.remove(); // Ensure input is removed
-                titleElement.style.display = ''; // Show original div (will be updated by render)
-
-                renderAllPlaylists(); // Re-render ALL to ensure UI consistency
+                if(input.parentNode) input.remove();
+                titleElement.style.display = '';
+                renderAllPlaylists();
                 saveState();
             };
 
             const onBlur = () => {
-                // Timeout to allow click on potential "save" button if we add one, or to handle Enter key first
-                setTimeout(() => {
-                    // Check if input is still in DOM (might have been removed by Enter key)
-                    if (input.parentNode) {
-                        finishRename(true);
-                    }
-                }, 100); // Small delay
+                setTimeout(() => { if (input.parentNode) { finishRename(true); } }, 100);
             };
-
             const onKeydown = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    input.removeEventListener('blur', onBlur); // Prevent blur from firing as well
-                    finishRename(true);
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    input.removeEventListener('blur', onBlur);
-                    finishRename(false);
-                }
+                if (e.key === 'Enter') { e.preventDefault(); input.removeEventListener('blur', onBlur); finishRename(true); }
+                else if (e.key === 'Escape') { e.preventDefault(); input.removeEventListener('blur', onBlur); finishRename(false); }
             };
-
             input.addEventListener('blur', onBlur);
             input.addEventListener('keydown', onKeydown);
         }
 
         function handlePlaylistDoubleClick(event) {
             const RENAME_INPUT_SELECTOR = 'input.playlist-item-rename-input';
-            const clickedListItem = event.target.closest('.playlist-item'); // Get the LI or DIV item
-
-            if (!clickedListItem) return; // Click was not on a playlist item
-
-            // If there's already an input in this item, don't do anything
-            if (clickedListItem.querySelector(RENAME_INPUT_SELECTOR)) {
-                return;
-            }
-
+            const clickedListItem = event.target.closest('.playlist-item');
+            if (!clickedListItem || clickedListItem.querySelector(RENAME_INPUT_SELECTOR)) { return; }
             const titleDisplayElement = event.target.closest('.playlist-item-title-display');
-            if (titleDisplayElement && clickedListItem.contains(titleDisplayElement)) { // Ensure title is part of the item
+            if (titleDisplayElement && clickedListItem.contains(titleDisplayElement)) {
                 const trackIndex = parseInt(clickedListItem.dataset.index);
-                if (!isNaN(trackIndex) && tracks[trackIndex]) {
-                    startRenameMode(titleDisplayElement, trackIndex);
-                }
+                if (!isNaN(trackIndex) && tracks[trackIndex]) { startRenameMode(titleDisplayElement, trackIndex); }
             }
         }
 
-
         if (playlistContainerDisplay) {
              playlistContainerDisplay.addEventListener('click', (event) => {
-                 if (event.target.tagName === 'INPUT' && event.target.classList.contains('playlist-item-rename-input')) {
-                    return; // Ignore click on rename input itself for play action
-                 }
+                 if (event.target.tagName === 'INPUT' && event.target.classList.contains('playlist-item-rename-input')) { return; }
                  const clickedItem = event.target.closest('.playlist-item');
                  if (clickedItem && playlistContainerDisplay.contains(clickedItem)) {
                      const index = parseInt(clickedItem.dataset.index);
-                     if (!isNaN(index) && index >= 0 && index < tracks.length) {
-                         currentTrackIndex = index;
-                         loadTrackFromPlaylist(currentTrackIndex);
-                     }
+                     if (!isNaN(index) && index >= 0 && index < tracks.length) { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); }
                  }
              });
              playlistContainerDisplay.addEventListener('dblclick', handlePlaylistDoubleClick);
         }
-
-        if (playlistEditorList) {
-            // SortableJS handles its own drag events.
-            // Double click for renaming is handled on the UL (playlistEditorList)
-            playlistEditorList.addEventListener('dblclick', handlePlaylistDoubleClick);
-        }
-
+        if (playlistEditorList) { playlistEditorList.addEventListener('dblclick', handlePlaylistDoubleClick); }
 
         function renderAllPlaylists() { renderPlaylistView(playlistContainerDisplay, false); renderPlaylistView(playlistEditorList, true); }
 
         function deleteTrack(index) {
             if (index >= 0 && index < tracks.length) {
-                const isCurrentTrack = parseInt(currentTrackIndex) === parseInt(index);
-                tracks.splice(index, 1);
-
+                const isCurrentTrack = parseInt(currentTrackIndex) === parseInt(index); tracks.splice(index, 1);
                 if (isCurrentTrack) {
-                    currentTrackIndex = -1; // Reset
-                    clearPlayerScreen();
-                    if (songTitleElem) songTitleElem.textContent = "Select a Song or Video";
-                    if (tracks.length > 0) {
-                        // Try to select the new track at the same position, or the last one if out of bounds
-                        currentTrackIndex = Math.min(index, tracks.length - 1);
-                        if (currentTrackIndex < 0) currentTrackIndex = 0; // If list became empty then re-set to 0 for next add.
-                         if(tracks.length > 0) loadTrackFromPlaylist(currentTrackIndex); else updateProgressBar();
-
-                    } else {
-                        updateProgressBar(); // Playlist is empty
-                    }
-                } else if (currentTrackIndex > index) {
-                    currentTrackIndex--; // Adjust index if a track before current was deleted
-                }
-                renderAllPlaylists();
-                saveState();
+                    currentTrackIndex = -1; clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Select a Song or Video";
+                    if (tracks.length > 0) { currentTrackIndex = Math.min(index, tracks.length - 1); if (currentTrackIndex < 0) currentTrackIndex = 0; if(tracks.length > 0) loadTrackFromPlaylist(currentTrackIndex); else updateProgressBar(); }
+                    else { updateProgressBar(); }
+                } else if (currentTrackIndex > index) { currentTrackIndex--; }
+                renderAllPlaylists(); saveState();
             }
         }
 
         function initializePlaylist() {
-             renderAllPlaylists(); // Render based on `tracks` (which is loaded from localStorage or empty)
-             if (tracks.length > 0) {
-                if (currentTrackIndex === -1 || currentTrackIndex >= tracks.length) { // If invalid index from previous session
-                    currentTrackIndex = 0;
-                }
-                loadTrackFromPlaylist(currentTrackIndex);
-             }
-             else {
-                if(songTitleElem) songTitleElem.textContent = "Playlist Empty";
-                updateProgressBar();
-             }
+             renderAllPlaylists();
+             if (tracks.length > 0) { if (currentTrackIndex === -1 || currentTrackIndex >= tracks.length) { currentTrackIndex = 0; } loadTrackFromPlaylist(currentTrackIndex); }
+             else { if(songTitleElem) songTitleElem.textContent = "Playlist Empty"; updateProgressBar(); }
         }
 
         function initializePlaylistEditorSortable() {
             if (playlistEditorList && !sortableInstance) {
                 try {
-                    sortableInstance = new Sortable(playlistEditorList, {
-                        animation: 150,
-                        ghostClass: 'sortable-ghost',
-                        dragClass: 'sortable-drag',
+                    sortableInstance = new Sortable(playlistEditorList, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
                         onEnd: function (evt) {
                             if (evt.oldIndex !== evt.newIndex) {
-                                const movedItem = tracks.splice(evt.oldIndex, 1)[0];
-                                tracks.splice(evt.newIndex, 0, movedItem);
-
-                                // Update currentTrackIndex if the currently playing/selected track was moved
-                                if (currentTrackIndex === evt.oldIndex) {
-                                    currentTrackIndex = evt.newIndex;
-                                } else {
-                                    // Adjust if old position was before current and new is after, or vice versa
-                                    if (evt.oldIndex < currentTrackIndex && evt.newIndex >= currentTrackIndex) {
-                                        currentTrackIndex--;
-                                    } else if (evt.oldIndex > currentTrackIndex && evt.newIndex <= currentTrackIndex) {
-                                        currentTrackIndex++;
-                                    }
-                                }
-                                // Re-render the display playlist to reflect new order and correct active track
-                                renderPlaylistView(playlistContainerDisplay, false);
-                                // The editor list is visually updated by SortableJS, its data-index attributes need to be re-synced by re-rendering it too.
-                                renderPlaylistView(playlistEditorList, true);
-                                saveState();
+                                const movedItem = tracks.splice(evt.oldIndex, 1)[0]; tracks.splice(evt.newIndex, 0, movedItem);
+                                if (currentTrackIndex === evt.oldIndex) { currentTrackIndex = evt.newIndex; }
+                                else { if (evt.oldIndex < currentTrackIndex && evt.newIndex >= currentTrackIndex) { currentTrackIndex--; } else if (evt.oldIndex > currentTrackIndex && evt.newIndex <= currentTrackIndex) { currentTrackIndex++; } }
+                                renderPlaylistView(playlistContainerDisplay, false); renderPlaylistView(playlistEditorList, true); saveState();
                             }
                         },
                     });
@@ -349,68 +268,41 @@
 
         function clearPlayerScreen() {
             if (soundcloudWidget) { soundcloudWidget = null; }
-            if (youtubePlayer) { youtubePlayer = null; }
-            mainVideoPlayerContainer.innerHTML = '';
-            mainVideoPlayerContainer.style.backgroundImage = 'none';
-            mainVideoPlayerContainer.style.paddingBottom = "56.25%";
-            activeMediaFrame = null;
-            mainVideoPlayerContainer.style.height = "0";
+            // if (youtubePlayer) { youtubePlayer = null; } // Not using full YT API
+            mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none';
+            mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0";
         }
 
         function getYouTubeVideoID(url) { const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; }
         function getSoundCloudEmbedSrc(iframeCode) { if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) { const match = iframeCode.match(/src="([^"]*)"/); if (match && match[1] && match[1].includes('w.soundcloud.com/player')) return match[1]; } return null; }
 
         function loadMediaToPlayer(urlOrId, type, title = "Loading...") {
-            clearPlayerScreen();
-            audio.pause();
-            if (songTitleElem) songTitleElem.textContent = title; // Set title immediately
-            currentMediaType = type;
+            clearPlayerScreen(); audio.pause(); if (songTitleElem) songTitleElem.textContent = title; currentMediaType = type;
 
             if (type === 'youtube') {
                 const videoID = getYouTubeVideoID(urlOrId);
                 if (videoID) {
                     activeMediaFrame = document.createElement('iframe');
+                    // Crucial: ensure enablejsapi=1 for postMessage control
                     activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`;
                     activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
                     activeMediaFrame.allowFullscreen = true;
                     if (mainVideoPlayerContainer) mainVideoPlayerContainer.appendChild(activeMediaFrame);
-                    if (playerControlsArea) playerControlsArea.style.display = 'none';
-                } else {
-                    if (songTitleElem) songTitleElem.textContent = "Invalid YouTube URL";
-                }
+                    if (playerControlsArea) playerControlsArea.style.display = 'block'; // Show controls for YT now
+                } else { if (songTitleElem) songTitleElem.textContent = "Invalid YouTube URL"; }
             } else if (type === 'soundcloud') {
                 if (urlOrId.includes('w.soundcloud.com/player')) {
-                    activeMediaFrame = document.createElement('iframe');
-                    activeMediaFrame.id = 'soundcloud-player-' + Date.now();
-                    activeMediaFrame.width = "100%"; activeMediaFrame.height = "166";
-                    activeMediaFrame.scrolling = "no"; activeMediaFrame.frameborder = "no";
-                    activeMediaFrame.allow = "autoplay";
-                    let scSrc = urlOrId;
-                    if (!scSrc.includes('visual=')) { scSrc += (scSrc.includes('?') ? '&' : '?') + 'visual=true'; }
-                    if (!scSrc.includes('auto_play=')) { scSrc += (scSrc.includes('?') ? '&' : '?') + 'auto_play=true'; }
-                    else { scSrc = scSrc.replace(/auto_play=false/gi, 'auto_play=true'); }
+                    activeMediaFrame = document.createElement('iframe'); activeMediaFrame.id = 'soundcloud-player-' + Date.now();
+                    activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling = "no"; activeMediaFrame.frameborder = "no"; activeMediaFrame.allow = "autoplay";
+                    let scSrc = urlOrId; if (!scSrc.includes('visual=')) { scSrc += (scSrc.includes('?') ? '&' : '?') + 'visual=true'; }
+                    if (!scSrc.includes('auto_play=')) { scSrc += (scSrc.includes('?') ? '&' : '?') + 'auto_play=true'; } else { scSrc = scSrc.replace(/auto_play=false/gi, 'auto_play=true'); }
                     activeMediaFrame.src = scSrc;
-
-                    if (mainVideoPlayerContainer) {
-                        mainVideoPlayerContainer.style.paddingBottom = "0";
-                        mainVideoPlayerContainer.style.height = "166px";
-                        mainVideoPlayerContainer.appendChild(activeMediaFrame);
-                    }
+                    if (mainVideoPlayerContainer) { mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); }
                     soundcloudWidget = SC.Widget(activeMediaFrame);
                     soundcloudWidget.bind(SC.Widget.Events.READY, () => {
                         soundcloudWidget.setVolume(audio.volume * 100);
                         soundcloudWidget.getDuration((duration) => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); });
-                        soundcloudWidget.getCurrentSound((currentSound) => {
-                            if (currentSound && (songTitleElem.textContent === "Loading..." || tracks[currentTrackIndex]?.title === "SoundCloud Track" || songTitleElem.textContent === "SoundCloud Track")) {
-                                const newSCTitle = currentSound.title || title; // Use API title or passed title
-                                songTitleElem.textContent = newSCTitle;
-                                if (tracks[currentTrackIndex] && (tracks[currentTrackIndex].title === "SoundCloud Track" || tracks[currentTrackIndex].title === "User Added Media")) {
-                                    tracks[currentTrackIndex].title = newSCTitle;
-                                    renderAllPlaylists();
-                                    saveState();
-                                }
-                            }
-                        });
+                        soundcloudWidget.getCurrentSound((currentSound) => { if (currentSound && (songTitleElem.textContent === "Loading..." || tracks[currentTrackIndex]?.title === "SoundCloud Track" || songTitleElem.textContent === "SoundCloud Track")) { const newSCTitle = currentSound.title || title; songTitleElem.textContent = newSCTitle; if (tracks[currentTrackIndex] && (tracks[currentTrackIndex].title === "SoundCloud Track" || tracks[currentTrackIndex].title === "User Added Media")) { tracks[currentTrackIndex].title = newSCTitle; renderAllPlaylists(); saveState(); } } });
                         soundcloudWidget.bind(SC.Widget.Events.PLAY, () => { if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; });
                         soundcloudWidget.bind(SC.Widget.Events.PAUSE, () => { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; });
                         soundcloudWidget.bind(SC.Widget.Events.PLAY_PROGRESS, (data) => { if (!isDraggingProgress) { if (currentTimeElem) currentTimeElem.textContent = formatTime(data.currentPosition / 1000); soundcloudWidget.getDuration((duration) => { if (duration > 0) { if(durationElem) durationElem.textContent = formatTime(duration / 1000); if (progressBarElem) progressBarElem.style.width = (data.currentPosition / duration) * 100 + '%'; } }); } });
@@ -451,30 +343,39 @@
 
         function loadTrackFromPlaylist(index) {
             if (index < 0 || index >= tracks.length) { console.error(`Invalid track index: ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; updateProgressBar(); return; }
-            currentTrackIndex = index; // Set global current index
-            const track = tracks[index];
-            if (track) {
-                loadMediaToPlayer(track.src, track.type, track.title); // This will set songTitleElem
-            } else { console.error(`Track not found at index ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; }
-
-            // Update active class in the display playlist only
+            currentTrackIndex = index; const track = tracks[index];
+            if (track) { loadMediaToPlayer(track.src, track.type, track.title); }
+            else { console.error(`Track not found at index ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; }
             const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
-            displayItems.forEach(item => {
-                item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex);
-            });
+            displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
             saveState();
         }
 
-
         function playCurrentMedia() {
-            if (currentMediaType === 'audio') { audio.play().catch(error => console.error("Error playing audio:", error)); }
-            else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; }
-            else if (currentMediaType === 'soundcloud' && soundcloudWidget) { soundcloudWidget.play(); }
+            if (currentMediaType === 'audio') {
+                audio.play().catch(error => console.error("Error playing audio:", error));
+                // Button state handled by audio's 'play' event
+            } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) {
+                activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                if (playBtn) playBtn.style.display = 'none';
+                if (pauseBtn) pauseBtn.style.display = 'inline-block';
+            } else if (currentMediaType === 'soundcloud' && soundcloudWidget) {
+                soundcloudWidget.play();
+                // Button state handled by SC widget's 'PLAY' event
+            }
         }
         function pauseCurrentMedia() {
-            if (currentMediaType === 'audio') { audio.pause(); }
-            else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; }
-            else if (currentMediaType === 'soundcloud' && soundcloudWidget) { soundcloudWidget.pause(); }
+            if (currentMediaType === 'audio') {
+                audio.pause();
+                // Button state handled by audio's 'pause' event
+            } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) {
+                activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                if (playBtn) playBtn.style.display = 'inline-block';
+                if (pauseBtn) pauseBtn.style.display = 'none';
+            } else if (currentMediaType === 'soundcloud' && soundcloudWidget) {
+                soundcloudWidget.pause();
+                // Button state handled by SC widget's 'PAUSE' event
+            }
         }
 
         if (playBtn) playBtn.addEventListener('click', playCurrentMedia);
@@ -490,7 +391,7 @@
         function updateProgressBar() {
             if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if (progressBarElem) progressBarElem.style.width = progressPercent + '%'; if (currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if (durationElem) durationElem.textContent = formatTime(audio.duration); }
             else if (currentMediaType === 'soundcloud') { if (soundcloudWidget) { soundcloudWidget.getDuration(duration => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); else if (durationElem) durationElem.textContent = "-:--"; soundcloudWidget.getPosition(position => { if(currentTimeElem) currentTimeElem.textContent = formatTime(position / 1000); if(progressBarElem && duration > 0) progressBarElem.style.width = (position / duration) * 100 + '%'; else if (progressBarElem) progressBarElem.style.width = '0%'; }); }); } else { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "0:00"; if (durationElem) durationElem.textContent = "Loading..."; } }
-            else if (currentMediaType === 'youtube') { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "-:--"; if (durationElem) durationElem.textContent = "-:--"; }
+            else if (currentMediaType === 'youtube') { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "-:--"; if (durationElem) durationElem.textContent = "-:--"; } // YT progress not available with simple postMessage
             else { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "0:00"; if (durationElem) durationElem.textContent = "0:00"; }
         }
         function formatTime(seconds) { if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; }
@@ -498,7 +399,7 @@
         if (prevBtn) prevBtn.addEventListener('click', () => { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
         if (nextBtn) nextBtn.addEventListener('click', () => { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
 
-        if (progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if ((currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) || (currentMediaType === 'soundcloud' && soundcloudWidget)) { isDraggingProgress = true; handleProgressBarSeek(e); } });
+        if (progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if ((currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) || (currentMediaType === 'soundcloud' && soundcloudWidget)) { isDraggingProgress = true; handleProgressBarSeek(e); } /* No progress bar seek for YT with simple postMessage */ });
         window.addEventListener('mousemove', (e) => { if (isDraggingProgress) handleProgressBarSeek(e); });
         window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; });
 
@@ -515,6 +416,8 @@
         function handleVolumeSliderDrag(e) {
             const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); const volumeRatio = offsetX / rect.width;
             audio.volume = volumeRatio; if (soundcloudWidget) soundcloudWidget.setVolume(volumeRatio * 100);
+            // YouTube volume control via postMessage is possible but more complex to get feedback from.
+            // For now, this will only affect HTML5 audio and SoundCloud.
             if (volumeThumb) { const thumbWidth = volumeThumb.offsetWidth; const maxThumbLeft = rect.width - thumbWidth; const thumbLeft = Math.max(0, Math.min(volumeRatio * rect.width - (thumbWidth / 2), maxThumbLeft)); volumeThumb.style.left = `${thumbLeft}px`; }
             saveState();
         }
