@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Playback/Sort Fix!</title>
+    <title>Study Hub - Full YouTube API</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <script src="https://w.soundcloud.com/player/api.js"></script> <style>
-        /* --- CSS (No changes) --- */
+    <script src="https://w.soundcloud.com/player/api.js"></script>
+    <style>
+        /* --- CSS (No changes from your last version) --- */
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; display: flex; min-height: 100vh; overflow: hidden; }
         .main-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
         #left-column { min-width: 320px; padding: 0; background-color: #f9f9f9; overflow: hidden; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; box-sizing: border-box; }
@@ -29,28 +30,22 @@
         .player-tab-btn.active { background-color: #fff; font-weight: bold; color: #333; border-bottom-color: #007bff;}
         .player-tab-content { padding: 20px; overflow-y: auto; flex-grow: 1; display: none; flex-direction: column; }
         .player-tab-content.active { display: flex; }
-        .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden; background-color: #ddd; margin-bottom: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+        .video-container { position: relative; width: 100%; padding-bottom: 56.25%; /* 16:9 Aspect Ratio */ height: 0; border-radius: 10px; overflow: hidden; background-color: #000; /* Black background for player */ margin-bottom: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
+        .video-container iframe, .video-container #yt-player-div { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; flex-shrink: 0; }
         .player-controls-area { flex-shrink: 0; }
         .controls { display: flex; justify-content: center; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 5px;}
         .progress-container { display: flex; align-items: center; justify-content: center; margin-top: 15px; }
         .progress-bar { width: 70%; height: 15px; background-color: #ddd; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; flex-grow: 1; }
-        .progress { height: 100%; background-color: #888; width: 0%; transition: width 0.3s ease; border-radius: 10px; }
+        .progress { height: 100%; background-color: #888; width: 0%; /* transition: width 0.3s ease; */ /* Disable transition for smoother JS updates */ border-radius: 10px; }
         .time { font-size: 14px; margin: 0 10px; color: #555; flex-shrink: 0; }
         .playlist-container { margin-top: 20px; overflow-y: auto; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; padding: 10px; flex-grow: 1; min-height: 100px; }
         .playlist-item { display: flex; align-items: center; padding: 10px; margin-bottom: 5px; cursor: pointer; background-color: #fff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s; }
         .playlist-item:hover { background-color: #f0f0f0; }
         .playlist-item.active-track { background-color: #d1e7ff; border-left: 4px solid #007bff; }
         .playlist-item img { width: 40px; height: 40px; background-color: #ddd; display: flex; justify-content: center; align-items: center; color: #555; border-radius: 5px; margin-right: 10px; flex-shrink: 0;}
-        .playlist-item-title-display { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; } /* Applied to title div */
-        .playlist-item-rename-input { /* Optional: Style for the rename input */
-            padding: 5px;
-            font-size: 0.95em; /* Match playlist item text */
-            border: 1px solid #007bff;
-            border-radius: 3px;
-            box-sizing: border-box;
-        }
+        .playlist-item-title-display { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; }
+        .playlist-item-rename-input { padding: 5px; font-size: 0.95em; border: 1px solid #007bff; border-radius: 3px; box-sizing: border-box; }
         .volume-container { display: flex; align-items: center; margin-left: 15px; }
         .volume-slider-container { width: 80px; height: 15px; background-color: #ddd; border-radius: 5px; position: relative; cursor: pointer; }
         .volume-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background-color: #888; border-radius: 50%; left: 50%; }
@@ -65,7 +60,7 @@
         #playlist-editor-list li { padding: 10px; background-color: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; cursor: grab; }
         #playlist-editor-list li:last-child { border-bottom: none; }
         #playlist-editor-list img { width: 30px; height: 30px; border-radius: 3px; flex-shrink: 0; }
-        #playlist-editor-list .playlist-item-title-display { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em; } /* Ensure this style exists for editor list titles as well */
+        #playlist-editor-list .playlist-item-title-display { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em; }
         .sortable-ghost { background-color: #cce5ff; opacity: 0.7; } .sortable-drag { background-color: #e9f5ff; }
         .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
         .widget-tab-btn { background-color: #f0f0f0; color:#333; border-color:transparent; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 5px; position: relative; bottom: -1px; padding: 10px 15px; margin-bottom: -1px; } .widget-tab-btn:hover { background-color: #e7e7e7; } .widget-tab-btn.active { background-color: #fff; border-color: #ddd #ddd transparent #ddd; font-weight: bold; border-bottom: 1px solid #fff; z-index: 1; }
@@ -93,24 +88,33 @@
 
         // State variables
         let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0; let calculatedLeftMinWidth = 320;
-        let audio = new Audio(); let currentTrackIndex = -1; let currentMediaType = null; let activeMediaFrame = null;
-        let tracks = []; // Single source of truth
+        let audio = new Audio(); let currentTrackIndex = -1; let currentMediaType = null;
+        // let activeMediaFrame = null; // Replaced by youtubePlayer for YT
+        let tracks = [];
         let isDraggingProgress = false; let isDraggingVolume = false;
         let sortableInstance = null; let checklistItemIdCounter = 0;
         let flashcards = []; let currentFlashcardIndex = -1; let isFlashcardFlipped = false;
         let stickyNoteZIndex = 1;
 
-        // let youtubePlayer = null; // Not using full YT API for now
+        let youtubePlayer = null; // For YouTube IFrame Player API
         let soundcloudWidget = null; // For SoundCloud Widget API
+        let youtubeProgressInterval = null; // Interval for YT progress
 
         const defaultThumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23eeeeee"/></svg>';
+
+        // --- YouTube IFrame API Setup ---
+        // This function will be called automatically by the YouTube API script
+        function onYouTubeIframeAPIReady() {
+            // Player initialization is now deferred to loadMediaToPlayer when a YT track is selected.
+            // We could initialize a placeholder player here if one was always visible, but it's not.
+            console.log("YouTube IFrame API Ready.");
+        }
 
         // --- COLUMN RESIZER ---
         function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); }
         function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; }
-        function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); saveState(); /* Save width change */ }
+        function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); saveState(); }
         if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); }); }
-
 
         // --- LEFT PLAYER TABS ---
         playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
@@ -119,112 +123,43 @@
         function renderPlaylistView(container, isEditable) {
             if (!container) { console.error("Playlist container not found:", container); return; }
             const fragment = document.createDocumentFragment();
-            if (tracks.length === 0) {
-                const emptyMsg = document.createElement(isEditable ? 'li' : 'div');
-                emptyMsg.textContent = isEditable ? 'Playlist empty.' : 'Playlist empty. Add in "Add & Organize" tab.';
-                emptyMsg.style.padding = '10px'; emptyMsg.style.color = '#777';
-                fragment.appendChild(emptyMsg);
+            if (tracks.length === 0) { const emptyMsg = document.createElement(isEditable ? 'li' : 'div'); emptyMsg.textContent = isEditable ? 'Playlist empty.' : 'Playlist empty. Add in "Add & Organize" tab.'; emptyMsg.style.padding = '10px'; emptyMsg.style.color = '#777'; fragment.appendChild(emptyMsg);
             } else {
                 tracks.forEach((track, index) => {
-                    const item = document.createElement(isEditable ? 'li' : 'div');
-                    item.classList.add('playlist-item');
-                    if (!isEditable && index === currentTrackIndex) {
-                        item.classList.add('active-track');
-                    }
+                    const item = document.createElement(isEditable ? 'li' : 'div'); item.classList.add('playlist-item');
+                    if (!isEditable && index === currentTrackIndex) { item.classList.add('active-track'); }
                     item.dataset.index = index;
-
-                    const img = document.createElement('img');
-                    img.src = track.thumbnail || defaultThumbnail;
-                    img.alt = track.title ? track.title.substring(0, 10) : 'Track';
-                    img.onerror = function() { this.onerror=null; this.src = defaultThumbnail; };
-                    item.appendChild(img);
-
-                    const titleDiv = document.createElement('div');
-                    titleDiv.classList.add('playlist-item-title-display');
-                    titleDiv.textContent = track.title || "Unknown Title";
-                    item.appendChild(titleDiv);
-
-                    if (isEditable) {
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.innerHTML = '🗑️'; deleteBtn.className = 'delete-item-btn';
-                        deleteBtn.title = 'Remove from Playlist'; deleteBtn.type = "button";
-                        deleteBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (confirm(`Remove "${track.title}" from playlist?`)) {
-                                deleteTrack(index);
-                            }
-                        });
-                        item.appendChild(deleteBtn);
-                    }
+                    const img = document.createElement('img'); img.src = track.thumbnail || defaultThumbnail; img.alt = track.title ? track.title.substring(0, 10) : 'Track'; img.onerror = function() { this.onerror=null; this.src = defaultThumbnail; }; item.appendChild(img);
+                    const titleDiv = document.createElement('div'); titleDiv.classList.add('playlist-item-title-display'); titleDiv.textContent = track.title || "Unknown Title"; item.appendChild(titleDiv);
+                    if (isEditable) { const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '🗑️'; deleteBtn.className = 'delete-item-btn'; deleteBtn.title = 'Remove from Playlist'; deleteBtn.type = "button"; deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); if (confirm(`Remove "${track.title}" from playlist?`)) { deleteTrack(index); } }); item.appendChild(deleteBtn); }
                     fragment.appendChild(item);
                 });
             }
-            container.innerHTML = '';
-            container.appendChild(fragment);
+            container.innerHTML = ''; container.appendChild(fragment);
         }
 
         function startRenameMode(titleElement, trackIndex) {
-            const currentTitle = tracks[trackIndex].title;
-            titleElement.style.display = 'none';
-
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentTitle;
-            input.classList.add('playlist-item-rename-input');
-            input.style.flexGrow = '1';
-            input.style.marginRight = '5px';
-
-            titleElement.parentNode.insertBefore(input, titleElement.nextSibling);
-            input.focus();
-            input.select();
-
+            const currentTitle = tracks[trackIndex].title; titleElement.style.display = 'none';
+            const input = document.createElement('input'); input.type = 'text'; input.value = currentTitle; input.classList.add('playlist-item-rename-input'); input.style.flexGrow = '1'; input.style.marginRight = '5px';
+            titleElement.parentNode.insertBefore(input, titleElement.nextSibling); input.focus(); input.select();
             const finishRename = (saveChanges) => {
-                if (saveChanges) {
-                    const newTitle = input.value.trim();
-                    if (newTitle && newTitle !== currentTitle) {
-                        tracks[trackIndex].title = newTitle;
-                        if (parseInt(currentTrackIndex) === parseInt(trackIndex)) {
-                            if (songTitleElem) songTitleElem.textContent = newTitle;
-                        }
-                    }
-                }
-                if(input.parentNode) input.remove();
-                titleElement.style.display = '';
-                renderAllPlaylists();
-                saveState();
+                if (saveChanges) { const newTitle = input.value.trim(); if (newTitle && newTitle !== currentTitle) { tracks[trackIndex].title = newTitle; if (parseInt(currentTrackIndex) === parseInt(trackIndex)) { if (songTitleElem) songTitleElem.textContent = newTitle; } } }
+                if(input.parentNode) input.remove(); titleElement.style.display = ''; renderAllPlaylists(); saveState();
             };
-
-            const onBlur = () => {
-                setTimeout(() => { if (input.parentNode) { finishRename(true); } }, 100);
-            };
-            const onKeydown = (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); input.removeEventListener('blur', onBlur); finishRename(true); }
-                else if (e.key === 'Escape') { e.preventDefault(); input.removeEventListener('blur', onBlur); finishRename(false); }
-            };
-            input.addEventListener('blur', onBlur);
-            input.addEventListener('keydown', onKeydown);
+            const onBlur = () => { setTimeout(() => { if (input.parentNode) { finishRename(true); } }, 100); };
+            const onKeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); input.removeEventListener('blur', onBlur); finishRename(true); } else if (e.key === 'Escape') { e.preventDefault(); input.removeEventListener('blur', onBlur); finishRename(false); } };
+            input.addEventListener('blur', onBlur); input.addEventListener('keydown', onKeydown);
         }
 
         function handlePlaylistDoubleClick(event) {
-            const RENAME_INPUT_SELECTOR = 'input.playlist-item-rename-input';
-            const clickedListItem = event.target.closest('.playlist-item');
+            const RENAME_INPUT_SELECTOR = 'input.playlist-item-rename-input'; const clickedListItem = event.target.closest('.playlist-item');
             if (!clickedListItem || clickedListItem.querySelector(RENAME_INPUT_SELECTOR)) { return; }
             const titleDisplayElement = event.target.closest('.playlist-item-title-display');
-            if (titleDisplayElement && clickedListItem.contains(titleDisplayElement)) {
-                const trackIndex = parseInt(clickedListItem.dataset.index);
-                if (!isNaN(trackIndex) && tracks[trackIndex]) { startRenameMode(titleDisplayElement, trackIndex); }
-            }
+            if (titleDisplayElement && clickedListItem.contains(titleDisplayElement)) { const trackIndex = parseInt(clickedListItem.dataset.index); if (!isNaN(trackIndex) && tracks[trackIndex]) { startRenameMode(titleDisplayElement, trackIndex); } }
         }
 
         if (playlistContainerDisplay) {
-             playlistContainerDisplay.addEventListener('click', (event) => {
-                 if (event.target.tagName === 'INPUT' && event.target.classList.contains('playlist-item-rename-input')) { return; }
-                 const clickedItem = event.target.closest('.playlist-item');
-                 if (clickedItem && playlistContainerDisplay.contains(clickedItem)) {
-                     const index = parseInt(clickedItem.dataset.index);
-                     if (!isNaN(index) && index >= 0 && index < tracks.length) { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); }
-                 }
-             });
+             playlistContainerDisplay.addEventListener('click', (event) => { if (event.target.tagName === 'INPUT' && event.target.classList.contains('playlist-item-rename-input')) { return; } const clickedItem = event.target.closest('.playlist-item'); if (clickedItem && playlistContainerDisplay.contains(clickedItem)) { const index = parseInt(clickedItem.dataset.index); if (!isNaN(index) && index >= 0 && index < tracks.length) { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); } } });
              playlistContainerDisplay.addEventListener('dblclick', handlePlaylistDoubleClick);
         }
         if (playlistEditorList) { playlistEditorList.addEventListener('dblclick', handlePlaylistDoubleClick); }
@@ -232,49 +167,78 @@
         function renderAllPlaylists() { renderPlaylistView(playlistContainerDisplay, false); renderPlaylistView(playlistEditorList, true); }
 
         function deleteTrack(index) {
-            if (index >= 0 && index < tracks.length) {
-                const isCurrentTrack = parseInt(currentTrackIndex) === parseInt(index); tracks.splice(index, 1);
-                if (isCurrentTrack) {
-                    currentTrackIndex = -1; clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Select a Song or Video";
-                    if (tracks.length > 0) { currentTrackIndex = Math.min(index, tracks.length - 1); if (currentTrackIndex < 0) currentTrackIndex = 0; if(tracks.length > 0) loadTrackFromPlaylist(currentTrackIndex); else updateProgressBar(); }
-                    else { updateProgressBar(); }
+            if (index >= 0 && index < tracks.length) { const isCurrentTrack = parseInt(currentTrackIndex) === parseInt(index); tracks.splice(index, 1);
+                if (isCurrentTrack) { currentTrackIndex = -1; clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Select a Song or Video"; if (tracks.length > 0) { currentTrackIndex = Math.min(index, tracks.length - 1); if (currentTrackIndex < 0) currentTrackIndex = 0; if(tracks.length > 0) loadTrackFromPlaylist(currentTrackIndex); else updateProgressBar(); } else { updateProgressBar(); }
                 } else if (currentTrackIndex > index) { currentTrackIndex--; }
                 renderAllPlaylists(); saveState();
             }
         }
 
-        function initializePlaylist() {
-             renderAllPlaylists();
-             if (tracks.length > 0) { if (currentTrackIndex === -1 || currentTrackIndex >= tracks.length) { currentTrackIndex = 0; } loadTrackFromPlaylist(currentTrackIndex); }
-             else { if(songTitleElem) songTitleElem.textContent = "Playlist Empty"; updateProgressBar(); }
-        }
+        function initializePlaylist() { renderAllPlaylists(); if (tracks.length > 0) { if (currentTrackIndex === -1 || currentTrackIndex >= tracks.length) { currentTrackIndex = 0; } loadTrackFromPlaylist(currentTrackIndex); } else { if(songTitleElem) songTitleElem.textContent = "Playlist Empty"; updateProgressBar(); } }
 
         function initializePlaylistEditorSortable() {
             if (playlistEditorList && !sortableInstance) {
-                try {
-                    sortableInstance = new Sortable(playlistEditorList, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
-                        onEnd: function (evt) {
-                            if (evt.oldIndex !== evt.newIndex) {
-                                const movedItem = tracks.splice(evt.oldIndex, 1)[0]; tracks.splice(evt.newIndex, 0, movedItem);
-                                if (currentTrackIndex === evt.oldIndex) { currentTrackIndex = evt.newIndex; }
-                                else { if (evt.oldIndex < currentTrackIndex && evt.newIndex >= currentTrackIndex) { currentTrackIndex--; } else if (evt.oldIndex > currentTrackIndex && evt.newIndex <= currentTrackIndex) { currentTrackIndex++; } }
-                                renderPlaylistView(playlistContainerDisplay, false); renderPlaylistView(playlistEditorList, true); saveState();
-                            }
-                        },
-                    });
+                try { sortableInstance = new Sortable(playlistEditorList, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', onEnd: function (evt) { if (evt.oldIndex !== evt.newIndex) { const movedItem = tracks.splice(evt.oldIndex, 1)[0]; tracks.splice(evt.newIndex, 0, movedItem); if (currentTrackIndex === evt.oldIndex) { currentTrackIndex = evt.newIndex; } else { if (evt.oldIndex < currentTrackIndex && evt.newIndex >= currentTrackIndex) { currentTrackIndex--; } else if (evt.oldIndex > currentTrackIndex && evt.newIndex <= currentTrackIndex) { currentTrackIndex++; } } renderPlaylistView(playlistContainerDisplay, false); renderPlaylistView(playlistEditorList, true); saveState(); } }, });
                 } catch (error) { console.error("Failed to initialize SortableJS:", error); }
             } else if (!playlistEditorList) { console.error("Playlist editor list element not found for SortableJS init."); }
         }
 
         function clearPlayerScreen() {
-            if (soundcloudWidget) { soundcloudWidget = null; }
-            // if (youtubePlayer) { youtubePlayer = null; } // Not using full YT API
+            if (soundcloudWidget) { soundcloudWidget.destroy(); soundcloudWidget = null; } // Use destroy for SC too
+            if (youtubePlayer && typeof youtubePlayer.destroy === 'function') { youtubePlayer.destroy(); youtubePlayer = null; }
+            if (youtubeProgressInterval) { clearInterval(youtubeProgressInterval); youtubeProgressInterval = null; }
             mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none';
-            mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0";
+            mainVideoPlayerContainer.style.paddingBottom = "56.25%"; // Reset for potential audio/image
+            mainVideoPlayerContainer.style.height = "0"; // Reset for potential audio/image
+            // activeMediaFrame = null; // Not needed anymore
         }
 
         function getYouTubeVideoID(url) { const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; }
         function getSoundCloudEmbedSrc(iframeCode) { if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) { const match = iframeCode.match(/src="([^"]*)"/); if (match && match[1] && match[1].includes('w.soundcloud.com/player')) return match[1]; } return null; }
+
+        // --- YouTube Player Event Handlers (Global Scope for API) ---
+        function onYouTubePlayerReady(event) {
+            console.log("YT Player Ready:", event.target);
+            if (youtubePlayer && typeof youtubePlayer.setVolume === 'function') {
+                 youtubePlayer.setVolume(audio.volume * 100); // Set initial volume
+            }
+            updateYouTubeProgress(); // Initial time/duration update
+            // Autoplay is handled by playerVars, but if issues, can call: event.target.playVideo();
+        }
+
+        function onYouTubePlayerStateChange(event) {
+            console.log("YT Player State Change:", event.data);
+            if (youtubeProgressInterval) { clearInterval(youtubeProgressInterval); youtubeProgressInterval = null;}
+
+            if (event.data === YT.PlayerState.PLAYING) {
+                if (playBtn) playBtn.style.display = 'none';
+                if (pauseBtn) pauseBtn.style.display = 'inline-block';
+                youtubeProgressInterval = setInterval(updateYouTubeProgress, 250);
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                if (playBtn) playBtn.style.display = 'inline-block';
+                if (pauseBtn) pauseBtn.style.display = 'none';
+            } else if (event.data === YT.PlayerState.ENDED) {
+                if (playBtn) playBtn.style.display = 'inline-block';
+                if (pauseBtn) pauseBtn.style.display = 'none';
+                if (nextBtn) nextBtn.click();
+            } else if (event.data === YT.PlayerState.BUFFERING) {
+                // Can add a loading indicator if desired
+                if (currentTimeElem) currentTimeElem.textContent = "Buff...";
+            }
+        }
+        function updateYouTubeProgress() {
+            if (youtubePlayer && typeof youtubePlayer.getCurrentTime === 'function' && typeof youtubePlayer.getDuration === 'function') {
+                const currentTime = youtubePlayer.getCurrentTime();
+                const duration = youtubePlayer.getDuration();
+                if (currentTimeElem) currentTimeElem.textContent = formatTime(currentTime);
+                if (durationElem && duration > 0) durationElem.textContent = formatTime(duration); else if (durationElem) durationElem.textContent = "0:00";
+                if (progressBarElem && duration > 0) {
+                    progressBarElem.style.width = (currentTime / duration) * 100 + '%';
+                } else if (progressBarElem) {
+                    progressBarElem.style.width = '0%';
+                }
+            }
+        }
 
         function loadMediaToPlayer(urlOrId, type, title = "Loading...") {
             clearPlayerScreen(); audio.pause(); if (songTitleElem) songTitleElem.textContent = title; currentMediaType = type;
@@ -282,23 +246,41 @@
             if (type === 'youtube') {
                 const videoID = getYouTubeVideoID(urlOrId);
                 if (videoID) {
-                    activeMediaFrame = document.createElement('iframe');
-                    // Crucial: ensure enablejsapi=1 for postMessage control
-                    activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`;
-                    activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-                    activeMediaFrame.allowFullscreen = true;
-                    if (mainVideoPlayerContainer) mainVideoPlayerContainer.appendChild(activeMediaFrame);
-                    if (playerControlsArea) playerControlsArea.style.display = 'block'; // Show controls for YT now
+                    mainVideoPlayerContainer.innerHTML = '<div id="yt-player-div"></div>'; // Prepare div for YT API
+                    if (typeof YT !== 'undefined' && YT.Player) {
+                         youtubePlayer = new YT.Player('yt-player-div', {
+                            height: '100%', // Fill container
+                            width: '100%',  // Fill container
+                            videoId: videoID,
+                            playerVars: {
+                                'autoplay': 1,
+                                'controls': 0, // Hide YouTube's default controls
+                                'rel': 0,      // No related videos at end
+                                'modestbranding': 1,
+                                'playsinline': 1 // For mobile
+                            },
+                            events: {
+                                'onReady': onYouTubePlayerReady,
+                                'onStateChange': onYouTubePlayerStateChange
+                            }
+                        });
+                    } else {
+                        console.error("YouTube API not loaded yet. Cannot create player.");
+                        // Fallback or retry logic could be added here
+                         mainVideoPlayerContainer.innerHTML = 'Error: YouTube API not ready.';
+                    }
+                    if (playerControlsArea) playerControlsArea.style.display = 'block';
                 } else { if (songTitleElem) songTitleElem.textContent = "Invalid YouTube URL"; }
             } else if (type === 'soundcloud') {
                 if (urlOrId.includes('w.soundcloud.com/player')) {
-                    activeMediaFrame = document.createElement('iframe'); activeMediaFrame.id = 'soundcloud-player-' + Date.now();
-                    activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling = "no"; activeMediaFrame.frameborder = "no"; activeMediaFrame.allow = "autoplay";
+                    const scIframe = document.createElement('iframe'); // Create SC iframe directly
+                    scIframe.id = 'soundcloud-player-' + Date.now();
+                    scIframe.width = "100%"; scIframe.height = "166"; scIframe.scrolling = "no"; scIframe.frameborder = "no"; scIframe.allow = "autoplay";
                     let scSrc = urlOrId; if (!scSrc.includes('visual=')) { scSrc += (scSrc.includes('?') ? '&' : '?') + 'visual=true'; }
                     if (!scSrc.includes('auto_play=')) { scSrc += (scSrc.includes('?') ? '&' : '?') + 'auto_play=true'; } else { scSrc = scSrc.replace(/auto_play=false/gi, 'auto_play=true'); }
-                    activeMediaFrame.src = scSrc;
-                    if (mainVideoPlayerContainer) { mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); }
-                    soundcloudWidget = SC.Widget(activeMediaFrame);
+                    scIframe.src = scSrc;
+                    if (mainVideoPlayerContainer) { mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(scIframe); }
+                    soundcloudWidget = SC.Widget(scIframe);
                     soundcloudWidget.bind(SC.Widget.Events.READY, () => {
                         soundcloudWidget.setVolume(audio.volume * 100);
                         soundcloudWidget.getDuration((duration) => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); });
@@ -320,7 +302,7 @@
             }
         }
 
-        if (loadMediaBtn) {
+        if (loadMediaBtn) { /* ... loadMediaBtn logic (no changes needed here for YT API part) ... */
              loadMediaBtn.addEventListener('click', () => {
                  const inputVal = mediaUrlInput.value.trim(); if (inputVal === "") return;
                  let type = 'unknown'; let src = inputVal; let title = "User Added Media"; let thumbnail = defaultThumbnail;
@@ -341,7 +323,7 @@
         }
         if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
 
-        function loadTrackFromPlaylist(index) {
+        function loadTrackFromPlaylist(index) { /* ... loadTrackFromPlaylist logic (no changes needed here for YT API part) ... */
             if (index < 0 || index >= tracks.length) { console.error(`Invalid track index: ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; updateProgressBar(); return; }
             currentTrackIndex = index; const track = tracks[index];
             if (track) { loadMediaToPlayer(track.src, track.type, track.title); }
@@ -352,30 +334,14 @@
         }
 
         function playCurrentMedia() {
-            if (currentMediaType === 'audio') {
-                audio.play().catch(error => console.error("Error playing audio:", error));
-                // Button state handled by audio's 'play' event
-            } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) {
-                activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                if (playBtn) playBtn.style.display = 'none';
-                if (pauseBtn) pauseBtn.style.display = 'inline-block';
-            } else if (currentMediaType === 'soundcloud' && soundcloudWidget) {
-                soundcloudWidget.play();
-                // Button state handled by SC widget's 'PLAY' event
-            }
+            if (currentMediaType === 'audio') { audio.play().catch(error => console.error("Error playing audio:", error)); }
+            else if (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.playVideo === 'function') { youtubePlayer.playVideo(); }
+            else if (currentMediaType === 'soundcloud' && soundcloudWidget) { soundcloudWidget.play(); }
         }
         function pauseCurrentMedia() {
-            if (currentMediaType === 'audio') {
-                audio.pause();
-                // Button state handled by audio's 'pause' event
-            } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) {
-                activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-                if (playBtn) playBtn.style.display = 'inline-block';
-                if (pauseBtn) pauseBtn.style.display = 'none';
-            } else if (currentMediaType === 'soundcloud' && soundcloudWidget) {
-                soundcloudWidget.pause();
-                // Button state handled by SC widget's 'PAUSE' event
-            }
+            if (currentMediaType === 'audio') { audio.pause(); }
+            else if (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') { youtubePlayer.pauseVideo(); }
+            else if (currentMediaType === 'soundcloud' && soundcloudWidget) { soundcloudWidget.pause(); }
         }
 
         if (playBtn) playBtn.addEventListener('click', playCurrentMedia);
@@ -388,10 +354,10 @@
         audio.addEventListener('play', () => { if (currentMediaType === 'audio') { if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; } });
         audio.addEventListener('pause', () => { if (currentMediaType === 'audio') { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; } });
 
-        function updateProgressBar() {
+        function updateProgressBar() { // This is now mainly for Audio, YT has its own update via interval
             if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if (progressBarElem) progressBarElem.style.width = progressPercent + '%'; if (currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if (durationElem) durationElem.textContent = formatTime(audio.duration); }
-            else if (currentMediaType === 'soundcloud') { if (soundcloudWidget) { soundcloudWidget.getDuration(duration => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); else if (durationElem) durationElem.textContent = "-:--"; soundcloudWidget.getPosition(position => { if(currentTimeElem) currentTimeElem.textContent = formatTime(position / 1000); if(progressBarElem && duration > 0) progressBarElem.style.width = (position / duration) * 100 + '%'; else if (progressBarElem) progressBarElem.style.width = '0%'; }); }); } else { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "0:00"; if (durationElem) durationElem.textContent = "Loading..."; } }
-            else if (currentMediaType === 'youtube') { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "-:--"; if (durationElem) durationElem.textContent = "-:--"; } // YT progress not available with simple postMessage
+            else if (currentMediaType === 'soundcloud') { /* SoundCloud progress handled by its own PLAY_PROGRESS event */ }
+            else if (currentMediaType === 'youtube') { /* YouTube progress handled by updateYouTubeProgress via interval */ }
             else { if (progressBarElem) progressBarElem.style.width = '0%'; if (currentTimeElem) currentTimeElem.textContent = "0:00"; if (durationElem) durationElem.textContent = "0:00"; }
         }
         function formatTime(seconds) { if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; }
@@ -399,14 +365,33 @@
         if (prevBtn) prevBtn.addEventListener('click', () => { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
         if (nextBtn) nextBtn.addEventListener('click', () => { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); });
 
-        if (progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if ((currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) || (currentMediaType === 'soundcloud' && soundcloudWidget)) { isDraggingProgress = true; handleProgressBarSeek(e); } /* No progress bar seek for YT with simple postMessage */ });
+        if (progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => {
+            if ((currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) ||
+                (currentMediaType === 'soundcloud' && soundcloudWidget) ||
+                (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.getDuration === 'function' && youtubePlayer.getDuration() > 0) ) {
+                isDraggingProgress = true;
+                handleProgressBarSeek(e); // Call immediately for responsiveness
+            }
+        });
         window.addEventListener('mousemove', (e) => { if (isDraggingProgress) handleProgressBarSeek(e); });
         window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; });
 
         function handleProgressBarSeek(e) {
-            if (!isDraggingProgress) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); const seekRatio = progressWidth / rect.width;
+            if (!isDraggingProgress) return;
+            const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); const seekRatio = progressWidth / rect.width;
+
             if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { audio.currentTime = seekRatio * audio.duration; updateProgressBar(); }
-            else if (currentMediaType === 'soundcloud' && soundcloudWidget) { soundcloudWidget.getDuration((duration) => { if (duration > 0) { const seekPositionMs = seekRatio * duration; soundcloudWidget.seekTo(seekPositionMs); if (currentTimeElem) currentTimeElem.textContent = formatTime(seekPositionMs / 1000); if (progressBarElem) progressBarElem.style.width = seekRatio * 100 + '%'; } }); }
+            else if (currentMediaType === 'soundcloud' && soundcloudWidget) { soundcloudWidget.getDuration((duration) => { if (duration > 0) { const seekPositionMs = seekRatio * duration; soundcloudWidget.seekTo(seekPositionMs); /* SC progress updates via its event */ } }); }
+            else if (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.seekTo === 'function' && typeof youtubePlayer.getDuration === 'function') {
+                const duration = youtubePlayer.getDuration();
+                if (duration > 0) {
+                    const seekTime = seekRatio * duration;
+                    youtubePlayer.seekTo(seekTime, true);
+                    // Manually update UI elements immediately after seek for better UX
+                    if (currentTimeElem) currentTimeElem.textContent = formatTime(seekTime);
+                    if (progressBarElem) progressBarElem.style.width = seekRatio * 100 + '%';
+                }
+            }
         }
 
         if (volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); });
@@ -415,23 +400,27 @@
 
         function handleVolumeSliderDrag(e) {
             const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); const volumeRatio = offsetX / rect.width;
-            audio.volume = volumeRatio; if (soundcloudWidget) soundcloudWidget.setVolume(volumeRatio * 100);
-            // YouTube volume control via postMessage is possible but more complex to get feedback from.
-            // For now, this will only affect HTML5 audio and SoundCloud.
+            audio.volume = volumeRatio;
+            if (soundcloudWidget) soundcloudWidget.setVolume(volumeRatio * 100);
+            if (youtubePlayer && typeof youtubePlayer.setVolume === 'function') { youtubePlayer.setVolume(volumeRatio * 100); }
             if (volumeThumb) { const thumbWidth = volumeThumb.offsetWidth; const maxThumbLeft = rect.width - thumbWidth; const thumbLeft = Math.max(0, Math.min(volumeRatio * rect.width - (thumbWidth / 2), maxThumbLeft)); volumeThumb.style.left = `${thumbLeft}px`; }
             saveState();
         }
 
         function setInitialVolume() {
             const savedVolume = (localStorage.getItem('studyHubState') && JSON.parse(localStorage.getItem('studyHubState')).volume !== undefined) ? JSON.parse(localStorage.getItem('studyHubState')).volume : 0.5;
-            audio.volume = savedVolume; if (soundcloudWidget) soundcloudWidget.setVolume(savedVolume * 100);
+            audio.volume = savedVolume;
+            if (soundcloudWidget) soundcloudWidget.setVolume(savedVolume * 100);
+            if (youtubePlayer && typeof youtubePlayer.setVolume === 'function') { youtubePlayer.setVolume(savedVolume * 100); }
             if (volumeSlider && volumeThumb) { const rect = volumeSlider.getBoundingClientRect(); const thumbWidth = volumeThumb.offsetWidth; if (rect.width > 0) { const maxThumbLeft = rect.width - thumbWidth; const initialThumbPos = savedVolume * rect.width - (thumbWidth / 2); volumeThumb.style.left = `${Math.max(0, Math.min(initialThumbPos, maxThumbLeft))}px`; } else { volumeThumb.style.left = `calc(${savedVolume * 100}% - ${thumbWidth / 2}px)`; } }
         }
 
         // --- RIGHT WIDGET TAB Switching ---
+        /* ... No changes ... */
         widgetTabs.forEach(tab => { tab.addEventListener('click', () => { widgetTabs.forEach(t => t.classList.remove('active')); widgetContents.forEach(c => c.style.display = 'none'); tab.classList.add('active'); const widgetName = tab.dataset.widget; const activeWidgetContent = document.getElementById(`${widgetName}-widget`); if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; }); });
 
         // --- CHECKLIST JavaScript ---
+        /* ... No changes ... */
         function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) {
             const itemText = taskText || (checklistItemInput ? checklistItemInput.value.trim() : ""); if (itemText === "" && !taskText) { alert("Please enter a task!"); return; }
             const listItem = document.createElement('li'); const checkboxId = `task-${checklistItemIdCounter++}`; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.checked = isChecked;
@@ -444,7 +433,9 @@
         if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
         if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
+
         // --- FLASHCARDS JavaScript ---
+        /* ... No changes ... */
         function renderFlashcard() {
             if (!flashcardDisplay || !flashcardFront || !flashcardBack || !currentCardInfo) return;
             if (flashcards.length === 0) { flashcardFront.textContent = "No cards yet!"; flashcardBack.textContent = "Add some cards below."; flashcardDisplay.classList.remove('is-flipped'); isFlashcardFlipped = false; currentCardInfo.textContent = "0/0"; if(prevFlashcardBtn) prevFlashcardBtn.disabled = true; if(nextFlashcardBtn) nextFlashcardBtn.disabled = true; if(flipFlashcardBtn) flipFlashcardBtn.disabled = true; return; }
@@ -462,7 +453,9 @@
         if(addNewFlashcardBtn) { addNewFlashcardBtn.addEventListener('click', () => { const term = flashcardTermInput.value.trim(); const definition = flashcardDefinitionInput.value.trim(); if (term && definition) { flashcards.push({ term, definition }); flashcardTermInput.value = ''; flashcardDefinitionInput.value = ''; if (currentFlashcardIndex === -1 && flashcards.length > 0) currentFlashcardIndex = 0; else currentFlashcardIndex = flashcards.length - 1; isFlashcardFlipped = false; renderFlashcard(); renderFlashcardTermList(); saveState(); if(flashcardTermInput) flashcardTermInput.focus(); } else { alert("Please enter both a term and a definition."); } }); }
         document.addEventListener('keydown', function(e) { const flashcardsTab = document.querySelector('.widget-tab-btn[data-widget="flashcards"]'); if (flashcardsTab && flashcardsTab.classList.contains('active') && e.code === 'Space') { if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); flipCurrentFlashcard(); } } });
 
+
         // --- STICKY NOTES JavaScript ---
+        /* ... No changes ... */
         function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) {
             const note = document.createElement('div'); note.classList.add('sticky-note'); if (!stickyNotesBoard) return;
             const boardScrollWidth = stickyNotesBoard.scrollWidth; const boardScrollHeight = stickyNotesBoard.scrollHeight; const noteWidth = 180; const noteHeight = 180;
@@ -480,7 +473,9 @@
         if (addStickyNoteBtn) { addStickyNoteBtn.addEventListener('click', () => { const topPos = 20 + (stickyNotesBoard ? stickyNotesBoard.scrollTop : 0); const leftPos = 20 + (stickyNotesBoard ? stickyNotesBoard.scrollLeft : 0); createStickyNote(undefined, '', topPos, leftPos); });}
         if (notesArea) notesArea.addEventListener('input', saveState);
 
+
         // --- LOCAL STORAGE ---
+        /* ... No changes ... */
         function saveState() {
             try {
                 const state = { tracks: tracks, currentTrackIndex: currentTrackIndex, volume: audio.volume, leftColumnWidth: leftColumn.style.flexBasis || '320px', checklistItems: [], flashcards: flashcards, currentFlashcardIndex: currentFlashcardIndex, isFlashcardFlipped: isFlashcardFlipped, mainNote: notesArea ? notesArea.value : '', stickyNotes: [] };
@@ -515,5 +510,6 @@
             window.addEventListener('beforeunload', saveState);
         });
     </script>
+    <script src="http://www.youtube.com/iframe_api"></script>
 </body>
 </html>
