@@ -51,21 +51,50 @@ console.log("MINIMAL TEST - DEBUG: End of minimal script execution.");
 
 /* --- Everything below this line is commented out for the MINIMAL TEST ---
 
-const addStickyNoteBtn = document.getElementById('add-sticky-note-btn');
-const stickyNotesBoard = document.getElementById('sticky-notes-board');
-const notesAreaElement = document.getElementById('notes-area');
+// --- Debounce Utility Function ---
+// Prevents a function from running too frequently
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
-// State variables
+// State variables (just examples, keep relevant ones if needed by above consts)
 let isResizing = false;
 let initialPosX = 0;
-// ... (rest of your original script) ...
+// ... etc ...
+let flashcards = [];
+
+
+// --- YouTube API Loading ---
+function onYouTubeIframeAPIReady() {
+    console.log("YouTube API Ready globally"); // Original DEBUG
+}
+
+// --- COLUMN RESIZER ---
+function calculateLeftMinWidth() { } // Empty function
+function handleResizerMouseMove(e) { } // Empty function
+function handleResizerMouseUp() { } // Empty function
+if (dragHandle) { } // Empty check
+
+// --- LEFT PLAYER TABS ---
+// playerTabs.forEach(tab => { }); // Empty loop
+
+// --- MEDIA PLAYER & PLAYLIST ---
+function renderPlaylistView(container, isEditable) { } // Empty function
+// ... (all other functions commented out) ...
+
 
 // --- INITIAL LOAD ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DEBUG: DOMContentLoaded event fired."); // Original DEBUG
-
-    var tag = document.createElement('script');
-    // ... (rest of your original script) ...
-});
+// document.addEventListener('DOMContentLoaded', () => { // Commented out listener
+//    console.log("DEBUG: DOMContentLoaded event fired."); // Original DEBUG
+// ... (rest of DOMContentLoaded content commented out) ...
+// });
 
 */
