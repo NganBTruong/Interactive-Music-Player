@@ -368,7 +368,20 @@
                         soundcloudWidget.bind(SC.Widget.Events.READY, () => {
                             console.log("SoundCloud Widget Ready");
                             soundcloudWidget.setVolume(audio.volume * 100);
-                            soundcloudWidget.getDuration((duration) => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); else if(durationElem) durationElem.textContent = "0:00"; });
+                            // --- MODIFICATION START ---
+                            // Original: soundcloudWidget.getDuration((duration) => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); else if(durationElem) durationElem.textContent = "0:00"; });
+                            soundcloudWidget.getDuration((duration) => {
+                                if (durationElem) { // Check if durationElem exists
+                                    if (duration > 0) {
+                                        durationElem.textContent = formatTime(duration / 1000);
+                                    } else {
+                                        durationElem.textContent = "0:00";
+                                    }
+                                } else {
+                                    console.error("Element with ID 'duration' not found when trying to set SC duration text.");
+                                }
+                            });
+                            // --- MODIFICATION END ---
                             soundcloudWidget.getCurrentSound((currentSound) => { if (currentSound && (songTitleElem.textContent === "Loading..." || tracks[currentTrackIndex]?.title === "SoundCloud Track" || songTitleElem.textContent === "SoundCloud Track")) { const newSCTitle = currentSound.title || title; songTitleElem.textContent = newSCTitle; if (tracks[currentTrackIndex] && (tracks[currentTrackIndex].title === "SoundCloud Track" || tracks[currentTrackIndex].title === "User Added Media")) { tracks[currentTrackIndex].title = newSCTitle; renderAllPlaylists(); saveState(); } } });
                             soundcloudWidget.bind(SC.Widget.Events.PLAY, () => { if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; });
                             soundcloudWidget.bind(SC.Widget.Events.PAUSE, () => { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; });
@@ -428,7 +441,7 @@
                 if (pauseBtn) pauseBtn.style.display = 'none';
                 if (nextBtn) nextBtn.click();
             } else if (event.data === YT.PlayerState.BUFFERING) {
-                 // Optionally indicate buffering
+               // Optionally indicate buffering
             } else if (event.data === YT.PlayerState.CUED) {
                 // Video is ready
             }
@@ -775,9 +788,30 @@
             initializePlaylistEditorSortable();
             // Note: setInitialVolume is called within loadState()
             // Note: initializePlaylist is called within loadState() if no state, or its components are called
-            //       to restore playlist display. The actual player for the current track
-            //       will be instantiated by loadTrackFromPlaylist, which is called
-            //       at the end of loadState if a track was active.
+            //      to restore playlist display. The actual player for the current track
+            //      will be instantiated by loadTrackFromPlaylist, which is called
+            //      at the end of loadState if a track was active.
+
+            // --- MODIFICATION START: Call our new backend function ---
+            async function fetchGreeting() {
+                try {
+                    const response = await fetch('/api/greeting'); 
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log("Data from backend function:", data);
+                    // You could update an element on your page with data.message here!
+                    // For example:
+                    // const someDisplayElement = document.getElementById('some-id-for-display');
+                    // if (someDisplayElement) someDisplayElement.textContent = data.message;
+                } catch (error) {
+                    console.error("Could not fetch greeting:", error);
+                }
+            }
+
+            fetchGreeting(); // Call it when the page loads
+            // --- MODIFICATION END ---
 
             window.addEventListener('beforeunload', saveState);
         });
