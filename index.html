@@ -368,8 +368,7 @@
                         soundcloudWidget.bind(SC.Widget.Events.READY, () => {
                             console.log("SoundCloud Widget Ready");
                             soundcloudWidget.setVolume(audio.volume * 100);
-                            // --- MODIFICATION START ---
-                            // Original: soundcloudWidget.getDuration((duration) => { if(durationElem && duration > 0) durationElem.textContent = formatTime(duration / 1000); else if(durationElem) durationElem.textContent = "0:00"; });
+                            // --- This is the CORRECTED SoundCloud duration part from previous step ---
                             soundcloudWidget.getDuration((duration) => {
                                 if (durationElem) { // Check if durationElem exists
                                     if (duration > 0) {
@@ -381,7 +380,7 @@
                                     console.error("Element with ID 'duration' not found when trying to set SC duration text.");
                                 }
                             });
-                            // --- MODIFICATION END ---
+                            // --- End of corrected part ---
                             soundcloudWidget.getCurrentSound((currentSound) => { if (currentSound && (songTitleElem.textContent === "Loading..." || tracks[currentTrackIndex]?.title === "SoundCloud Track" || songTitleElem.textContent === "SoundCloud Track")) { const newSCTitle = currentSound.title || title; songTitleElem.textContent = newSCTitle; if (tracks[currentTrackIndex] && (tracks[currentTrackIndex].title === "SoundCloud Track" || tracks[currentTrackIndex].title === "User Added Media")) { tracks[currentTrackIndex].title = newSCTitle; renderAllPlaylists(); saveState(); } } });
                             soundcloudWidget.bind(SC.Widget.Events.PLAY, () => { if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; });
                             soundcloudWidget.bind(SC.Widget.Events.PAUSE, () => { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; });
@@ -777,7 +776,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Load YouTube API
             var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
+            tag.src = "https://www.youtube.com/iframe_api"; // Use https for API
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
@@ -792,26 +791,32 @@
             //      will be instantiated by loadTrackFromPlaylist, which is called
             //      at the end of loadState if a track was active.
 
-            // --- MODIFICATION START: Call our new backend function ---
+            // --- MODIFICATION START: Add Debugging for fetchGreeting ---
+            console.log("DEBUG: DOMContentLoaded event fired."); // <-- ADDED THIS
+
             async function fetchGreeting() {
+                console.log("DEBUG: fetchGreeting function started."); // <-- ADDED THIS
                 try {
-                    const response = await fetch('/api/greeting'); 
+                    console.log("DEBUG: Attempting to fetch /api/greeting..."); // <-- ADDED THIS
+                    const response = await fetch('/api/greeting');
+                    console.log("DEBUG: Fetch response status:", response.status); // <-- ADDED THIS
                     if (!response.ok) {
+                        console.error("DEBUG: Fetch failed with status:", response.statusText); // <-- ADDED THIS
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     const data = await response.json();
-                    console.log("Data from backend function:", data);
-                    // You could update an element on your page with data.message here!
-                    // For example:
-                    // const someDisplayElement = document.getElementById('some-id-for-display');
-                    // if (someDisplayElement) someDisplayElement.textContent = data.message;
+                    console.log("Data from backend function:", data); // <-- This is the success log
                 } catch (error) {
-                    console.error("Could not fetch greeting:", error);
+                    console.error("DEBUG: Error inside fetchGreeting catch block:", error); // <-- Modified this
                 }
+                console.log("DEBUG: fetchGreeting function finished."); // <-- ADDED THIS
             }
 
-            fetchGreeting(); // Call it when the page loads
+            console.log("DEBUG: About to call fetchGreeting()."); // <-- ADDED THIS
+            fetchGreeting(); // <-- Make sure this line exists and is not commented out
+            console.log("DEBUG: Called fetchGreeting()."); // <-- ADDED THIS
             // --- MODIFICATION END ---
+
 
             window.addEventListener('beforeunload', saveState);
         });
