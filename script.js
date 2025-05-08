@@ -271,7 +271,7 @@ function onPlayerReady(event) { /* ... (This function should be here, unchanged 
 function onPlayerStateChange(event) { /* ... (This function should be here, unchanged from before) ... */ console.log("YouTube Player State Change:", event.data); if (ytProgressInterval) clearInterval(ytProgressInterval); if (event.data === YT.PlayerState.PLAYING) { if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; updateProgressBar(); ytProgressInterval = setInterval(updateYouTubeProgress, 250); } else if (event.data === YT.PlayerState.PAUSED) { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; } else if (event.data === YT.PlayerState.ENDED) { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; if (nextBtn) nextBtn.click(); } }
 function onPlayerError(event) { /* ... (This function should be here, unchanged from before) ... */ console.error("YouTube Player Error:", event.data); if (songTitleElem) songTitleElem.textContent = "Error playing YouTube video (Code: " + event.data + ")"; updateProgressBar(); if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; if (ytProgressInterval) clearInterval(ytProgressInterval); }
 function updateYouTubeProgress() { /* ... (This function should be here, unchanged from before) ... */ if (youtubePlayer && typeof youtubePlayer.getCurrentTime === 'function' && typeof youtubePlayer.getDuration === 'function') { const currentTime = youtubePlayer.getCurrentTime(); const duration = youtubePlayer.getDuration(); if (!isDraggingProgress) { if (currentTimeElem) currentTimeElem.textContent = formatTime(currentTime); if (duration > 0) { if (durationElem) durationElem.textContent = formatTime(duration); if (progressBarElem) progressBarElem.style.width = (currentTime / duration) * 100 + '%'; } else { if (durationElem) durationElem.textContent = "0:00"; if (progressBarElem) progressBarElem.style.width = '0%'; } } } }
-if (loadMediaBtn) { loadMediaBtn.addEventListener('click', () => { const inputVal = mediaUrlInput.value.trim(); if (inputVal === "") return; let type = 'unknown'; let src = inputVal; let title = "User Added Media"; let thumbnail = defaultThumbnail; const youtubeID = getYouTubeVideoID(inputVal); const soundcloudEmbedCodeSrc = getSoundCloudEmbedSrc(inputVal); if (youtubeID) { type = 'youtube'; src = inputVal; title = `YouTube Video`; thumbnail = `http://img.youtube.com/vi/${youtubeID}/default.jpg`; } else if (soundcloudEmbedCodeSrc) { type = 'soundcloud'; src = soundcloudEmbedCodeSrc; const titleMatch = inputVal.match(/title="([^"]*)"/); title = titleMatch && titleMatch[1] ? titleMatch[1] : "SoundCloud Track"; } else if (inputVal.startsWith('http') && (inputVal.endsWith('.mp3') || inputVal.endsWith('.ogg') || inputVal.endsWith('.wav') || inputVal.includes('audio'))) { type = 'audio'; src = inputVal; try { const urlParts = new URL(inputVal).pathname.split('/'); title = decodeURIComponent(urlParts[urlParts.length -1]) || "Audio Track"; } catch(e) { title = "Audio Track"; } } if (type !== 'unknown') { const newTrackData = { src, title, thumbnail, type }; tracks.push(newTrackData); renderAllPlaylists(); saveState(); if (tracks.length === 1 && currentTrackIndex === -1) { currentTrackIndex = 0; loadTrackFromPlaylist(currentTrackIndex); } mediaUrlInput.value = ''; } else { alert("Could not load. Please paste a valid YouTube URL, full SoundCloud Embed Code, or direct audio link."); } }); }
+if (loadMediaBtn) { loadMediaBtn.addEventListener('click', () => { const inputVal = mediaUrlInput.value.trim(); if (inputVal === "") return; let type = 'unknown'; let src = inputVal; let title = "User Added Media"; let thumbnail = defaultThumbnail; const youtubeID = getYouTubeVideoID(inputVal); const soundcloudEmbedCodeSrc = getSoundCloudEmbedSrc(inputVal); if (youtubeID) { type = 'youtube'; src = inputVal; title = `YouTube Video`; thumbnail = `https://i.ytimg.com/vi/${youtubeID}/default.jpg`; } else if (soundcloudEmbedCodeSrc) { type = 'soundcloud'; src = soundcloudEmbedCodeSrc; const titleMatch = inputVal.match(/title="([^"]*)"/); title = titleMatch && titleMatch[1] ? titleMatch[1] : "SoundCloud Track"; } else if (inputVal.startsWith('http') && (inputVal.endsWith('.mp3') || inputVal.endsWith('.ogg') || inputVal.endsWith('.wav') || inputVal.includes('audio'))) { type = 'audio'; src = inputVal; try { const urlParts = new URL(inputVal).pathname.split('/'); title = decodeURIComponent(urlParts[urlParts.length -1]) || "Audio Track"; } catch(e) { title = "Audio Track"; } } if (type !== 'unknown') { const newTrackData = { src, title, thumbnail, type }; tracks.push(newTrackData); renderAllPlaylists(); saveState(); if (tracks.length === 1 && currentTrackIndex === -1) { currentTrackIndex = 0; loadTrackFromPlaylist(currentTrackIndex); } mediaUrlInput.value = ''; } else { alert("Could not load. Please paste a valid YouTube URL, full SoundCloud Embed Code, or direct audio link."); } }); }
 if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
 function loadTrackFromPlaylist(index) { /* ... (This function should be here, unchanged from before) ... */ if (ytProgressInterval) clearInterval(ytProgressInterval); ytProgressInterval = null; if (index < 0 || index >= tracks.length) { console.error(`Invalid track index: ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; updateProgressBar(); return; } currentTrackIndex = index; const track = tracks[index]; if (track) { loadMediaToPlayer(track.src, track.type, track.title); } else { console.error(`Track not found at index ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; updateProgressBar(); } const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item'); displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); }); saveState(); }
 function playCurrentMedia() { /* ... (This function should be here, unchanged from before) ... */ if (currentMediaType === 'audio') { audio.play().catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.playVideo === 'function') { youtubePlayer.playVideo(); } else if (currentMediaType === 'soundcloud' && soundcloudWidget && typeof soundcloudWidget.play === 'function') { soundcloudWidget.play(); } }
@@ -294,33 +294,110 @@ function handleVolumeSliderDrag(e) { /* ... (This function should be here, uncha
 function setInitialVolume() { /* ... (This function should be here, unchanged from before) ... */ const savedVolume = (localStorage.getItem('studyHubState') && JSON.parse(localStorage.getItem('studyHubState')).volume !== undefined) ? JSON.parse(localStorage.getItem('studyHubState')).volume : 0.5; audio.volume = savedVolume; if (soundcloudWidget && typeof soundcloudWidget.setVolume === 'function') soundcloudWidget.setVolume(savedVolume * 100); if (youtubePlayer && typeof youtubePlayer.setVolume === 'function') youtubePlayer.setVolume(savedVolume * 100); if (volumeSlider && volumeThumb) { const rect = volumeSlider.getBoundingClientRect(); const thumbWidth = volumeThumb.offsetWidth; if (rect.width > 0) { const maxThumbLeft = rect.width - thumbWidth; const initialThumbPos = savedVolume * rect.width - (thumbWidth / 2); volumeThumb.style.left = `${Math.max(0, Math.min(initialThumbPos, maxThumbLeft))}px`; } else { volumeThumb.style.left = `calc(${savedVolume * 100}% - ${thumbWidth / 2}px)`; } } }
 
 // --- RIGHT WIDGET TAB Switching ---
-widgetTabs.forEach(tab => { /* ... (This function should be here, unchanged from before) ... */ });
+widgetTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        widgetTabs.forEach(t => t.classList.remove('active'));
+        widgetContents.forEach(c => c.style.display = 'none');
+        tab.classList.add('active');
+        const targetWidgetName = tab.dataset.widget;
+        const targetWidget = document.getElementById(`${targetWidgetName}-widget`);
+        if (targetWidget) {
+            targetWidget.style.display = 'flex'; // Or 'block' depending on your layout needs
+        } else {
+            console.error("Target widget content not found for tab:", targetWidgetName);
+        }
+    });
+});
+
 
 // --- CHECKLIST JavaScript ---
-function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */ }
+function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */
+    const text = taskText !== null ? taskText : checklistItemInput.value.trim();
+    if (text === "") return;
+
+    const listItem = document.createElement('li');
+    const checkboxId = `task-${checklistItemIdCounter++}`;
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = checkboxId;
+    checkbox.checked = isChecked;
+    checkbox.addEventListener('change', saveState);
+
+    const label = document.createElement('label');
+    label.htmlFor = checkboxId;
+    label.textContent = text;
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '🗑️'; // Use an icon or text
+    deleteBtn.className = 'delete-item-btn'; // For styling
+    deleteBtn.title = 'Delete item';
+    deleteBtn.addEventListener('click', () => {
+        listItem.remove();
+        saveState();
+    });
+
+    listItem.appendChild(checkbox);
+    listItem.appendChild(label);
+    listItem.appendChild(deleteBtn);
+    checklist.appendChild(listItem);
+
+    if (taskText === null) checklistItemInput.value = ''; // Clear input only if it was a new item
+    if (shouldSave) saveState();
+}
 if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
 if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
 // --- FLASHCARDS JavaScript ---
-function renderFlashcard() { /* ... (This function should be here, unchanged from before) ... */ }
-function flipCurrentFlashcard() { /* ... (This function should be here, unchanged from before) ... */ }
+// The renderFlashcard function updates the main display area of the current flashcard.
+function renderFlashcard() {
+    if (!flashcardDisplay) return;
+    if (currentFlashcardIndex === -1 || flashcards.length === 0) {
+        flashcardFront.textContent = 'No flashcards available.';
+        flashcardBack.textContent = '';
+        flashcardDisplay.classList.remove('flipped');
+        if (currentCardInfo) currentCardInfo.textContent = '0/0';
+    } else {
+        const card = flashcards[currentFlashcardIndex];
+        flashcardFront.textContent = card.term;
+        flashcardBack.textContent = card.definition;
+        if (isFlashcardFlipped) {
+            flashcardDisplay.classList.add('flipped');
+        } else {
+            flashcardDisplay.classList.remove('flipped');
+        }
+        if (currentCardInfo) currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`;
+    }
+}
+
+function flipCurrentFlashcard() {
+    if (flashcards.length === 0 || currentFlashcardIndex === -1) return;
+    isFlashcardFlipped = !isFlashcardFlipped;
+    if (flashcardDisplay) flashcardDisplay.classList.toggle('flipped');
+    saveState();
+}
+
+// This function renders the list of flashcard terms.
+// The crucial line listItem.appendChild(deleteBtn) is included below.
 function renderFlashcardTermList() {
-    console.log("DEBUG: renderFlashcardTermList is running, flashcards count:", flashcards.length); // ADD THIS LINE
+    console.log("DEBUG: renderFlashcardTermList is running, flashcards count:", flashcards.length);
 
     if (!flashcardTermListUL) {
-        console.error("DEBUG: flashcardTermListUL not found!"); // ADD THIS LINE
+        console.error("DEBUG: flashcardTermListUL not found!");
         return;
     }
-    flashcardTermListUL.innerHTML = '';
+    flashcardTermListUL.innerHTML = ''; // Clear existing list items
+
+    // Create a version of flashcards that includes original index, then sort by term for display
     const sortedForDisplay = flashcards.map((card, index) => ({ ...card, originalIndex: index }))
-                                     .sort((a, b) => a.term.localeCompare(b.term));
+                                      .sort((a, b) => a.term.localeCompare(b.term));
 
     sortedForDisplay.forEach(cardData => {
-        console.log("DEBUG: Processing card in renderFlashcardTermList:", cardData.term); // ADD THIS LINE
-        const originalIndex = cardData.originalIndex;
+        console.log("DEBUG: Processing card in renderFlashcardTermList:", cardData.term);
+        const originalIndex = cardData.originalIndex; // This is the index in the *unsorted* flashcards array
 
         const listItem = document.createElement('li');
-        listItem.dataset.originalIndex = originalIndex;
+        listItem.dataset.originalIndex = originalIndex; // Store the original index
 
         const termSpan = document.createElement('span');
         termSpan.className = 'term';
@@ -329,40 +406,122 @@ function renderFlashcardTermList() {
         const defSpan = document.createElement('span');
         defSpan.className = 'definition';
         defSpan.textContent = cardData.definition;
+        // Basic styling for definition to be less prominent or next to term
+        defSpan.style.marginLeft = '10px';
+        defSpan.style.color = '#555';
+
 
         const deleteBtn = document.createElement('button');
-        console.log("DEBUG: Creating delete button for card:", cardData.term); // ADD THIS LINE
+        console.log("DEBUG: Creating delete button for card:", cardData.term);
         deleteBtn.innerHTML = '🗑️';
-        deleteBtn.className = 'delete-item-btn';
+        deleteBtn.className = 'delete-item-btn'; // Use this class for styling
         deleteBtn.title = 'Delete Flashcard';
-        deleteBtn.style.marginLeft = '10px';
+        deleteBtn.style.marginLeft = '10px'; // Add some space
 
+        // Event listener for the delete button
         deleteBtn.addEventListener('click', (event) => {
-            event.stopPropagation();
-            deleteFlashcard(originalIndex);
+            event.stopPropagation(); // Prevent the listItem click event from firing
+            deleteFlashcard(originalIndex); // Use the originalIndex to delete from the master array
         });
 
         listItem.appendChild(termSpan);
         listItem.appendChild(defSpan);
-        listItem.appendChild(deleteBtn);
+        listItem.appendChild(deleteBtn); // This line appends the delete button
 
-        listItem.addEventListener('click', function(event) { // Added event to the parameters
-            if (event.target !== deleteBtn) {
-                 currentFlashcardIndex = parseInt(this.dataset.originalIndex);
-                 isFlashcardFlipped = false;
+        // Event listener for the list item itself (to view the card)
+        listItem.addEventListener('click', function(event) {
+            // Ensure the click was not on the delete button itself
+            if (event.target !== deleteBtn && !deleteBtn.contains(event.target)) {
+                 currentFlashcardIndex = parseInt(this.dataset.originalIndex, 10);
+                 isFlashcardFlipped = false; // Show front first
                  renderFlashcard();
-                 saveState();
+                 saveState(); // Save the new current index
             }
         });
         flashcardTermListUL.appendChild(listItem);
     });
 }
+
+
 if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard);
 if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard);
-if(prevFlashcardBtn) { /* ... (This function should be here, unchanged from before) ... */ }
-if(nextFlashcardBtn) { /* ... (This function should be here, unchanged from before) ... */ }
-if(addNewFlashcardBtn) { /* ... (This function should be here, unchanged from before) ... */ }
-document.addEventListener('keydown', function(e) { /* ... (This function should be here, unchanged from before) ... */ });
+
+if(prevFlashcardBtn) {
+    prevFlashcardBtn.addEventListener('click', () => {
+        if (flashcards.length === 0) return;
+        currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcards.length) % flashcards.length;
+        isFlashcardFlipped = false;
+        renderFlashcard();
+        saveState();
+    });
+}
+
+if(nextFlashcardBtn) {
+    nextFlashcardBtn.addEventListener('click', () => {
+        if (flashcards.length === 0) return;
+        currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcards.length;
+        isFlashcardFlipped = false;
+        renderFlashcard();
+        saveState();
+    });
+}
+
+if(addNewFlashcardBtn) {
+    addNewFlashcardBtn.addEventListener('click', () => {
+        const term = flashcardTermInput.value.trim();
+        const definition = flashcardDefinitionInput.value.trim();
+        if (term && definition) {
+            flashcards.push({ term, definition });
+            flashcardTermInput.value = '';
+            flashcardDefinitionInput.value = '';
+            if (currentFlashcardIndex === -1 && flashcards.length > 0) { // If it was the first card added
+                currentFlashcardIndex = 0;
+            } else if (flashcards.length > 0) {
+                 // Optionally, set currentFlashcardIndex to the newly added card
+                 currentFlashcardIndex = flashcards.length -1;
+            }
+            isFlashcardFlipped = false;
+            renderFlashcard();
+            renderFlashcardTermList();
+            saveState();
+        } else {
+            alert("Please enter both a term and a definition.");
+        }
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    // Check if the focus is on an input field or textarea, if so, don't trigger global keybinds
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable;
+
+    if (isInputFocused) {
+        // Allow specific keybinds for inputs if needed, e.g. Enter in mediaUrlInput
+        if (activeElement === mediaUrlInput && e.key === 'Enter' && loadMediaBtn) {
+            loadMediaBtn.click();
+        } else if (activeElement === checklistItemInput && e.key === 'Enter') {
+            addChecklistItem();
+        }
+        // For flashcard inputs, allow Enter to potentially submit or move to next field (not implemented here)
+        return;
+    }
+
+    // Global keybinds when not in an input
+    const flashcardsWidget = document.getElementById('flashcards-widget');
+    const isFlashcardsWidgetActive = flashcardsWidget && getComputedStyle(flashcardsWidget).display !== 'none';
+
+    if (isFlashcardsWidgetActive) {
+        if (e.key === 'ArrowLeft') { // Previous flashcard
+            if (prevFlashcardBtn) prevFlashcardBtn.click();
+        } else if (e.key === 'ArrowRight') { // Next flashcard
+            if (nextFlashcardBtn) nextFlashcardBtn.click();
+        } else if (e.key === ' ') { // Flip flashcard (Spacebar)
+            e.preventDefault(); // Prevent page scroll
+            if (flipFlashcardBtn) flipFlashcardBtn.click();
+            else if (flashcardDisplay) flipCurrentFlashcard(); // Fallback if button specific var is not found
+        }
+    }
+});
 
 // --- FLASHCARDS: Function to Delete a Flashcard ---
 function deleteFlashcard(indexToDelete) {
@@ -371,48 +530,123 @@ function deleteFlashcard(indexToDelete) {
         return;
     }
 
-    // Get the card details *before* deleting for confirmation message
     const cardToDelete = flashcards[indexToDelete];
-
-    // Confirm deletion
     if (!confirm(`Are you sure you want to delete the flashcard:\nTerm: "${cardToDelete.term}"\nDefinition: "${cardToDelete.definition.substring(0, 50)}..."?`)) {
-        return; // User cancelled
+        return;
     }
 
-    // Remove the flashcard from the array
     flashcards.splice(indexToDelete, 1);
 
-    // Adjust the current index if necessary
     if (flashcards.length === 0) {
-        // If list is now empty
         currentFlashcardIndex = -1;
-        isFlashcardFlipped = false;
     } else if (currentFlashcardIndex === indexToDelete) {
-        // If we deleted the card currently being viewed
-        // Go to the previous card, or the new last card if we deleted the first one
+        // If we deleted the currently viewed card, try to view the one before it,
+        // or the new first card if the deleted one was the first.
         currentFlashcardIndex = Math.max(0, indexToDelete - 1);
-         // If the index was 0 and we deleted it, the new index 0 is the next item
-         // If index > 0 was deleted, index-1 shows the previous item
-         // Let's just reset to the first card for simplicity after delete:
-         // currentFlashcardIndex = 0;
-        isFlashcardFlipped = false; // Show the term side
+        // If indexToDelete was 0, currentFlashcardIndex becomes 0 (new first card or empty handled above)
     } else if (currentFlashcardIndex > indexToDelete) {
-        // If we deleted a card before the current one, shift the current index back
+        // If we deleted a card that was before the currently viewed one,
+        // the current card's index shifts down by one.
         currentFlashcardIndex--;
     }
-     // If we deleted a card after the current one, currentFlashcardIndex remains correct.
+    // If a card after the current one was deleted, currentFlashcardIndex is still valid.
 
-    // Update the UI
-    renderFlashcard(); // Update the main display
-    renderFlashcardTermList(); // Update the list
-    saveState(); // Save changes to localStorage
+    isFlashcardFlipped = false; // Reset to front view
+    renderFlashcard();
+    renderFlashcardTermList();
+    saveState();
 }
 // --- STICKY NOTES JavaScript ---
-function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */ }
-if (addStickyNoteBtn) { /* ... (This function should be here, unchanged from before) ... */ }
-// ** IMPORTANT: We are not attaching saveState directly to notesArea input anymore for localStorage **
+function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */
+    const note = document.createElement('div');
+    note.classList.add('sticky-note');
+    note.dataset.id = id; // Store ID for saving
+    note.style.position = 'absolute';
+    note.style.top = `${top}px`;
+    note.style.left = `${left}px`;
+    note.style.zIndex = z;
 
-// --- LOCAL STORAGE (Still used for other things) ---
+    const textarea = document.createElement('textarea');
+    textarea.value = content;
+    textarea.placeholder = 'Type something...';
+    textarea.addEventListener('input', () => {
+        // Auto-resize logic (optional, simple version)
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+        saveState(); // Save on input
+    });
+    textarea.addEventListener('focus', () => { // Bring to front on focus
+        note.style.zIndex = ++stickyNoteZIndex;
+        saveState();
+    });
+
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.classList.add('sticky-note-close-btn');
+    closeBtn.title = "Delete Note";
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm("Delete this sticky note?")) {
+            note.remove();
+            saveState();
+        }
+    });
+
+    note.appendChild(textarea);
+    note.appendChild(closeBtn);
+    stickyNotesBoard.appendChild(note);
+
+    // Make it draggable (simple implementation)
+    let isDraggingNote = false;
+    let dragOffsetX, dragOffsetY;
+
+    note.addEventListener('mousedown', (e) => {
+        // Only drag if not clicking on textarea or close button
+        if (e.target === textarea || e.target === closeBtn || closeBtn.contains(e.target)) return;
+
+        isDraggingNote = true;
+        note.style.zIndex = ++stickyNoteZIndex; // Bring to front
+        dragOffsetX = e.clientX - note.offsetLeft;
+        dragOffsetY = e.clientY - note.offsetTop;
+        note.style.cursor = 'grabbing';
+        e.preventDefault(); // Prevent text selection while dragging header
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDraggingNote) return;
+        let newTop = e.clientY - dragOffsetY;
+        let newLeft = e.clientX - dragOffsetX;
+
+        // Boundary checks (optional, ensure it stays within board)
+        const boardRect = stickyNotesBoard.getBoundingClientRect();
+        const noteRect = note.getBoundingClientRect();
+
+        newTop = Math.max(0, Math.min(newTop, boardRect.height - noteRect.height));
+        newLeft = Math.max(0, Math.min(newLeft, boardRect.width - noteRect.width));
+
+
+        note.style.top = `${newTop}px`;
+        note.style.left = `${newLeft}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDraggingNote) {
+            isDraggingNote = false;
+            note.style.cursor = 'grab';
+            saveState(); // Save new position
+        }
+    });
+     if (shouldSave) saveState();
+     // Initial resize
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+if (addStickyNoteBtn) {
+    addStickyNoteBtn.addEventListener('click', () => createStickyNote());
+}
+
+// --- LOCAL STORAGE ---
 function saveState() {
     try {
         const state = {
@@ -424,7 +658,7 @@ function saveState() {
             flashcards: flashcards,
             currentFlashcardIndex: currentFlashcardIndex,
             isFlashcardFlipped: isFlashcardFlipped,
-            mainNote: notesAreaElement ? notesAreaElement.value : '', // Keep saving to LS as backup
+            mainNote: notesAreaElement ? notesAreaElement.value : '',
             stickyNotes: []
         };
         if (checklist) { checklist.querySelectorAll('li').forEach(li => { const checkbox = li.querySelector('input[type="checkbox"]'); const label = li.querySelector('label'); if (checkbox && label) { state.checklistItems.push({ text: label.textContent, checked: checkbox.checked }); } }); }
@@ -445,7 +679,6 @@ function loadState() {
             flashcards = state.flashcards || [];
             currentFlashcardIndex = state.currentFlashcardIndex !== undefined ? state.currentFlashcardIndex : -1;
             isFlashcardFlipped = state.isFlashcardFlipped || false;
-            // Main note is now primarily loaded from backend; localStorage is a fallback in loadNotesFromBackend
             if (state.stickyNotes && stickyNotesBoard) { stickyNotesBoard.innerHTML = ''; let maxZ = 0; state.stickyNotes.forEach(noteData => { createStickyNote(noteData.id, noteData.content, noteData.top, noteData.left, noteData.zIndex, false); if (noteData.zIndex > maxZ) maxZ = noteData.zIndex; }); stickyNoteZIndex = maxZ || 1; }
 
             setInitialVolume();
@@ -454,21 +687,28 @@ function loadState() {
             renderFlashcardTermList();
 
             if (tracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < tracks.length) {
-                 const track = tracks[currentTrackIndex];
-                 if (songTitleElem) songTitleElem.textContent = track.title;
-                 loadMediaToPlayer(track.src, track.type, track.title);
-                 setTimeout(() => {
-                    if (youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') youtubePlayer.pauseVideo();
-                    if (soundcloudWidget && typeof soundcloudWidget.pause === 'function') soundcloudWidget.pause();
-                    audio.pause();
-                 }, 100);
-                 updateProgressBar();
-                 const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
-                 displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
-            } else if (tracks.length > 0) {
-                currentTrackIndex = 0;
                 const track = tracks[currentTrackIndex];
                 if (songTitleElem) songTitleElem.textContent = track.title;
+                // Don't autoplay on load, just set up the player
+                loadMediaToPlayer(track.src, track.type, track.title);
+                setTimeout(() => { // Ensure player is ready before trying to pause
+                    if (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') {
+                         try { youtubePlayer.pauseVideo(); } catch(e) { console.warn("YT Pause on load error", e); }
+                    } else if (currentMediaType === 'soundcloud' && soundcloudWidget && typeof soundcloudWidget.pause === 'function') {
+                         try { soundcloudWidget.pause(); } catch(e) { console.warn("SC Pause on load error", e); }
+                    } else if (currentMediaType === 'audio') {
+                        audio.pause();
+                    }
+                    if (playBtn) playBtn.style.display = 'inline-block';
+                    if (pauseBtn) pauseBtn.style.display = 'none';
+                }, 500); // Increased timeout slightly
+                updateProgressBar();
+                const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+                displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
+            } else if (tracks.length > 0) {
+                currentTrackIndex = 0; // Default to first track if index was invalid
+                // but don't auto load/play, just set title
+                if (songTitleElem && tracks[0]) songTitleElem.textContent = tracks[0].title;
                 updateProgressBar();
             } else {
                 if(songTitleElem) songTitleElem.textContent = "Playlist Empty";
@@ -476,18 +716,20 @@ function loadState() {
             }
         } catch (error) {
             console.error("Error parsing saved state:", error);
+            localStorage.removeItem('studyHubState'); // Clear corrupted state
+            // Initialize fresh
             initializePlaylist(); setInitialVolume(); updateProgressBar(); renderFlashcard(); renderFlashcardTermList();
         }
     } else {
+        // Initialize fresh if no saved state
         initializePlaylist(); setInitialVolume(); updateProgressBar(); renderFlashcard(); renderFlashcardTermList();
     }
 }
 
 // --- INITIAL LOAD ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Load YouTube API
     var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
+    tag.src = "https://www.youtube.com/iframe_api"; // Corrected API source
     var firstScriptTag = document.getElementsByTagName('script')[0];
     if (firstScriptTag && firstScriptTag.parentNode) {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -495,42 +737,51 @@ document.addEventListener('DOMContentLoaded', () => {
         document.head.appendChild(tag);
     }
 
-    // Initialize UI elements (tabs)
     const initialActivePlayerTab = document.querySelector('.player-tab-btn.active'); if(initialActivePlayerTab) { const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); if(playerTabContents) playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
     const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveWidgetTab) { const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); if(widgetContents) widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
 
-    loadState(); // Load general state from localStorage (notes are handled separately below)
+    loadState();
     initializePlaylistEditorSortable();
 
-    // --- Notes Persistence Logic ---
     async function loadNotesFromBackend() {
         if (!notesAreaElement) { console.error("Notes area element not found for loading!"); return; }
         console.log("Frontend: Attempting to load notes from /api/notes/load...");
         try {
             const response = await fetch('/api/notes/load');
-            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-            const noteText = await response.text();
-            notesAreaElement.value = noteText;
-            console.log("Frontend: Notes loaded successfully from backend.");
+            if (!response.ok) {
+                 // If response is not ok, but it's a 404 (no notes yet), it's not a hard error for the user.
+                if (response.status === 404) {
+                    console.log("Frontend: No notes found on backend (404). Starting fresh or using localStorage fallback.");
+                    notesAreaElement.value = ''; // Start with empty if no backend notes
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } else {
+                 const noteText = await response.text();
+                 notesAreaElement.value = noteText;
+                 console.log("Frontend: Notes loaded successfully from backend.");
+                 return; // Successfully loaded from backend, skip localStorage fallback for notes.
+            }
         } catch (error) {
             console.error("Frontend: Failed to load notes from backend:", error);
-            const fallbackState = localStorage.getItem('studyHubState');
-            if (fallbackState) {
-                try {
-                    const parsedState = JSON.parse(fallbackState);
-                    if (notesAreaElement && parsedState.mainNote !== undefined) {
-                        notesAreaElement.value = parsedState.mainNote;
-                        console.log("Frontend: Loaded notes from localStorage as fallback.");
-                    }
-                } catch (e) { console.error("Error parsing fallback state", e); }
-            }
+        }
+        // Fallback to localStorage if backend load fails or returns 404 etc.
+        const fallbackState = localStorage.getItem('studyHubState');
+        if (fallbackState) {
+            try {
+                const parsedState = JSON.parse(fallbackState);
+                if (notesAreaElement && parsedState.mainNote !== undefined) {
+                    notesAreaElement.value = parsedState.mainNote;
+                    console.log("Frontend: Loaded notes from localStorage as fallback.");
+                }
+            } catch (e) { console.error("Error parsing fallback state for notes", e); }
         }
     }
 
     async function saveNotesToBackend() {
         if (!notesAreaElement) { console.error("Notes area element not found for saving!"); return; }
         const currentNotes = notesAreaElement.value;
-        console.log("Frontend: Attempting to auto-save notes to /api/notes/save..."); // Changed log message
+        console.log("Frontend: Attempting to auto-save notes to /api/notes/save...");
         try {
             const response = await fetch('/api/notes/save', {
                 method: 'POST',
@@ -538,33 +789,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: currentNotes
             });
             if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-            console.log("Frontend: Notes auto-saved via API successfully."); // Changed log message
-            // Optional: Add a subtle visual cue that saving happened, e.g., a small "Saved." message that fades.
+            console.log("Frontend: Notes auto-saved via API successfully.");
         } catch (error) {
             console.error("Frontend: Failed to auto-save notes to backend:", error);
-            // Optional: Add a subtle error indicator.
+            // Save to localStorage as a fallback if API fails
+            saveState(); // This will save notesAreaElement.value to localStorage.mainNote
+            console.log("Frontend: Notes saved to localStorage due to API failure.");
         }
     }
 
-    // Create a debounced version of the save function
-    const debouncedSaveNotesToBackend = debounce(saveNotesToBackend, 1500); // 1.5 second delay
-
-    // Load notes from backend when page loads
+    const debouncedSaveNotesToBackend = debounce(saveNotesToBackend, 1500);
     loadNotesFromBackend();
-
-    // Add INPUT listener to the notes area for auto-save
     if (notesAreaElement) {
-        notesAreaElement.addEventListener('input', debouncedSaveNotesToBackend);
+        notesAreaElement.addEventListener('input', () => {
+            debouncedSaveNotesToBackend(); // Save to backend (which includes LS fallback on API error)
+            // Also ensure the main saveState is called to keep localStorage.mainNote updated for non-API scenarios or immediate backup
+            saveState();
+        });
         console.log("Frontend: Auto-save listener added to notes area.");
     } else {
         console.error("Notes area element not found! Cannot add auto-save listener.");
     }
-    // --- End of Notes Persistence Logic ---
-
-    // --- Greeting Function Call (Removed as it was for initial testing) ---
-    // async function fetchGreeting() { /* ... */ }
-    // fetchGreeting();
-
-    // --- Save state (including localStorage parts like playlist, flashcards) before unload ---
-    window.addEventListener('beforeunload', saveState);
+    window.addEventListener('beforeunload', () => {
+      saveState(); // General save state
+      // Explicitly try to save notes to backend if not debounced recently,
+      // but this might be interrupted by unload. Debounce is better.
+      // Forcing a save here might be too slow or get cancelled.
+      // The debounced save on 'input' and regular 'saveState' should cover most cases.
+    });
 });
