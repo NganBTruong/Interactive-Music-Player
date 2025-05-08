@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Player/Playlist Refinements</title>
+    <title>Study Hub - Playlist Editor!</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha512-Eezs+g9Lq4TCCq0wae01s97ufKNPuts0LDbDbodDEzvPpzzfYTOKPzZAriCoH4LsPFwd+ERwmCRnA/4/Ome1fQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         /* --- CSS --- */
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; display: flex; min-height: 100vh; overflow: hidden; }
@@ -13,17 +14,7 @@
         .resizer { width: 10px; background-color: #c1c1c1; cursor: ew-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .resizer::after { content: '⋮'; font-size: 18px; color: #555; line-height: 0; }
         #right-column { flex-grow: 1; min-width: 350px; padding: 20px; background-color: #ffffff; overflow-y: auto; display: flex; flex-direction: column; box-sizing: border-box; }
-        
-        /* --- Drag State Styling --- */
-        body.is-resizing iframe, 
-        body.is-resizing .widget-content-area { /* Disable pointer events on iframes/widgets during resize */
-            pointer-events: none; 
-        }
-        body.is-resizing {
-             cursor: ew-resize; /* Show resize cursor everywhere */
-        }
-
-        /* Buttons */
+        body.is-resizing iframe, body.is-resizing .widget-content-area { pointer-events: none; } body.is-resizing { cursor: ew-resize; }
         button, .button-like { padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; text-align: center; font-weight: bold; line-height: 1.4; }
         button:hover, .button-like:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .control-btn { background: #e0e0e0; color: #333; border-color: #ccc; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin: 0 5px; padding: 0; } .control-btn:hover { background: #d0d0d0; }
@@ -31,17 +22,16 @@
         .btn-danger { background-color: #d9534f; color: white; border-color: #d9534f;} .btn-danger:hover { background-color: #c9302c; border-color: #c9302c;}
         .btn-success { background-color: #28a745; color: white; border-color: #28a745;} .btn-success:hover { background-color: #218838; border-color: #218838;}
         .btn-secondary { background-color: #6c757d; color: white; border-color: #6c757d;} .btn-secondary:hover { background-color: #5a6268; border-color: #545b62;}
-        .delete-item-btn { color: #d9534f; background: none; border: none; padding: 5px; line-height: 1; flex-shrink: 0; font-weight: normal; } .delete-item-btn:hover { color: #c9302c; background: #f0f0f0;}
-        
-        /* Left Column - Player Container & Tabs */
+        .delete-item-btn { color: #d9534f; background: none; border: none; padding: 5px; line-height: 1; flex-shrink: 0; font-weight: normal; margin-left: auto; } /* Moved margin */
+        .delete-item-btn:hover { color: #c9302c; background: #f0f0f0;}
+
+        /* Left Column */
         .music-player-container { flex-grow: 1; display: flex; flex-direction: column; margin: 0; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
         .player-tabs { display: flex; border-bottom: 1px solid #ddd; flex-shrink: 0; }
         .player-tab-btn { padding: 10px 15px; cursor: pointer; border: none; background-color: #f0f0f0; color: #555; font-size: 14px; flex-grow: 1; text-align: center; border-bottom: 3px solid transparent; }
         .player-tab-btn.active { background-color: #fff; font-weight: bold; color: #333; border-bottom-color: #007bff;}
-        .player-tab-content { padding: 20px; overflow-y: auto; flex-grow: 1; display: none; } 
-        .player-tab-content.active { display: flex; flex-direction: column; } 
-        
-        /* Player Content Styling */
+        .player-tab-content { padding: 20px; overflow-y: auto; flex-grow: 1; display: none; flex-direction: column; } /* Needs flex direction */
+        .player-tab-content.active { display: flex; }
         .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden; background-color: #ddd; margin-bottom: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; flex-shrink: 0; }
@@ -52,74 +42,51 @@
         .progress { height: 100%; background-color: #888; width: 0%; transition: width 0.3s ease; border-radius: 10px; }
         .time { font-size: 14px; margin: 0 10px; color: #555; flex-shrink: 0; }
         .playlist-container { margin-top: 20px; overflow-y: auto; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; padding: 10px; flex-grow: 1; min-height: 100px; }
-        .playlist-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 5px; cursor: pointer; background-color: #fff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s; }
+        .playlist-item { display: flex; align-items: center; padding: 10px; margin-bottom: 5px; cursor: pointer; background-color: #fff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s; }
         .playlist-item:hover { background-color: #f0f0f0; }
         .playlist-item.active-track { background-color: #d1e7ff; border-left: 4px solid #007bff; }
         .playlist-item img { width: 40px; height: 40px; background-color: #ddd; display: flex; justify-content: center; align-items: center; color: #555; border-radius: 5px; margin-right: 10px; flex-shrink: 0;}
-        .playlist-item div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .volume-container { display: flex; align-items: center; margin-left: 15px; }
-        .volume-slider-container { width: 80px; height: 15px; background-color: #ddd; border-radius: 5px; position: relative; cursor: pointer; }
-        .volume-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background-color: #888; border-radius: 50%; left: 50%; }
-        
-        /* Link Loader Content Styling */
-        .media-input-area { margin-top: 10px; padding-top: 0; border-top: none; }
+        .playlist-item div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; /* Allow title to take space */ }
+
+        /* Link Loader Tab Styles */
+        .media-input-area { margin-top: 10px; padding-top: 0; border-top: none; margin-bottom: 15px; flex-shrink: 0;}
         .media-input-area h4 { margin-top:0; margin-bottom: 10px; font-size: 1.1em; color: #333;}
         .media-input-area p { font-size: 0.9em; color: #666; margin-bottom: 15px;}
         .media-input-container { display: flex; margin-bottom: 5px; }
         #media-url-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 14px; min-width: 100px; }
         #load-media-btn { border-radius: 0 5px 5px 0; flex-shrink: 0; }
         .load-instructions { font-size: 0.8em; color: #888; margin-top: 5px;}
+        #playlist-editor-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;}
+        #playlist-editor-list li { 
+            padding: 10px; background-color: #fff; 
+            border-bottom: 1px solid #eee; 
+            display: flex; align-items: center; gap: 10px;
+            cursor: grab; /* Indicate draggable */
+        }
+        #playlist-editor-list li:last-child { border-bottom: none; }
+        #playlist-editor-list img { width: 30px; height: 30px; border-radius: 3px; flex-shrink: 0; }
+        #playlist-editor-list div { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em; }
+        /* Style for SortableJS dragging */
+        .sortable-ghost { background-color: #cce5ff; opacity: 0.7; }
+        .sortable-drag { background-color: #e9f5ff; }
+
 
         /* Right Column Widgets */
+        /* ... Widget Tab Styles unchanged ... */
         .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
-        .widget-tab-btn { background-color: #f0f0f0; color:#333; border-color:transparent; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 5px; position: relative; bottom: -1px; padding: 10px 15px; margin-bottom: -1px; }
-        .widget-tab-btn:hover { background-color: #e7e7e7; }
-        .widget-tab-btn.active { background-color: #fff; border-color: #ddd #ddd transparent #ddd; font-weight: bold; border-bottom: 1px solid #fff; z-index: 1; }
+        .widget-tab-btn { background-color: #f0f0f0; color:#333; border-color:transparent; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 5px; position: relative; bottom: -1px; padding: 10px 15px; margin-bottom: -1px; } .widget-tab-btn:hover { background-color: #e7e7e7; } .widget-tab-btn.active { background-color: #fff; border-color: #ddd #ddd transparent #ddd; font-weight: bold; border-bottom: 1px solid #fff; z-index: 1; }
         .widget-content-area { border: 1px solid #ddd; border-top: none; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .widget-card { background-color: #fff; box-sizing: border-box; display: none; flex-direction: column; height: 100%; }
-        .widget-card.active-widget { display: flex; } 
+        .widget-card { background-color: #fff; box-sizing: border-box; display: none; flex-direction: column; height: 100%; } .widget-card.active-widget { display: flex; } 
         .widget-card h3 { margin-top: 0; margin-bottom: 15px; color: #333; padding-bottom: 10px; border-bottom: 1px solid #eee; }
         
-        /* Widgets Content Styling */
-        .checklist-widget {}
-        .checklist-input-container { display: flex; margin-bottom: 15px; }
-        #checklist-item-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 15px; }
-        #add-checklist-item-btn { border-radius: 0 5px 5px 0; }
-        #checklist { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; min-height: 100px; }
-        #checklist li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 16px; } #checklist li:last-child { border-bottom: none; } #checklist input[type="checkbox"] { appearance: none; -webkit-appearance: none; -moz-appearance: none; width: 20px; height: 20px; border: 2px solid #888; border-radius: 50%; margin-right: 12px; cursor: pointer; position: relative; outline: none; flex-shrink: 0; } #checklist input[type="checkbox"]:checked { background-color: #007bff; border-color: #007bff; } #checklist input[type="checkbox"]:checked::before { content: ''; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background-color: white; border-radius: 50%; transform: translate(-50%, -50%); } #checklist label { flex-grow: 1; cursor: pointer; color: #333; word-break: break-word; } #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color: #aaa; }
-        .notes-widget { flex-grow: 1; display: flex; flex-direction: column; } 
-        #notes-area { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: vertical; box-sizing: border-box; min-height: 200px; flex-shrink: 0; }
-        .sticky-notes-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; }
-        .sticky-notes-section h4 { margin-top: 0; margin-bottom: 10px;}
-        #sticky-notes-controls { margin-bottom: 10px; }
-        #sticky-notes-board { flex-grow: 1; border: 1px dashed #ccc; border-radius: 5px; position: relative; overflow: auto; background-color: #fdfdfd; min-height: 250px; }
-        .sticky-note { position: absolute; width: 180px; height: 180px; background-color: #ffc; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); padding: 0; box-sizing: border-box; cursor: move; display: flex; flex-direction: column; border: 1px solid #e6e6a1; overflow: hidden; }
-        .sticky-note-header { display: flex; justify-content: flex-end; height: 20px; padding: 2px 5px; background-color: rgba(0,0,0,0.05); flex-shrink: 0;}
-        .delete-sticky-btn { font-size: 14px; width: 18px; height: 18px; line-height: 16px; padding: 0; background: rgba(0,0,0,0.1); color: #333; border: none; border-radius: 50%; cursor: pointer; opacity: 0.5; }
-        .sticky-note:hover .delete-sticky-btn { opacity: 1; }
-        .sticky-note textarea { flex-grow: 1; border: none; background-color: transparent; resize: none; outline: none; font-family: 'Architects Daughter', cursive; font-size: 1em; padding: 8px; box-sizing: border-box; }
-        .flashcards-widget { display: flex; flex-direction: column; gap: 15px; flex-grow:1; }
-        .flashcard-display-area { min-height: 180px; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; font-size: 1.4em; cursor: pointer; background-color: #f9f9f9; position: relative; perspective: 1000px; overflow: hidden; }
-        .flashcard-face { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transition: transform 0.7s ease-in-out; position: absolute; overflow-wrap: break-word; word-wrap: break-word; padding: 10px; box-sizing: border-box; }
-        .flashcard-front { transform: rotateY(0deg); }
-        .flashcard-back { transform: rotateY(180deg); background-color: #e8f4fd; border-radius: 8px;}
-        .flashcard-display-area.is-flipped .flashcard-front { transform: rotateY(180deg); } .flashcard-display-area.is-flipped .flashcard-back { transform: rotateY(0deg); } 
-        .flashcard-nav { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;}
-        #current-card-info { font-size: 0.9em; color: #666; margin: 0 10px; }
-        #flip-flashcard-btn { width:100%; margin-top:5px; }
-        .add-flashcard-area { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;}
-        .add-flashcard-area div { margin-bottom: 10px; }
-        .add-flashcard-area label { display: block; margin-bottom: 5px; font-weight: bold;}
-        .add-flashcard-area input[type="text"], .add-flashcard-area textarea { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
-        .add-flashcard-area textarea { min-height: 60px; resize: vertical; }
-        .flashcard-term-list-container { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; min-height: 100px; }
-        .flashcard-term-list-container h4 { margin-top:0; margin-bottom: 10px; }
-        #flashcard-term-list { list-style-type: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; border: 1px solid #eee; border-radius: 4px; }
-        #flashcard-term-list li { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: baseline; gap: 15px; }
-        #flashcard-term-list li:last-child { border-bottom: none; }
-        #flashcard-term-list li:hover { background-color: #e9ecef; }
-        #flashcard-term-list li span.term { font-weight: bold; flex-shrink: 0; margin-right: 10px;}
-        #flashcard-term-list li span.definition { font-size: 0.9em; color: #555; text-align: right; flex-grow: 1; word-break: break-word; }
+        /* ... Checklist Styles unchanged ... */
+        .checklist-widget {} .checklist-input-container { display: flex; margin-bottom: 15px; } #checklist-item-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 15px; } #add-checklist-item-btn { border-radius: 0 5px 5px 0; } #checklist { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; min-height: 100px; } #checklist li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 16px; } #checklist li:last-child { border-bottom: none; } #checklist input[type="checkbox"] { appearance: none; -webkit-appearance: none; -moz-appearance: none; width: 20px; height: 20px; border: 2px solid #888; border-radius: 50%; margin-right: 12px; cursor: pointer; position: relative; outline: none; flex-shrink: 0; } #checklist input[type="checkbox"]:checked { background-color: #007bff; border-color: #007bff; } #checklist input[type="checkbox"]:checked::before { content: ''; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background-color: white; border-radius: 50%; transform: translate(-50%, -50%); } #checklist label { flex-grow: 1; cursor: pointer; color: #333; word-break: break-word; } #checklist input[type="checkbox"]:checked + label { text-decoration: line-through; color: #aaa; }
+        
+        /* ... Notes & Sticky Styles unchanged ... */
+        .notes-widget { flex-grow: 1; display: flex; flex-direction: column; } #notes-area { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: vertical; box-sizing: border-box; min-height: 200px; flex-shrink: 0; } .sticky-notes-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; } .sticky-notes-section h4 { margin-top: 0; margin-bottom: 10px;} #sticky-notes-controls { margin-bottom: 10px; } #sticky-notes-board { flex-grow: 1; border: 1px dashed #ccc; border-radius: 5px; position: relative; overflow: auto; background-color: #fdfdfd; min-height: 250px; } .sticky-note { position: absolute; width: 180px; height: 180px; background-color: #ffc; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); padding: 0; box-sizing: border-box; cursor: move; display: flex; flex-direction: column; border: 1px solid #e6e6a1; overflow: hidden; } .sticky-note-header { display: flex; justify-content: flex-end; height: 20px; padding: 2px 5px; background-color: rgba(0,0,0,0.05); flex-shrink: 0;} .delete-sticky-btn { font-size: 14px; width: 18px; height: 18px; line-height: 16px; padding: 0; background: rgba(0,0,0,0.1); color: #333; border: none; border-radius: 50%; cursor: pointer; opacity: 0.5; } .sticky-note:hover .delete-sticky-btn { opacity: 1; } .sticky-note textarea { flex-grow: 1; border: none; background-color: transparent; resize: none; outline: none; font-family: 'Architects Daughter', cursive; font-size: 1em; padding: 8px; box-sizing: border-box; }
+        
+        /* ... Flashcard Styles unchanged ... */
+         .flashcards-widget { display: flex; flex-direction: column; gap: 15px; flex-grow:1; } .flashcard-display-area { min-height: 180px; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; font-size: 1.4em; cursor: pointer; background-color: #f9f9f9; position: relative; perspective: 1000px; overflow: hidden; } .flashcard-face { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transition: transform 0.7s ease-in-out; position: absolute; overflow-wrap: break-word; word-wrap: break-word; padding: 10px; box-sizing: border-box; } .flashcard-front { transform: rotateY(0deg); } .flashcard-back { transform: rotateY(180deg); background-color: #e8f4fd; border-radius: 8px;} .flashcard-display-area.is-flipped .flashcard-front { transform: rotateY(180deg); } .flashcard-display-area.is-flipped .flashcard-back { transform: rotateY(0deg); } .flashcard-nav { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;} #current-card-info { font-size: 0.9em; color: #666; margin: 0 10px; } #flip-flashcard-btn { width:100%; margin-top:5px; } .add-flashcard-area { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;} .add-flashcard-area div { margin-bottom: 10px; } .add-flashcard-area label { display: block; margin-bottom: 5px; font-weight: bold;} .add-flashcard-area input[type="text"], .add-flashcard-area textarea { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; } .add-flashcard-area textarea { min-height: 60px; resize: vertical; } .flashcard-term-list-container { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; flex-grow: 1; display: flex; flex-direction: column; min-height: 100px; } .flashcard-term-list-container h4 { margin-top:0; margin-bottom: 10px; } #flashcard-term-list { list-style-type: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; border: 1px solid #eee; border-radius: 4px; } #flashcard-term-list li { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: baseline; gap: 15px; } #flashcard-term-list li:last-child { border-bottom: none; } #flashcard-term-list li:hover { background-color: #e9ecef; } #flashcard-term-list li span.term { font-weight: bold; flex-shrink: 0; margin-right: 10px;} #flashcard-term-list li span.definition { font-size: 0.9em; color: #555; text-align: right; flex-grow: 1; word-break: break-word; }
 
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -132,31 +99,31 @@
             <div class="music-player-container">
                 <div class="player-tabs">
                     <button class="player-tab-btn active" data-player-tab="player">Player</button>
-                    <button class="player-tab-btn" data-player-tab="load-link">Load Link</button>
-                </div>
+                    <button class="player-tab-btn" data-player-tab="load-link">Add & Organize</button> </div>
 
                 <div class="player-tab-content active" id="player-content-area">
                     <div class="video-container" id="main-video-player"></div>
                     <div class="song-title">Select a Song or Video</div>
                     <div class="player-controls-area">
-                         <div class="controls"> <button id="prev-btn" class="control-btn">⏮</button> <button id="play-btn" class="control-btn">▶</button> <button id="pause-btn" class="control-btn" style="display: none;">⏸</button> <button id="next-btn" class="control-btn">⏭</button> <div class="volume-container"> <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div> </div> </div> <div class="progress-container"> <div class="time" id="current-time">0:00</div> <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div> <div class="time" id="duration">0:00</div> </div>
+                        <div class="controls"> <button id="prev-btn" class="control-btn">⏮</button> <button id="play-btn" class="control-btn">▶</button> <button id="pause-btn" class="control-btn" style="display: none;">⏸</button> <button id="next-btn" class="control-btn">⏭</button> <div class="volume-container"> <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div> </div> </div> <div class="progress-container"> <div class="time" id="current-time">0:00</div> <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div> <div class="time" id="duration">0:00</div> </div>
                     </div>
-                    <div class="playlist-container" id="playlist-container-display"> <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio"> <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div> </div> <div class="playlist-item" data-src="youtu.be11" data-thumbnail="youtu.be12" data-type="youtube"> <img src="youtu.be13" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div> </div> <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio"> <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div> </div>
-                    </div>
+                    <div class="playlist-container" id="playlist-container-display"> 
+                         </div>
                 </div>
 
                  <div class="player-tab-content" id="link-loader-area">
-                    <div class="media-input-area">
-                        <h4>Load Media & Add to Playlist:</h4>
-                        <p>Paste a YouTube URL or full SoundCloud Embed Code.</p>
+                     <div class="media-input-area">
+                        <h4>Add Media to Playlist:</h4>
+                        <p>Paste YouTube URL or full SoundCloud Embed Code.</p>
                         <div class="media-input-container">
-                            <input type="text" id="media-url-input" placeholder="YouTube URL or full <iframe...> code from SoundCloud">
-                            <button id="load-media-btn" class="btn-success">Add to Playlist</button> </div>
-                         <div class="load-instructions">
-                            For SoundCloud: Click Share > Embed > Copy the full iframe code.<br/>
-                            (Loaded media will be added to the end of the playlist in the 'Player' tab).
-                         </div>
-                         </div>
+                            <input type="text" id="media-url-input" placeholder="YouTube URL or full <iframe...> code">
+                            <button id="load-media-btn" class="btn-success">Add Media</button> 
+                        </div>
+                         <div class="load-instructions">For SoundCloud: Click Share > Embed > Copy the full iframe code.</div>
+                    </div>
+                    <h4>Edit Playlist Order (Drag & Drop):</h4>
+                     <ul id="playlist-editor-list">
+                         </ul>
                 </div>
             </div>
         </section>
@@ -164,11 +131,7 @@
         <div class="resizer" id="drag-handle"></div>
 
         <section id="right-column">
-            <div class="widget-tabs">
-                  <button class="widget-tab-btn active" data-widget="checklist">Checklist</button>
-                  <button class="widget-tab-btn" data-widget="notes">Notes & Sticky</button> 
-                  <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button>
-             </div>
+            <div class="widget-tabs"> <button class="widget-tab-btn active" data-widget="checklist">Checklist</button> <button class="widget-tab-btn" data-widget="notes">Notes & Sticky</button> <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button> </div>
              <div class="widget-content-area">
                   <div class="checklist-widget widget-card active-widget" id="checklist-widget"> <div class="checklist-input-container"> <input type="text" id="checklist-item-input" placeholder="Add a new task..."> <button id="add-checklist-item-btn" class="btn-primary">Add</button> </div> <ul id="checklist"></ul> </div>
                   <div class="notes-widget widget-card" id="notes-widget" style="display: none;"> <textarea id="notes-area" placeholder="Write your main notes here..."></textarea> <div class="sticky-notes-section"> <h4>Sticky Notes</h4> <div id="sticky-notes-controls"> <button id="add-sticky-note-btn" class="btn-primary">Add New Sticky Note</button> </div> <div id="sticky-notes-board"></div> </div> </div>
@@ -179,36 +142,121 @@
 
     <script>
         // --- COLUMN RESIZER JavaScript ---
-        const leftColumn = document.getElementById('left-column'); const rightColumn = document.getElementById('right-column'); const dragHandle = document.getElementById('drag-handle'); let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0; let calculatedLeftMinWidth = 320; function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); } document.addEventListener('DOMContentLoaded', () => { if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; } setTimeout(calculateLeftMinWidth, 100); const containerWidth = leftColumn.parentElement.offsetWidth; const initialLeftPercent = 35; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const resizerWidth = dragHandle.offsetWidth || 10; let initialLeftPx = (containerWidth * initialLeftPercent) / 100; initialLeftPx = Math.max(calculatedLeftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${initialLeftPx}px`; }); if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); /* Add class to disable pointer events */ document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); }); } function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; } function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); /* Remove class */ document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); }
+        // ... (Resizer JS with pointer-events fix) ...
+        const leftColumn = document.getElementById('left-column'); const rightColumn = document.getElementById('right-column'); const dragHandle = document.getElementById('drag-handle'); let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0; let calculatedLeftMinWidth = 320; function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); } document.addEventListener('DOMContentLoaded', () => { if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; } setTimeout(calculateLeftMinWidth, 100); const containerWidth = leftColumn.parentElement.offsetWidth; const initialLeftPercent = 35; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const resizerWidth = dragHandle.offsetWidth || 10; let initialLeftPx = (containerWidth * initialLeftPercent) / 100; initialLeftPx = Math.max(calculatedLeftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${initialLeftPx}px`; }); if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); }); } function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; } function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); }
 
 
         // --- LEFT PLAYER TABS ---
-        // ... (Player tab switching JS - corrected) ...
-        const playerTabs = document.querySelectorAll('.player-tab-btn'); const playerTabContents = document.querySelectorAll('.player-tab-content'); playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
+        // ... (Player tab switching JS - Corrected ID lookup) ...
+         const playerTabs = document.querySelectorAll('.player-tab-btn'); const playerTabContents = document.querySelectorAll('.player-tab-content'); playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
 
 
-        // --- MEDIA PLAYER (Audio, YouTube, SoundCloud Embed Code) ---
-        const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); const playlistContainerDisplay = document.getElementById('playlist-container-display'); // Use ID
+        // --- MEDIA PLAYER & PLAYLIST MANAGEMENT ---
+        const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); 
+        const playlistContainerDisplay = document.getElementById('playlist-container-display'); // Player tab view
+        const playlistEditorList = document.getElementById('playlist-editor-list'); // Editor tab view
         const volumeSlider = document.getElementById('volume-slider'); const volumeThumb = volumeSlider.querySelector('.volume-thumb'); const songTitleElem = document.getElementById('song-title'); const mainVideoPlayerContainer = document.getElementById('main-video-player'); const playerControlsArea = document.querySelector('.player-controls-area'); const mediaUrlInput = document.getElementById('media-url-input'); const loadMediaBtn = document.getElementById('load-media-btn'); 
+        
         let audio = new Audio(); 
-        let currentTrackIndex = -1; // Start at -1, set when loading
+        let currentTrackIndex = -1; 
         let currentMediaType = null; 
         let activeMediaFrame = null; 
-        let tracks = []; // Will be populated from HTML initially, then updated
+        let tracks = []; // Single source of truth for playlist data
         let isDraggingProgress = false; let isDraggingVolume = false; 
 
-        // Function to parse initial playlist items from HTML
+        // Function to render BOTH playlist views from the 'tracks' array
+        function renderAllPlaylists() {
+            renderPlaylistView(playlistContainerDisplay, false); // Render read-only view in player
+            renderPlaylistView(playlistEditorList, true);    // Render editable view in editor
+            // Re-initialize SortableJS on the editor list after rendering
+            initializePlaylistEditorSortable();
+        }
+
+        // Generic playlist render function
+        function renderPlaylistView(container, isEditable) {
+            if (!container) return;
+            container.innerHTML = ''; // Clear current view
+            
+            tracks.forEach((track, index) => {
+                const item = document.createElement(isEditable ? 'li' : 'div'); // Use li for editor, div for display
+                item.classList.add('playlist-item');
+                item.dataset.index = index; // Store index for reference
+
+                // Thumbnail
+                const img = document.createElement('img');
+                img.src = track.thumbnail;
+                img.alt = track.title.substring(0, 10); // Alt text snippet
+                item.appendChild(img);
+
+                // Title
+                const titleDiv = document.createElement('div');
+                titleDiv.textContent = track.title;
+                item.appendChild(titleDiv);
+
+                if (isEditable) {
+                    item.dataset.trackId = index; // Or use a unique ID if available
+                    // Add delete button for editor view
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.className = 'delete-item-btn';
+                    deleteBtn.title = 'Remove from Playlist';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent click listener below
+                        if (confirm(`Remove "${track.title}" from playlist?`)) {
+                            deleteTrack(index);
+                        }
+                    });
+                    item.appendChild(deleteBtn);
+                } else {
+                    // Add click listener only for the display view
+                    item.addEventListener('click', () => {
+                        currentTrackIndex = index;
+                        loadTrackFromPlaylist(currentTrackIndex);
+                    });
+                    // Add active track highlighting for display view
+                     if (index === currentTrackIndex) {
+                         item.classList.add('active-track');
+                     }
+                }
+                container.appendChild(item);
+            });
+        }
+        
+        // Delete track function
+        function deleteTrack(index) {
+             if (index >= 0 && index < tracks.length) {
+                 tracks.splice(index, 1); // Remove from data array
+                 // Adjust currentTrackIndex if needed
+                 if (currentTrackIndex === index) {
+                     currentTrackIndex = -1; // Stop playback or load next/previous? Reset for now.
+                     clearPlayerScreen();
+                     songTitleElem.textContent = "Select a Song or Video";
+                     // Maybe load index 0 if it exists?
+                     if (tracks.length > 0) {
+                         currentTrackIndex = 0;
+                         loadTrackFromPlaylist(0);
+                     }
+                 } else if (currentTrackIndex > index) {
+                     currentTrackIndex--; // Adjust index if item before current was deleted
+                 }
+                 renderAllPlaylists(); // Re-render both views
+                 updateProgressBar(); // Update player state
+             }
+        }
+
+
+        // Function to parse initial items and set up
         function initializePlaylist() {
             const initialItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
             tracks = Array.from(initialItems).map(item => ({ 
                 src: item.dataset.src, 
                 title: item.querySelector('div') ? item.querySelector('div').textContent.trim() : "Unknown Title", 
-                thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/40/DDDDDD/808080?Text=M', // Smaller default thumb
+                thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/40/DDDDDD/808080?Text=M',
                 type: item.dataset.type || 'audio' 
             }));
-            // Add click listeners to initial items
-            addPlaylistListeners();
-            // Load the first track if playlist is not empty
+            playlistContainerDisplay.innerHTML = ''; // Clear static HTML items
+            renderAllPlaylists(); // Render from data array
+
             if (tracks.length > 0) {
                  currentTrackIndex = 0;
                  loadTrackFromPlaylist(currentTrackIndex);
@@ -217,125 +265,93 @@
             }
         }
 
-        // Function to add event listeners to playlist items
-        function addPlaylistListeners() {
-             const allPlaylistItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
-             allPlaylistItems.forEach((item, index) => {
-                // Remove existing listener first to avoid duplicates if called again
-                item.replaceWith(item.cloneNode(true)); // Simple way to remove all listeners
-             });
-             // Re-select items and add listeners
-             const newPlaylistItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
-             newPlaylistItems.forEach((item, index) => {
-                  item.addEventListener('click', () => { 
-                       currentTrackIndex = index; 
-                       loadTrackFromPlaylist(currentTrackIndex); 
-                  });
-             });
+        // Initialize SortableJS for the editor list
+        let sortableInstance = null;
+        function initializePlaylistEditorSortable() {
+             if (sortableInstance) {
+                 sortableInstance.destroy(); // Destroy previous instance if re-rendering
+             }
+             if (playlistEditorList) {
+                sortableInstance = new Sortable(playlistEditorList, {
+                    animation: 150, // ms, animation speed moving items when sorting, `0` — without animation
+                    ghostClass: 'sortable-ghost', // Class name for the drop placeholder
+                    dragClass: 'sortable-drag', // Class name for the dragging item
+                    onEnd: function (evt) {
+                        // evt.oldIndex - old index within parent
+                        // evt.newIndex - new index within parent
+                        if (evt.oldIndex !== evt.newIndex) {
+                             // Update the tracks array based on the drag event
+                             const movedItem = tracks.splice(evt.oldIndex, 1)[0];
+                             tracks.splice(evt.newIndex, 0, movedItem);
+
+                             // Adjust currentTrackIndex if the currently playing item moved
+                             if (currentTrackIndex === evt.oldIndex) {
+                                 currentTrackIndex = evt.newIndex;
+                             } else if (currentTrackIndex > evt.oldIndex && currentTrackIndex <= evt.newIndex) {
+                                 currentTrackIndex--;
+                             } else if (currentTrackIndex < evt.oldIndex && currentTrackIndex >= evt.newIndex) {
+                                 currentTrackIndex++;
+                             }
+                             
+                             // Re-render both lists to reflect the new order
+                             renderAllPlaylists(); 
+                        }
+                    },
+                });
+            }
         }
+
 
         function clearPlayerScreen() { /* ... as before ... */ mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } 
         function getYouTubeVideoID(url) { /* ... as before ... */ const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; } 
-        
-        // Updated function to extract SRC from SoundCloud embed code
-        function getSoundCloudEmbedSrc(iframeCode) {
-             if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) {
-                  const match = iframeCode.match(/src="([^"]*)"/);
-                  if (match && match[1] && match[1].includes('w.soundcloud.com/player')) {
-                       return match[1]; // Return the extracted src URL
-                  }
-             }
-             return null; // Not valid iframe code or src not found/valid
-        }
+        function getSoundCloudEmbedSrc(iframeCode) { /* ... as before ... */ if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) { const match = iframeCode.match(/src="([^"]*)"/); if (match && match[1] && match[1].includes('w.soundcloud.com/player')) return match[1]; } return null; }
+        function isSoundCloudUrl(url) { return url.includes('soundcloud.com'); } // Keep for potential future use
 
-        function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... as before, using urlOrId ... */ 
+        function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... unchanged core logic ... */ 
             clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title; 
-            if (type === 'youtube') { 
-                const videoID = getYouTubeVideoID(urlOrId); // Assume urlOrId is a standard YT URL
-                if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; 
-                } else { songTitleElem.textContent = "Invalid YouTube URL"; } 
-            } else if (type === 'soundcloud') { 
-                 // Assume urlOrId is the already extracted Embed SRC
-                 if(urlOrId.includes('w.soundcloud.com/player')) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = urlOrId; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; 
-                 } else { songTitleElem.textContent = "Invalid SoundCloud Embed SRC"; }
-            } else { // audio
-                 audio.src = urlOrId; audio.load(); const trackData = tracks.find(t => t.src === urlOrId && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); 
-            } 
+            if (type === 'youtube') { const videoID = getYouTubeVideoID(urlOrId); if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid YouTube URL"; } 
+            } else if (type === 'soundcloud') { if(urlOrId.includes('w.soundcloud.com/player')) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = urlOrId; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid SoundCloud Embed SRC"; } 
+            } else { audio.src = urlOrId; audio.load(); const trackData = tracks.find(t => t.src === urlOrId && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); } 
         } 
 
-        // Logic for the "Load Media" button
+        // Updated Load Media Button Logic
         if(loadMediaBtn) { 
             loadMediaBtn.addEventListener('click', () => { 
-                const inputVal = mediaUrlInput.value.trim(); 
-                if (inputVal === "") return; 
+                const inputVal = mediaUrlInput.value.trim(); if (inputVal === "") return; 
+                let type = 'unknown'; let src = inputVal; let title = "User Added Media"; let thumbnail = 'https://via.placeholder.com/40/DDDDDD/808080?Text=M'; 
+                const youtubeID = getYouTubeVideoID(inputVal); 
+                const soundcloudSrc = getSoundCloudEmbedSrc(inputVal); 
 
-                let type = 'unknown'; 
-                let src = inputVal;
-                let title = "User Added Media";
-                let thumbnail = 'https://via.placeholder.com/40/DDDDDD/808080?Text=M'; // Default thumb
-
-                const youtubeID = getYouTubeVideoID(inputVal);
-                const soundcloudSrc = getSoundCloudEmbedSrc(inputVal); // Try parsing as iframe code
-
-                if (youtubeID) {
-                    type = 'youtube';
-                    src = inputVal; // Store original URL for potential reprocessing if needed
-                    title = `YouTube Video (${youtubeID.substring(0,5)}...)`; // Placeholder title
-                    thumbnail = `https://img.youtube.com/vi/${youtubeID}/default.jpg`;
-                } else if (soundcloudSrc) {
-                    type = 'soundcloud';
-                    src = soundcloudSrc; // Store the extracted SRC
-                    title = "SoundCloud Track"; // Placeholder title
-                    // Fetching SC thumbnail is complex client-side, use default
+                if (youtubeID) { type = 'youtube'; src = inputVal; title = `YouTube Video (${youtubeID.substring(0,5)}...)`; thumbnail = `youtu.be3{youtubeID}/default.jpg`; 
+                } else if (soundcloudSrc) { type = 'soundcloud'; src = soundcloudSrc; title = "SoundCloud Track"; 
                 }
 
-                if (type !== 'unknown') {
-                    // Add to playlist data array
-                    const newTrackData = { src, title, thumbnail, type };
-                    tracks.push(newTrackData);
-
-                    // Add to visible playlist in Player tab
-                    const newItem = document.createElement('div');
-                    newItem.classList.add('playlist-item');
-                    newItem.dataset.src = src;
-                    newItem.dataset.thumbnail = thumbnail;
-                    newItem.dataset.type = type;
-                    newItem.innerHTML = `
-                        <img src="${thumbnail}" alt="Media">
-                        <div>${title}</div>
-                    `;
-                    playlistContainerDisplay.appendChild(newItem);
-                    
-                    // Re-attach listeners to all items including the new one
-                    addPlaylistListeners(); 
-
-                    // Optionally, load the newly added track
-                    // currentTrackIndex = tracks.length - 1;
-                    // loadTrackFromPlaylist(currentTrackIndex); 
-                    
-                    alert(`${title} added to playlist!`); // Give feedback
-
-                } else { 
-                    alert("Could not load. Please paste a valid YouTube URL or full SoundCloud Embed Code."); 
-                } 
+                if (type !== 'unknown') { 
+                    const newTrackData = { src, title, thumbnail, type }; 
+                    tracks.push(newTrackData); // Add to the main data array
+                    renderAllPlaylists(); // Re-render both playlist views
+                    alert(`${title} added to playlist! Check the 'Player' tab or edit order here.`); 
+                } else { alert("Could not load. Please paste a valid YouTube URL or full SoundCloud Embed Code."); } 
                 mediaUrlInput.value = ''; 
             }); 
         } 
         if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
         
-        function loadTrackFromPlaylist(index) { /* ... as before, calls loadMediaToPlayer ... */ const track = tracks[index]; if (track) loadMediaToPlayer(track.src, track.type, track.title); const allItems = playlistContainerDisplay.querySelectorAll('.playlist-item'); allItems.forEach(item => item.classList.remove('active-track')); if(allItems[index]) allItems[index].classList.add('active-track'); }
-        function playCurrentMedia() { /* ... as before ... */ if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } } 
-        function pauseCurrentMedia() { /* ... as before ... */ if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; } 
-        if(playBtn) playBtn.addEventListener('click', playCurrentMedia); if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()}); function updateProgressBar() { /* ... as before ... */ if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } } function formatTime(seconds) { /* ... as before ... */ if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; } 
+        function loadTrackFromPlaylist(index) { /* ... loads media, updates active class in player display ... */ const track = tracks[index]; if (track) loadMediaToPlayer(track.src, track.type, track.title); const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item'); displayItems.forEach(item => item.classList.remove('active-track')); if(displayItems[index]) displayItems[index].classList.add('active-track'); } 
+        function playCurrentMedia() { /* ... unchanged ... */ if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } } 
+        function pauseCurrentMedia() { /* ... unchanged ... */ if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; } 
+        if(playBtn) playBtn.addEventListener('click', playCurrentMedia); if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()}); 
+        function updateProgressBar() { /* ... unchanged ... */ if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } } 
+        function formatTime(seconds) { /* ... unchanged ... */ if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; } 
         if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
         if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
-        // Initial listeners set in initializePlaylist
-        if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); }); window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; }); function handleProgressBarSeek(e) { /* ... as before ... */ if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); } if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); function handleVolumeSliderDrag(e) { /* ... as before ... */ const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;} function setInitialVolume() { /* ... as before ... */ const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
+        // Playlist item click listeners are added in renderPlaylistView for the display list
+        if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); }); window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; }); function handleProgressBarSeek(e) { /* ... unchanged ... */ if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); } if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); function handleVolumeSliderDrag(e) { /* ... unchanged ... */ const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;} function setInitialVolume() { /* ... unchanged ... */ const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
 
 
         // --- RIGHT WIDGET TAB Switching ---
         // ... (Widget tab JS unchanged) ...
-         const widgetTabs = document.querySelectorAll('.widget-tab-btn'); const widgetContents = document.querySelectorAll('.widget-content-area .widget-card'); widgetTabs.forEach(tab => { tab.addEventListener('click', () => { widgetTabs.forEach(t => t.classList.remove('active')); widgetContents.forEach(c => c.style.display = 'none'); tab.classList.add('active'); const widgetName = tab.dataset.widget; const activeWidgetContent = document.getElementById(`${widgetName}-widget`); if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; }); }); 
+        const widgetTabs = document.querySelectorAll('.widget-tab-btn'); const widgetContents = document.querySelectorAll('.widget-content-area .widget-card'); widgetTabs.forEach(tab => { tab.addEventListener('click', () => { widgetTabs.forEach(t => t.classList.remove('active')); widgetContents.forEach(c => c.style.display = 'none'); tab.classList.add('active'); const widgetName = tab.dataset.widget; const activeWidgetContent = document.getElementById(`${widgetName}-widget`); if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; }); }); 
 
 
         // --- CHECKLIST JavaScript ---
@@ -354,17 +370,15 @@
 
         // --- INITIAL LOAD ---
         document.addEventListener('DOMContentLoaded', () => { 
-             // Initialize Playlist first
-             initializePlaylist(); 
-             // Then init other UI elements
-             setInitialVolume();
-             updateProgressBar();
-             renderFlashcard(); 
-             renderFlashcardTermList();
-             
-             // Init Player Tabs
+             initializePlaylist(); // Init playlist data & render views
+             setInitialVolume(); // Init volume
+             updateProgressBar(); // Init progress bar
+             renderFlashcard(); // Init flashcard view
+             renderFlashcardTermList(); // Init flashcard list
+
+             // Init Player Tabs Visibility
              const initialActivePlayerTab = document.querySelector('.player-tab-btn.active'); if(initialActivePlayerTab) { const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
-             // Init Widget Tabs
+             // Init Widget Tabs Visibility
              const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveWidgetTab) { const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
          });
 
