@@ -53,8 +53,7 @@ const addNewFlashcardBtn = document.getElementById('add-new-flashcard-btn');
 const flashcardTermListUL = document.getElementById('flashcard-term-list');
 const addStickyNoteBtn = document.getElementById('add-sticky-note-btn');
 const stickyNotesBoard = document.getElementById('sticky-notes-board');
-// --- Get notes area element ---
-const notesAreaElement = document.getElementById('notes-area'); // This was defined as 'notesArea' before, ensuring consistency
+const notesAreaElement = document.getElementById('notes-area');
 
 // State variables
 let isResizing = false;
@@ -83,7 +82,7 @@ const defaultThumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/
 
 // --- YouTube API Loading ---
 function onYouTubeIframeAPIReady() {
-    console.log("YouTube API Ready globally");
+    console.log("YouTube API Ready globally"); // Original DEBUG
 }
 
 // --- COLUMN RESIZER ---
@@ -97,7 +96,7 @@ if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preve
 playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
 
 // --- MEDIA PLAYER & PLAYLIST ---
-function renderPlaylistView(container, isEditable) { /* ... (This function should be here, unchanged from before) ... */
+function renderPlaylistView(container, isEditable) {
     if (!container) { console.error("Playlist container not found:", container); return; }
     const fragment = document.createDocumentFragment();
     if (tracks.length === 0) {
@@ -302,7 +301,7 @@ widgetTabs.forEach(tab => {
         const targetWidgetName = tab.dataset.widget;
         const targetWidget = document.getElementById(`${targetWidgetName}-widget`);
         if (targetWidget) {
-            targetWidget.style.display = 'flex'; // Or 'block' depending on your layout needs
+            targetWidget.style.display = 'flex';
         } else {
             console.error("Target widget content not found for tab:", targetWidgetName);
         }
@@ -311,7 +310,7 @@ widgetTabs.forEach(tab => {
 
 
 // --- CHECKLIST JavaScript ---
-function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */
+function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) {
     const text = taskText !== null ? taskText : checklistItemInput.value.trim();
     if (text === "") return;
 
@@ -329,8 +328,8 @@ function addChecklistItem(taskText = null, isChecked = false, shouldSave = true)
     label.textContent = text;
 
     const deleteBtn = document.createElement('button');
-    deleteBtn.innerHTML = '🗑️'; // Use an icon or text
-    deleteBtn.className = 'delete-item-btn'; // For styling
+    deleteBtn.innerHTML = '🗑️';
+    deleteBtn.className = 'delete-item-btn';
     deleteBtn.title = 'Delete item';
     deleteBtn.addEventListener('click', () => {
         listItem.remove();
@@ -340,27 +339,26 @@ function addChecklistItem(taskText = null, isChecked = false, shouldSave = true)
     listItem.appendChild(checkbox);
     listItem.appendChild(label);
     listItem.appendChild(deleteBtn);
-    checklist.appendChild(listItem);
+    if (checklist) checklist.appendChild(listItem); // Check if checklist element exists
 
-    if (taskText === null) checklistItemInput.value = ''; // Clear input only if it was a new item
+    if (taskText === null && checklistItemInput) checklistItemInput.value = '';
     if (shouldSave) saveState();
 }
 if(addChecklistItemBtn) addChecklistItemBtn.addEventListener('click', () => addChecklistItem());
 if(checklistItemInput) checklistItemInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addChecklistItem(); });
 
 // --- FLASHCARDS JavaScript ---
-// The renderFlashcard function updates the main display area of the current flashcard.
 function renderFlashcard() {
     if (!flashcardDisplay) return;
     if (currentFlashcardIndex === -1 || flashcards.length === 0) {
-        flashcardFront.textContent = 'No flashcards available.';
-        flashcardBack.textContent = '';
-        flashcardDisplay.classList.remove('flipped');
+        if (flashcardFront) flashcardFront.textContent = 'No flashcards available.';
+        if (flashcardBack) flashcardBack.textContent = '';
+        flashcardDisplay.classList.remove('flipped'); // Corrected from is-flipped to flipped
         if (currentCardInfo) currentCardInfo.textContent = '0/0';
     } else {
         const card = flashcards[currentFlashcardIndex];
-        flashcardFront.textContent = card.term;
-        flashcardBack.textContent = card.definition;
+        if (flashcardFront) flashcardFront.textContent = card.term;
+        if (flashcardBack) flashcardBack.textContent = card.definition;
         if (isFlashcardFlipped) {
             flashcardDisplay.classList.add('flipped');
         } else {
@@ -373,31 +371,29 @@ function renderFlashcard() {
 function flipCurrentFlashcard() {
     if (flashcards.length === 0 || currentFlashcardIndex === -1) return;
     isFlashcardFlipped = !isFlashcardFlipped;
-    if (flashcardDisplay) flashcardDisplay.classList.toggle('flipped');
+    if (flashcardDisplay) {
+      flashcardDisplay.classList.toggle('flipped'); // Use 'flipped' to match renderFlashcard
+    }
     saveState();
 }
 
-// This function renders the list of flashcard terms.
-// The crucial line listItem.appendChild(deleteBtn) is included below.
 function renderFlashcardTermList() {
-    console.log("DEBUG: renderFlashcardTermList is running, flashcards count:", flashcards.length);
+    console.log("DEBUG: renderFlashcardTermList is running, flashcards count:", flashcards.length); // Original DEBUG
 
     if (!flashcardTermListUL) {
-        console.error("DEBUG: flashcardTermListUL not found!");
+        console.error("DEBUG: flashcardTermListUL not found!"); // Original DEBUG
         return;
     }
-    flashcardTermListUL.innerHTML = ''; // Clear existing list items
-
-    // Create a version of flashcards that includes original index, then sort by term for display
+    flashcardTermListUL.innerHTML = '';
     const sortedForDisplay = flashcards.map((card, index) => ({ ...card, originalIndex: index }))
                                       .sort((a, b) => a.term.localeCompare(b.term));
 
     sortedForDisplay.forEach(cardData => {
-        console.log("DEBUG: Processing card in renderFlashcardTermList:", cardData.term);
-        const originalIndex = cardData.originalIndex; // This is the index in the *unsorted* flashcards array
+        console.log("DEBUG: Processing card in renderFlashcardTermList:", cardData.term); // Original DEBUG
+        const originalIndex = cardData.originalIndex;
 
         const listItem = document.createElement('li');
-        listItem.dataset.originalIndex = originalIndex; // Store the original index
+        listItem.dataset.originalIndex = originalIndex;
 
         const termSpan = document.createElement('span');
         termSpan.className = 'term';
@@ -406,39 +402,42 @@ function renderFlashcardTermList() {
         const defSpan = document.createElement('span');
         defSpan.className = 'definition';
         defSpan.textContent = cardData.definition;
-        // Basic styling for definition to be less prominent or next to term
         defSpan.style.marginLeft = '10px';
         defSpan.style.color = '#555';
 
-
         const deleteBtn = document.createElement('button');
-        console.log("DEBUG: Creating delete button for card:", cardData.term);
+        console.log("DEBUG: Creating delete button for card:", cardData.term); // Original DEBUG
         deleteBtn.innerHTML = '🗑️';
-        deleteBtn.className = 'delete-item-btn'; // Use this class for styling
+        deleteBtn.className = 'delete-item-btn';
         deleteBtn.title = 'Delete Flashcard';
-        deleteBtn.style.marginLeft = '10px'; // Add some space
+        deleteBtn.style.marginLeft = '10px';
 
-        // Event listener for the delete button
         deleteBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent the listItem click event from firing
-            deleteFlashcard(originalIndex); // Use the originalIndex to delete from the master array
+            event.stopPropagation();
+            deleteFlashcard(originalIndex);
         });
 
         listItem.appendChild(termSpan);
         listItem.appendChild(defSpan);
-        listItem.appendChild(deleteBtn); // This line appends the delete button
 
-        // Event listener for the list item itself (to view the card)
+        console.log("DEBUG: ListItem BEFORE appending button:", listItem.innerHTML); // New DEBUG
+        console.log("DEBUG: Is deleteBtn a valid element?", deleteBtn instanceof HTMLElement, deleteBtn); // New DEBUG
+        
+        listItem.appendChild(deleteBtn); // THE CRUCIAL LINE
+
+        console.log("DEBUG: ListItem AFTER appending button:", listItem.innerHTML); // New DEBUG
+        console.log("DEBUG: Full listItem element:", listItem); // New DEBUG
+
         listItem.addEventListener('click', function(event) {
-            // Ensure the click was not on the delete button itself
-            if (event.target !== deleteBtn && !deleteBtn.contains(event.target)) {
+            if (event.target !== deleteBtn && !deleteBtn.contains(event.target)) { // Check if target is not deleteBtn or its child
                  currentFlashcardIndex = parseInt(this.dataset.originalIndex, 10);
-                 isFlashcardFlipped = false; // Show front first
+                 isFlashcardFlipped = false;
                  renderFlashcard();
-                 saveState(); // Save the new current index
+                 saveState();
             }
         });
         flashcardTermListUL.appendChild(listItem);
+        console.log("DEBUG: Appended listItem to flashcardTermListUL. Current UL children count:", flashcardTermListUL.children.length); // New DEBUG
     });
 }
 
@@ -466,23 +465,28 @@ if(nextFlashcardBtn) {
     });
 }
 
+// MODIFIED addNewFlashcardBtn listener with new DEBUG logs
 if(addNewFlashcardBtn) {
     addNewFlashcardBtn.addEventListener('click', () => {
+        console.log("DEBUG: Add New Flashcard button clicked!"); // New DEBUG
         const term = flashcardTermInput.value.trim();
         const definition = flashcardDefinitionInput.value.trim();
+
         if (term && definition) {
             flashcards.push({ term, definition });
-            flashcardTermInput.value = '';
-            flashcardDefinitionInput.value = '';
-            if (currentFlashcardIndex === -1 && flashcards.length > 0) { // If it was the first card added
+            if(flashcardTermInput) flashcardTermInput.value = '';
+            if(flashcardDefinitionInput) flashcardDefinitionInput.value = '';
+
+            if (currentFlashcardIndex === -1 && flashcards.length > 0) {
                 currentFlashcardIndex = 0;
             } else if (flashcards.length > 0) {
-                 // Optionally, set currentFlashcardIndex to the newly added card
                  currentFlashcardIndex = flashcards.length -1;
             }
             isFlashcardFlipped = false;
+
             renderFlashcard();
-            renderFlashcardTermList();
+            console.log("DEBUG: About to call renderFlashcardTermList from addNewFlashcardBtn"); // New DEBUG
+            renderFlashcardTermList(); // CRUCIAL CALL
             saveState();
         } else {
             alert("Please enter both a term and a definition.");
@@ -491,39 +495,34 @@ if(addNewFlashcardBtn) {
 }
 
 document.addEventListener('keydown', function(e) {
-    // Check if the focus is on an input field or textarea, if so, don't trigger global keybinds
     const activeElement = document.activeElement;
     const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable;
 
     if (isInputFocused) {
-        // Allow specific keybinds for inputs if needed, e.g. Enter in mediaUrlInput
         if (activeElement === mediaUrlInput && e.key === 'Enter' && loadMediaBtn) {
             loadMediaBtn.click();
-        } else if (activeElement === checklistItemInput && e.key === 'Enter') {
-            addChecklistItem();
+        } else if (activeElement === checklistItemInput && e.key === 'Enter' && addChecklistItemBtn) { // Ensure addChecklistItemBtn exists
+            addChecklistItemBtn.click(); // Or call addChecklistItem() directly
         }
-        // For flashcard inputs, allow Enter to potentially submit or move to next field (not implemented here)
         return;
     }
 
-    // Global keybinds when not in an input
     const flashcardsWidget = document.getElementById('flashcards-widget');
     const isFlashcardsWidgetActive = flashcardsWidget && getComputedStyle(flashcardsWidget).display !== 'none';
 
     if (isFlashcardsWidgetActive) {
-        if (e.key === 'ArrowLeft') { // Previous flashcard
+        if (e.key === 'ArrowLeft') {
             if (prevFlashcardBtn) prevFlashcardBtn.click();
-        } else if (e.key === 'ArrowRight') { // Next flashcard
+        } else if (e.key === 'ArrowRight') {
             if (nextFlashcardBtn) nextFlashcardBtn.click();
-        } else if (e.key === ' ') { // Flip flashcard (Spacebar)
-            e.preventDefault(); // Prevent page scroll
+        } else if (e.key === ' ' || e.key === 'Spacebar') { // Added 'Spacebar' for older browsers/edge cases
+            e.preventDefault();
             if (flipFlashcardBtn) flipFlashcardBtn.click();
-            else if (flashcardDisplay) flipCurrentFlashcard(); // Fallback if button specific var is not found
+            else if (flashcardDisplay) flipCurrentFlashcard();
         }
     }
 });
 
-// --- FLASHCARDS: Function to Delete a Flashcard ---
 function deleteFlashcard(indexToDelete) {
     if (indexToDelete < 0 || indexToDelete >= flashcards.length) {
         console.error("Invalid index for deleting flashcard:", indexToDelete);
@@ -540,27 +539,21 @@ function deleteFlashcard(indexToDelete) {
     if (flashcards.length === 0) {
         currentFlashcardIndex = -1;
     } else if (currentFlashcardIndex === indexToDelete) {
-        // If we deleted the currently viewed card, try to view the one before it,
-        // or the new first card if the deleted one was the first.
         currentFlashcardIndex = Math.max(0, indexToDelete - 1);
-        // If indexToDelete was 0, currentFlashcardIndex becomes 0 (new first card or empty handled above)
     } else if (currentFlashcardIndex > indexToDelete) {
-        // If we deleted a card that was before the currently viewed one,
-        // the current card's index shifts down by one.
         currentFlashcardIndex--;
     }
-    // If a card after the current one was deleted, currentFlashcardIndex is still valid.
 
-    isFlashcardFlipped = false; // Reset to front view
+    isFlashcardFlipped = false;
     renderFlashcard();
     renderFlashcardTermList();
     saveState();
 }
-// --- STICKY NOTES JavaScript ---
-function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) { /* ... (This function should be here, unchanged from before) ... */
+
+function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) {
     const note = document.createElement('div');
     note.classList.add('sticky-note');
-    note.dataset.id = id; // Store ID for saving
+    note.dataset.id = id;
     note.style.position = 'absolute';
     note.style.top = `${top}px`;
     note.style.left = `${left}px`;
@@ -570,21 +563,32 @@ function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, l
     textarea.value = content;
     textarea.placeholder = 'Type something...';
     textarea.addEventListener('input', () => {
-        // Auto-resize logic (optional, simple version)
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
-        saveState(); // Save on input
+        saveState();
     });
-    textarea.addEventListener('focus', () => { // Bring to front on focus
+    textarea.addEventListener('focus', () => {
         note.style.zIndex = ++stickyNoteZIndex;
         saveState();
     });
 
-
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.classList.add('sticky-note-close-btn');
+    const closeBtn = document.createElement('button'); // Changed from deleteStickyBtn to closeBtn for consistency with class
+    closeBtn.innerHTML = '×';
+    closeBtn.classList.add('sticky-note-close-btn'); // Make sure this class is styled in CSS for visibility
     closeBtn.title = "Delete Note";
+    closeBtn.style.position = 'absolute'; // Example styling to make it visible
+    closeBtn.style.top = '2px';
+    closeBtn.style.right = '2px';
+    closeBtn.style.background = 'rgba(0,0,0,0.1)';
+    closeBtn.style.border = 'none';
+    closeBtn.style.borderRadius = '50%';
+    closeBtn.style.width = '18px';
+    closeBtn.style.height = '18px';
+    closeBtn.style.lineHeight = '16px';
+    closeBtn.style.textAlign = 'center';
+    closeBtn.style.cursor = 'pointer';
+
+
     closeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (confirm("Delete this sticky note?")) {
@@ -594,23 +598,22 @@ function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, l
     });
 
     note.appendChild(textarea);
-    note.appendChild(closeBtn);
-    stickyNotesBoard.appendChild(note);
+    note.appendChild(closeBtn); // Appending the close button
+    if(stickyNotesBoard) stickyNotesBoard.appendChild(note);
 
-    // Make it draggable (simple implementation)
+
     let isDraggingNote = false;
     let dragOffsetX, dragOffsetY;
 
     note.addEventListener('mousedown', (e) => {
-        // Only drag if not clicking on textarea or close button
-        if (e.target === textarea || e.target === closeBtn || closeBtn.contains(e.target)) return;
+        if (e.target === textarea || e.target === closeBtn || (closeBtn && closeBtn.contains(e.target)) ) return; // check if closeBtn exists
 
         isDraggingNote = true;
-        note.style.zIndex = ++stickyNoteZIndex; // Bring to front
+        note.style.zIndex = ++stickyNoteZIndex;
         dragOffsetX = e.clientX - note.offsetLeft;
         dragOffsetY = e.clientY - note.offsetTop;
         note.style.cursor = 'grabbing';
-        e.preventDefault(); // Prevent text selection while dragging header
+        e.preventDefault();
     });
 
     document.addEventListener('mousemove', (e) => {
@@ -618,13 +621,12 @@ function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, l
         let newTop = e.clientY - dragOffsetY;
         let newLeft = e.clientX - dragOffsetX;
 
-        // Boundary checks (optional, ensure it stays within board)
-        const boardRect = stickyNotesBoard.getBoundingClientRect();
-        const noteRect = note.getBoundingClientRect();
-
-        newTop = Math.max(0, Math.min(newTop, boardRect.height - noteRect.height));
-        newLeft = Math.max(0, Math.min(newLeft, boardRect.width - noteRect.width));
-
+        if (stickyNotesBoard) { // Ensure board exists for boundary checks
+            const boardRect = stickyNotesBoard.getBoundingClientRect();
+            const noteRect = note.getBoundingClientRect();
+            newTop = Math.max(0, Math.min(newTop, boardRect.height - noteRect.height));
+            newLeft = Math.max(0, Math.min(newLeft, boardRect.width - noteRect.width));
+        }
 
         note.style.top = `${newTop}px`;
         note.style.left = `${newLeft}px`;
@@ -634,11 +636,10 @@ function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, l
         if (isDraggingNote) {
             isDraggingNote = false;
             note.style.cursor = 'grab';
-            saveState(); // Save new position
+            saveState();
         }
     });
      if (shouldSave) saveState();
-     // Initial resize
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
@@ -653,7 +654,7 @@ function saveState() {
             tracks: tracks,
             currentTrackIndex: currentTrackIndex,
             volume: audio.volume,
-            leftColumnWidth: leftColumn.style.flexBasis || '320px',
+            leftColumnWidth: leftColumn ? leftColumn.style.flexBasis : '320px', // Check leftColumn exists
             checklistItems: [],
             flashcards: flashcards,
             currentFlashcardIndex: currentFlashcardIndex,
@@ -674,7 +675,7 @@ function loadState() {
             tracks = state.tracks || [];
             currentTrackIndex = state.currentTrackIndex !== undefined ? state.currentTrackIndex : -1;
             audio.volume = state.volume !== undefined ? state.volume : 0.5;
-            if (state.leftColumnWidth) leftColumn.style.flexBasis = state.leftColumnWidth;
+            if (leftColumn && state.leftColumnWidth) leftColumn.style.flexBasis = state.leftColumnWidth; // Check leftColumn exists
             if (state.checklistItems && checklist) { checklist.innerHTML = ''; state.checklistItems.forEach(item => addChecklistItem(item.text, item.checked, false)); }
             flashcards = state.flashcards || [];
             currentFlashcardIndex = state.currentFlashcardIndex !== undefined ? state.currentFlashcardIndex : -1;
@@ -689,9 +690,8 @@ function loadState() {
             if (tracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < tracks.length) {
                 const track = tracks[currentTrackIndex];
                 if (songTitleElem) songTitleElem.textContent = track.title;
-                // Don't autoplay on load, just set up the player
                 loadMediaToPlayer(track.src, track.type, track.title);
-                setTimeout(() => { // Ensure player is ready before trying to pause
+                setTimeout(() => {
                     if (currentMediaType === 'youtube' && youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') {
                          try { youtubePlayer.pauseVideo(); } catch(e) { console.warn("YT Pause on load error", e); }
                     } else if (currentMediaType === 'soundcloud' && soundcloudWidget && typeof soundcloudWidget.pause === 'function') {
@@ -701,13 +701,14 @@ function loadState() {
                     }
                     if (playBtn) playBtn.style.display = 'inline-block';
                     if (pauseBtn) pauseBtn.style.display = 'none';
-                }, 500); // Increased timeout slightly
+                }, 500);
                 updateProgressBar();
-                const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
-                displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
+                if(playlistContainerDisplay) { // Check if playlistContainerDisplay exists
+                    const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+                    displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
+                }
             } else if (tracks.length > 0) {
-                currentTrackIndex = 0; // Default to first track if index was invalid
-                // but don't auto load/play, just set title
+                currentTrackIndex = 0;
                 if (songTitleElem && tracks[0]) songTitleElem.textContent = tracks[0].title;
                 updateProgressBar();
             } else {
@@ -716,20 +717,20 @@ function loadState() {
             }
         } catch (error) {
             console.error("Error parsing saved state:", error);
-            localStorage.removeItem('studyHubState'); // Clear corrupted state
-            // Initialize fresh
+            localStorage.removeItem('studyHubState');
             initializePlaylist(); setInitialVolume(); updateProgressBar(); renderFlashcard(); renderFlashcardTermList();
         }
     } else {
-        // Initialize fresh if no saved state
         initializePlaylist(); setInitialVolume(); updateProgressBar(); renderFlashcard(); renderFlashcardTermList();
     }
 }
 
 // --- INITIAL LOAD ---
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DEBUG: DOMContentLoaded event fired."); // Original DEBUG
+
     var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api"; // Corrected API source
+    tag.src = "https://www.youtube.com/iframe_api"; // Corrected official YouTube API source
     var firstScriptTag = document.getElementsByTagName('script')[0];
     if (firstScriptTag && firstScriptTag.parentNode) {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -742,6 +743,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadState();
     initializePlaylistEditorSortable();
+    
+    // Greeting function (as per user's original console logs, assuming it exists or is desired)
+    async function fetchGreeting() {
+        console.log("DEBUG: FetchGreeting function started."); // Original DEBUG
+        try {
+            console.log("DEBUG: Attempting to fetch /api/greeting..."); // Original DEBUG
+            // This is a placeholder, replace with your actual API endpoint if needed
+            // const response = await fetch('/api/greeting'); 
+            // if (!response.ok) {
+            //     console.log("DEBUG: Fetch response status:", response.status); // Original DEBUG
+            //     throw new Error(`HTTP error! status: ${response.status}`);
+            // }
+            // const data = await response.json();
+            // console.log("Data from backend function:", data); // Original DEBUG
+            // if(document.getElementById('greeting-output')) document.getElementById('greeting-output').textContent = data.message || JSON.stringify(data);
+            
+            // Simulate data if no backend
+            const simulatedData = { message: "Study Hub Ready!" };
+            console.log("DEBUG: Fetch response status: 200 (Simulated)");
+            console.log("Data from backend function:", simulatedData);
+            if(document.getElementById('greeting-output')) document.getElementById('greeting-output').textContent = simulatedData.message;
+
+
+        } catch (error) {
+            console.error("DEBUG: FetchGreeting error:", error); // Original DEBUG
+            if(document.getElementById('greeting-output')) document.getElementById('greeting-output').textContent = 'Could not load greeting.';
+        }
+        console.log("DEBUG: FetchGreeting Function finished."); // Original DEBUG
+    }
+    
+    console.log("DEBUG: About to call fetchGreeting()."); // Original DEBUG
+    fetchGreeting();
+    console.log("DEBUG: Called fetchGreeting()."); // Original DEBUG
+
 
     async function loadNotesFromBackend() {
         if (!notesAreaElement) { console.error("Notes area element not found for loading!"); return; }
@@ -749,23 +784,21 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/api/notes/load');
             if (!response.ok) {
-                 // If response is not ok, but it's a 404 (no notes yet), it's not a hard error for the user.
                 if (response.status === 404) {
                     console.log("Frontend: No notes found on backend (404). Starting fresh or using localStorage fallback.");
-                    notesAreaElement.value = ''; // Start with empty if no backend notes
+                    if (notesAreaElement) notesAreaElement.value = '';
                 } else {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
             } else {
                  const noteText = await response.text();
-                 notesAreaElement.value = noteText;
+                 if (notesAreaElement) notesAreaElement.value = noteText;
                  console.log("Frontend: Notes loaded successfully from backend.");
-                 return; // Successfully loaded from backend, skip localStorage fallback for notes.
+                 return;
             }
         } catch (error) {
             console.error("Frontend: Failed to load notes from backend:", error);
         }
-        // Fallback to localStorage if backend load fails or returns 404 etc.
         const fallbackState = localStorage.getItem('studyHubState');
         if (fallbackState) {
             try {
@@ -792,8 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Frontend: Notes auto-saved via API successfully.");
         } catch (error) {
             console.error("Frontend: Failed to auto-save notes to backend:", error);
-            // Save to localStorage as a fallback if API fails
-            saveState(); // This will save notesAreaElement.value to localStorage.mainNote
+            saveState();
             console.log("Frontend: Notes saved to localStorage due to API failure.");
         }
     }
@@ -802,19 +834,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadNotesFromBackend();
     if (notesAreaElement) {
         notesAreaElement.addEventListener('input', () => {
-            debouncedSaveNotesToBackend(); // Save to backend (which includes LS fallback on API error)
-            // Also ensure the main saveState is called to keep localStorage.mainNote updated for non-API scenarios or immediate backup
-            saveState();
+            debouncedSaveNotesToBackend();
+            saveState(); // Also save to general LS state
         });
         console.log("Frontend: Auto-save listener added to notes area.");
     } else {
         console.error("Notes area element not found! Cannot add auto-save listener.");
     }
     window.addEventListener('beforeunload', () => {
-      saveState(); // General save state
-      // Explicitly try to save notes to backend if not debounced recently,
-      // but this might be interrupted by unload. Debounce is better.
-      // Forcing a save here might be too slow or get cancelled.
-      // The debounced save on 'input' and regular 'saveState' should cover most cases.
+      saveState();
     });
 });
