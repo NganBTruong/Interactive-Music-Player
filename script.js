@@ -1,18 +1,15 @@
 // --- Debounce Utility Function ---
- // Prevents a function from running too frequently
  function debounce(func, wait) {
- let timeout;
- return function executedFunction(...args) {
- const later = () => {
- clearTimeout(timeout);
- func(...args);
- };
- clearTimeout(timeout);
- timeout = setTimeout(later, wait);
- };
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => { clearTimeout(timeout); func(...args); };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
  };
 
 // --- Constants & State ---
+// Ensure ALL these elements exist in your HTML with the correct IDs
  const leftColumn = document.getElementById('left-column');
  const rightColumn = document.getElementById('right-column');
  const dragHandle = document.getElementById('drag-handle');
@@ -26,7 +23,7 @@
  const progressBarContainer = document.getElementById('progress-bar');
  const currentTimeElem = document.getElementById('current-time');
  const durationElem = document.getElementById('duration');
- const playlistContainerDisplay = document.getElementById('playlist-container-display');
+ const playlistContainerDisplay = document.getElementById('playlist-container-display'); // <<< ENSURE THIS IS CORRECT
  const playlistEditorList = document.getElementById('playlist-editor-list');
  const volumeSlider = document.getElementById('volume-slider');
  const volumeThumb = volumeSlider ? volumeSlider.querySelector('.volume-thumb') : null;
@@ -47,24 +44,22 @@
  const nextFlashcardBtn = document.getElementById('next-flashcard-btn');
  const flipFlashcardBtn = document.getElementById('flip-flashcard-btn');
  const currentCardInfo = document.getElementById('current-card-info');
-
-// Flashcard specific elements - with immediate logging
  const flashcardTermInput = document.getElementById('flashcard-term-input');
  const flashcardDefinitionInput = document.getElementById('flashcard-definition-input');
  const addNewFlashcardBtn = document.getElementById('add-new-flashcard-btn');
  const flashcardTermListUL = document.getElementById('flashcard-term-list');
-
-console.log("DEBUG: flashcardTermInput element:", flashcardTermInput);
- console.log("DEBUG: flashcardDefinitionInput element:", flashcardDefinitionInput);
- console.log("DEBUG: addNewFlashcardBtn element:", addNewFlashcardBtn);
- console.log("DEBUG: flashcardTermListUL element:", flashcardTermListUL);
-
-
  const addStickyNoteBtn = document.getElementById('add-sticky-note-btn');
  const stickyNotesBoard = document.getElementById('sticky-notes-board');
  const notesAreaElement = document.getElementById('notes-area');
 
-// State variables
+// Log initial element findings (Keep these)
+ console.log("DEBUG: playlistContainerDisplay element:", playlistContainerDisplay); // Log the specific element from the error
+ console.log("DEBUG: flashcardTermInput element:", flashcardTermInput);
+ console.log("DEBUG: flashcardDefinitionInput element:", flashcardDefinitionInput);
+ console.log("DEBUG: addNewFlashcardBtn element:", addNewFlashcardBtn);
+ console.log("DEBUG: flashcardTermListUL element:", flashcardTermListUL);
+
+// State variables (Keep these)
  let isResizing = false;
  let initialPosX = 0;
  let initialLeftWidth = 0;
@@ -82,359 +77,353 @@ console.log("DEBUG: flashcardTermInput element:", flashcardTermInput);
  let currentFlashcardIndex = -1;
  let isFlashcardFlipped = false;
  let stickyNoteZIndex = 1;
-
-let youtubePlayer = null;
+ let youtubePlayer = null;
  let soundcloudWidget = null;
  let ytProgressInterval = null;
+ const defaultThumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23eeeeee"/></svg>';
 
-const defaultThumbnail = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 10 10"><rect width="10" height="10" fill="%23eeeeee"/></svg>';
 
-// --- YouTube API Loading ---
- function onYouTubeIframeAPIReady() {
- console.log("YouTube API Ready globally"); // Original DEBUG
+// --- Function Definitions ---
+// (Keep all your function definitions here: onYouTubeIframeAPIReady, calculateLeftMinWidth, renderPlaylistView, renderFlashcard, addChecklistItem, deleteFlashcard, saveState, loadState, etc.)
+// Ensure functions correctly access the constants defined above.
+
+ function onYouTubeIframeAPIReady() { console.log("YouTube API Ready globally"); }
+ function calculateLeftMinWidth() { /* ... unchanged ... */ }
+ function handleResizerMouseMove(e) { /* ... unchanged ... */ }
+ function handleResizerMouseUp() { /* ... unchanged ... */ }
+ function renderPlaylistView(container, isEditable) { // This function uses playlistContainerDisplay indirectly via renderAllPlaylists
+    console.log("DEBUG: renderPlaylistView called for container:", container, "Editable:", isEditable);
+    // Ensure playlistContainerDisplay is accessible if needed directly here, but likely ok if called correctly
+    if (!container) { console.error("Playlist container (argument) not found:", container); return; }
+    const fragment = document.createDocumentFragment();
+    if (tracks.length === 0) {
+        const emptyMsg = document.createElement(isEditable ? 'li' : 'div');
+        emptyMsg.textContent = isEditable ? 'Playlist empty.' : 'Playlist empty. Add in "Add & Organize" tab.';
+        emptyMsg.style.padding = '10px'; emptyMsg.style.color = '#777';
+        fragment.appendChild(emptyMsg);
+    } else {
+        tracks.forEach((track, index) => {
+            const item = document.createElement(isEditable ? 'li' : 'div');
+            item.classList.add('playlist-item');
+            // This check needs the **global** currentTrackIndex
+            if (!isEditable && index === currentTrackIndex) {
+                item.classList.add('active-track');
+            }
+            item.dataset.index = index;
+            const img = document.createElement('img');
+            img.src = track.thumbnail || defaultThumbnail;
+            img.alt = track.title ? track.title.substring(0, 10) : 'Track';
+            img.onerror = function() { this.onerror=null; this.src = defaultThumbnail; };
+            item.appendChild(img);
+            const titleDiv = document.createElement('div');
+            titleDiv.classList.add('playlist-item-title-display');
+            titleDiv.textContent = track.title || "Unknown Title";
+            item.appendChild(titleDiv);
+            if (isEditable) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '🗑️'; deleteBtn.className = 'delete-item-btn';
+                deleteBtn.title = 'Remove from Playlist'; deleteBtn.type = "button";
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Remove "${track.title}" from playlist?`)) {
+                        deleteTrack(index); // Calls global deleteTrack
+                    }
+                });
+                item.appendChild(deleteBtn);
+            }
+            fragment.appendChild(item);
+        });
+    }
+    container.innerHTML = '';
+    container.appendChild(fragment);
+}
+ function startRenameMode(titleElement, trackIndex) { /* ... unchanged ... */ }
+ function handlePlaylistDoubleClick(event) { // Called by listener inside DOMContentLoaded
+     console.log("DEBUG: handlePlaylistDoubleClick called");
+     // Ensure tracks is accessible (it's global 'let')
+     const RENAME_INPUT_SELECTOR = 'input.playlist-item-rename-input';
+     const clickedListItem = event.target.closest('.playlist-item');
+     if (!clickedListItem || clickedListItem.querySelector(RENAME_INPUT_SELECTOR)) { return; }
+     const titleDisplayElement = event.target.closest('.playlist-item-title-display');
+     if (titleDisplayElement && clickedListItem.contains(titleDisplayElement)) {
+         const trackIndex = parseInt(clickedListItem.dataset.index);
+         if (!isNaN(trackIndex) && tracks[trackIndex]) { startRenameMode(titleDisplayElement, trackIndex); }
+     }
  }
-
-// --- COLUMN RESIZER ---
- function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); }
- function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; }
- function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); saveState(); }
- if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); }); }
-
-
- // --- LEFT PLAYER TABS ---
- playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
-
-// --- MEDIA PLAYER & PLAYLIST ---
- function renderPlaylistView(container, isEditable) { /* ... (unchanged) ... */ }
- function startRenameMode(titleElement, trackIndex) { /* ... (unchanged) ... */ }
- function handlePlaylistDoubleClick(event) { /* ... (unchanged) ... */ }
- if (playlistContainerDisplay) { /* ... (unchanged) ... */ }
- if (playlistEditorList) { /* ... (unchanged) ... */ }
- function renderAllPlaylists() { renderPlaylistView(playlistContainerDisplay, false); renderPlaylistView(playlistEditorList, true); }
- function deleteTrack(index) { /* ... (unchanged) ... */ }
- function initializePlaylist() { /* ... (unchanged) ... */ }
- function initializePlaylistEditorSortable() { /* ... (unchanged) ... */ }
- function clearPlayerScreen() { /* ... (unchanged) ... */ }
- function getYouTubeVideoID(url) { /* ... (unchanged) ... */ return (url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/) && RegExp.$2.length === 11) ? RegExp.$2 : null; } // Simplified
- function getSoundCloudEmbedSrc(iframeCode) { /* ... (unchanged) ... */ }
- function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... (unchanged) ... */ }
- function onPlayerReady(event) { /* ... (unchanged) ... */ }
- function onPlayerStateChange(event) { /* ... (unchanged) ... */ }
- function onPlayerError(event) { /* ... (unchanged) ... */ }
- function updateYouTubeProgress() { /* ... (unchanged) ... */ }
- if (loadMediaBtn) { /* ... (unchanged) ... */ }
- if(mediaUrlInput) { /* ... (unchanged) ... */ }
- function loadTrackFromPlaylist(index) { /* ... (unchanged) ... */ }
- function playCurrentMedia() { /* ... (unchanged) ... */ }
- function pauseCurrentMedia() { /* ... (unchanged) ... */ }
- if (playBtn) { /* ... (unchanged) ... */ }
- if (pauseBtn) { /* ... (unchanged) ... */ }
- audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => { if (nextBtn) nextBtn.click()}); audio.addEventListener('play', () => { if (currentMediaType === 'audio') { if (playBtn) playBtn.style.display = 'none'; if (pauseBtn) pauseBtn.style.display = 'inline-block'; } }); audio.addEventListener('pause', () => { if (currentMediaType === 'audio') { if (playBtn) playBtn.style.display = 'inline-block'; if (pauseBtn) pauseBtn.style.display = 'none'; } });
- function updateProgressBar() { /* ... (unchanged) ... */ }
- function formatTime(seconds) { /* ... (unchanged) ... */ return `${Math.floor(seconds / 60)}:${('0' + Math.floor(seconds % 60)).slice(-2)}`;} // Simplified
- if (prevBtn) { /* ... (unchanged) ... */ }
- if (nextBtn) { /* ... (unchanged) ... */ }
- if (progressBarContainer) { /* ... (unchanged) ... */ }
- window.addEventListener('mousemove', (e) => { if (isDraggingProgress) handleProgressBarSeek(e); if (isDraggingVolume) handleVolumeSliderDrag(e); }); // Combined
- window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; if (isDraggingVolume) isDraggingVolume = false; }); // Combined
- function handleProgressBarSeek(e) { /* ... (unchanged) ... */ }
- if (volumeSlider) { /* ... (unchanged) ... */ }
- // window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); // Duplicate, removed
- // window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); // Duplicate, removed
- function handleVolumeSliderDrag(e) { /* ... (unchanged) ... */ }
- function setInitialVolume() { /* ... (unchanged) ... */ }
-
-// --- RIGHT WIDGET TAB Switching ---
- widgetTabs.forEach(tab => { /* ... (unchanged as in user's provided code) ... */ });
-
-// --- CHECKLIST JavaScript ---
- function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) { /* ... (unchanged as in user's provided code) ... */ }
- if(addChecklistItemBtn) { /* ... (unchanged as in user's provided code) ... */ }
- if(checklistItemInput) { /* ... (unchanged as in user's provided code) ... */ }
-
-// --- FLASHCARDS JavaScript ---
- function renderFlashcard() {
- try {
- if (!flashcardDisplay) { console.warn("DEBUG: flashcardDisplay element not found in renderFlashcard."); return; }
- if (currentFlashcardIndex === -1 || flashcards.length === 0) {
- if (flashcardFront) flashcardFront.textContent = 'No flashcards available.';
- else console.warn("DEBUG: flashcardFront not found in renderFlashcard");
- if (flashcardBack) flashcardBack.textContent = '';
- else console.warn("DEBUG: flashcardBack not found in renderFlashcard");
- flashcardDisplay.classList.remove('flipped');
- if (currentCardInfo) currentCardInfo.textContent = '0/0';
- else console.warn("DEBUG: currentCardInfo not found in renderFlashcard");
- } else {
- const card = flashcards[currentFlashcardIndex];
- if (!card) {
- console.error("DEBUG: Card not found at currentFlashcardIndex:", currentFlashcardIndex, "Flashcards array:", flashcards);
- if (flashcardFront) flashcardFront.textContent = 'Error: Card not found.';
- if (flashcardBack) flashcardBack.textContent = '';
- return;
+ function renderAllPlaylists() { // This is likely where the error occurred if line 325 was inside it
+     console.log("DEBUG: renderAllPlaylists called");
+     // Critical: Ensure playlistContainerDisplay and playlistEditorList (top-level consts) are accessible here.
+     if (!playlistContainerDisplay) console.error("ERROR: playlistContainerDisplay is not accessible within renderAllPlaylists!");
+     if (!playlistEditorList) console.error("ERROR: playlistEditorList is not accessible within renderAllPlaylists!");
+     try {
+        renderPlaylistView(playlistContainerDisplay, false);
+        renderPlaylistView(playlistEditorList, true);
+     } catch (error) {
+         console.error("ERROR inside renderAllPlaylists calling renderPlaylistView:", error);
+     }
  }
- if (flashcardFront) flashcardFront.textContent = card.term;
- else console.warn("DEBUG: flashcardFront not found in renderFlashcard");
- if (flashcardBack) flashcardBack.textContent = card.definition;
- else console.warn("DEBUG: flashcardBack not found in renderFlashcard");
-
- if (isFlashcardFlipped) {
- flashcardDisplay.classList.add('flipped');
- } else {
- flashcardDisplay.classList.remove('flipped');
+ function deleteTrack(index) { /* ... unchanged ... calls renderAllPlaylists */ }
+ function initializePlaylist() { /* ... unchanged ... calls renderAllPlaylists and loadTrackFromPlaylist */ }
+ function initializePlaylistEditorSortable() { /* ... unchanged ... uses playlistEditorList */ }
+ function clearPlayerScreen() { /* ... unchanged ... uses mainVideoPlayerContainer */ }
+ function getYouTubeVideoID(url) { /* ... unchanged ... */ }
+ function getSoundCloudEmbedSrc(iframeCode) { /* ... unchanged ... */ }
+ function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... unchanged ... uses mainVideoPlayerContainer, songTitleElem, etc. */ }
+ function onPlayerReady(event) { /* ... unchanged ... */ }
+ function onPlayerStateChange(event) { /* ... unchanged ... */ }
+ function onPlayerError(event) { /* ... unchanged ... */ }
+ function updateYouTubeProgress() { /* ... unchanged ... */ }
+ function loadTrackFromPlaylist(index) { // Called from initializePlaylist & event listeners
+     console.log("DEBUG: loadTrackFromPlaylist called for index:", index);
+     // Uses playlistContainerDisplay indirectly via saveState and maybe directly for toggling class?
+     if (ytProgressInterval) clearInterval(ytProgressInterval); ytProgressInterval = null;
+     if (index < 0 || index >= tracks.length) { console.error(`Invalid track index: ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; updateProgressBar(); return; }
+     currentTrackIndex = index;
+     const track = tracks[index];
+     if (track) { loadMediaToPlayer(track.src, track.type, track.title); }
+     else { console.error(`Track not found at index ${index}`); clearPlayerScreen(); if (songTitleElem) songTitleElem.textContent = "Error: Track not found"; updateProgressBar(); }
+     // Ensure playlistContainerDisplay is accessible here
+     if (playlistContainerDisplay) {
+         const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+         displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
+     } else {
+         console.error("ERROR: playlistContainerDisplay not accessible in loadTrackFromPlaylist!");
+     }
+     saveState();
  }
- if (currentCardInfo) currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`;
- else console.warn("DEBUG: currentCardInfo not found in renderFlashcard");
- }
- } catch (error) {
- console.error("ERROR in renderFlashcard:", error);
- }
- }
-
-function flipCurrentFlashcard() {
- try {
- if (flashcards.length === 0 || currentFlashcardIndex === -1) return;
- isFlashcardFlipped = !isFlashcardFlipped;
- if (flashcardDisplay) {
- flashcardDisplay.classList.toggle('flipped');
- } else {
- console.warn("DEBUG: flashcardDisplay not found in flipCurrentFlashcard");
- }
- saveState();
- } catch (error) {
- console.error("ERROR in flipCurrentFlashcard:", error);
- }
- }
-
-function renderFlashcardTermList() {
- console.log("--------------------------------------------------"); // Separator
- console.log("DEBUG: renderFlashcardTermList CALLED. Flashcards count:", flashcards.length); // Original DEBUG, emphasized
- try {
- if (!flashcardTermListUL) {
- console.error("FATAL DEBUG: flashcardTermListUL is NULL or UNDEFINED here. Cannot render list."); // Original DEBUG, emphasized
- return;
- }
- console.log("DEBUG: flashcardTermListUL found:", flashcardTermListUL);
- flashcardTermListUL.innerHTML = ''; // Clear existing list items
- console.log("DEBUG: Cleared flashcardTermListUL innerHTML.");
-
- if (flashcards.length === 0) {
- console.log("DEBUG: No flashcards to render in the list.");
- const emptyMsg = document.createElement('li');
- emptyMsg.textContent = "No terms yet. Add some flashcards!";
- emptyMsg.style.padding = "10px";
- emptyMsg.style.color = "#777";
- flashcardTermListUL.appendChild(emptyMsg);
- return;
- }
-
- const sortedForDisplay = flashcards.map((card, index) => ({ ...card, originalIndex: index }))
- .sort((a, b) => a.term.localeCompare(b.term));
- console.log("DEBUG: Sorted flashcards for display:", sortedForDisplay);
-
- sortedForDisplay.forEach((cardData, displayIndex) => {
- console.log(`DEBUG: Processing card #${displayIndex + 1} in renderFlashcardTermList: Term='${cardData.term}', OriginalIndex=${cardData.originalIndex}`); // Original DEBUG, more info
- const originalIndex = cardData.originalIndex;
-
- const listItem = document.createElement('li');
- listItem.dataset.originalIndex = originalIndex;
- console.log("DEBUG: Created listItem:", listItem);
-
- const termSpan = document.createElement('span');
- termSpan.className = 'term';
- termSpan.textContent = cardData.term;
-
- const defSpan = document.createElement('span');
- defSpan.className = 'definition';
- defSpan.textContent = cardData.definition;
- // defSpan.style.marginLeft = '10px'; // Already in CSS
- // defSpan.style.color = '#555'; // Already in CSS
-
- const deleteBtn = document.createElement('button');
- console.log("DEBUG: Creating delete button for card:", cardData.term); // Original DEBUG
- deleteBtn.innerHTML = '🗑️';
- deleteBtn.className = 'delete-item-btn';
- deleteBtn.title = 'Delete Flashcard';
- // deleteBtn.style.marginLeft = '10px'; // Already in CSS via .delete-item-btn margin-left: auto and li gap
-
- deleteBtn.addEventListener('click', (event) => {
- try {
- console.log("DEBUG: Delete button clicked for card with originalIndex:", originalIndex);
- event.stopPropagation();
- deleteFlashcard(originalIndex);
- } catch (e) {
- console.error("ERROR in deleteBtn click listener:", e);
- }
- });
-
- listItem.appendChild(termSpan);
- listItem.appendChild(defSpan);
-
- console.log("DEBUG: ListItem BEFORE appending button:", listItem.innerHTML); // New DEBUG
- console.log("DEBUG: Is deleteBtn a valid element?", deleteBtn instanceof HTMLElement, deleteBtn); // New DEBUG
- 
- listItem.appendChild(deleteBtn); // THE CRUCIAL LINE
-
- console.log("DEBUG: ListItem AFTER appending button:", listItem.innerHTML); // New DEBUG
- console.log("DEBUG: Full listItem element (can expand in console):", listItem); // New DEBUG
-
- listItem.addEventListener('click', function(event) {
- try {
- console.log("DEBUG: List item clicked. Target:", event.target);
- // Check if target is not deleteBtn or its child (emoji is often a child text node)
- if (event.target !== deleteBtn && !deleteBtn.contains(event.target)) {
- currentFlashcardIndex = parseInt(this.dataset.originalIndex, 10);
- isFlashcardFlipped = false;
- renderFlashcard();
- saveState();
- } else {
- console.log("DEBUG: Click was on delete button or its child, not processing as list item click.");
- }
- } catch (e) {
- console.error("ERROR in listItem click listener:", e);
- }
- });
- flashcardTermListUL.appendChild(listItem);
- console.log(`DEBUG: Appended listItem for '${cardData.term}' to flashcardTermListUL. Current UL children count:`, flashcardTermListUL.children.length); // New DEBUG
- });
- console.log("DEBUG: Finished rendering all flashcard terms.");
- } catch (error) {
- console.error("MAJOR ERROR in renderFlashcardTermList function:", error);
- }
- console.log("--------------------------------------------------"); // Separator
- }
+ function playCurrentMedia() { /* ... unchanged ... */ }
+ function pauseCurrentMedia() { /* ... unchanged ... */ }
+ function updateProgressBar() { /* ... unchanged ... */ }
+ function formatTime(seconds) { /* ... unchanged ... */ }
+ function handleProgressBarSeek(e) { /* ... unchanged ... */ }
+ function handleVolumeSliderDrag(e) { /* ... unchanged ... */ }
+ function setInitialVolume() { /* ... unchanged ... */ }
+ function addChecklistItem(taskText = null, isChecked = false, shouldSave = true) { /* ... unchanged ... uses checklist */ }
+ function renderFlashcard() { /* ... unchanged ... uses flashcard constants */ }
+ function flipCurrentFlashcard() { /* ... unchanged ... uses flashcardDisplay */ }
+ function renderFlashcardTermList() { /* ... unchanged ... uses flashcardTermListUL and calls deleteFlashcard */ }
+ function deleteFlashcard(indexToDelete) { /* ... unchanged ... calls renderFlashcard, renderFlashcardTermList */ }
+ function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) { /* ... unchanged ... uses stickyNotesBoard */ }
+ function saveState() { /* ... unchanged ... uses many top-level constants */ }
+ function loadState() { /* ... unchanged ... calls many render functions */ }
+ async function fetchGreeting() { /* ... unchanged ... */ }
+ async function loadNotesFromBackend() { /* ... unchanged ... uses notesAreaElement */ }
+ async function saveNotesToBackend() { /* ... unchanged ... uses notesAreaElement */ }
 
 
- if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard);
- if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard);
+// --- INITIAL LOAD & EVENT LISTENER ATTACHMENT ---
+ document.addEventListener('DOMContentLoaded', () => {
+    console.log("DEBUG: DOMContentLoaded event fired.");
+    try { // Wrap the whole DOMContentLoaded in a try-catch for safety
 
-if(prevFlashcardBtn) {
- prevFlashcardBtn.addEventListener('click', () => {
- try {
- if (flashcards.length === 0) return;
- currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcards.length) % flashcards.length;
- isFlashcardFlipped = false;
- renderFlashcard();
- saveState();
- } catch (error) {
- console.error("ERROR in prevFlashcardBtn click:", error);
- }
- });
- }
+        // --- Attach Listeners for STATIC Elements ---
 
-if(nextFlashcardBtn) {
- nextFlashcardBtn.addEventListener('click', () => {
- try {
- if (flashcards.length === 0) return;
- currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcards.length;
- isFlashcardFlipped = false;
- renderFlashcard();
- saveState();
- } catch (error) {
- console.error("ERROR in nextFlashcardBtn click:", error);
- }
- });
- }
+        // Resizer
+        if (dragHandle) {
+            dragHandle.addEventListener('mousedown', function(e) {
+                try {
+                    e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp);
+                } catch (error) { console.error("ERROR in dragHandle mousedown:", error); }
+            });
+        } else { console.warn("DEBUG: dragHandle element not found."); }
 
-if(addNewFlashcardBtn) {
- addNewFlashcardBtn.addEventListener('click', () => {
- console.log("--------------------------------------------------"); // Separator
- console.log("DEBUG: Add New Flashcard button CLICKED!"); // New DEBUG, emphasized
- try {
- if (!flashcardTermInput || !flashcardDefinitionInput) {
- console.error("FATAL DEBUG: flashcardTermInput or flashcardDefinitionInput is NULL. Cannot add card.");
- alert("Error: Input fields not found. Please refresh.");
- return;
- }
+        // Player Tabs
+        if (playerTabs) {
+            playerTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    try {
+                        playerTabs.forEach(t => t.classList.remove('active'));
+                        playerTabContents.forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        const targetTabName = tab.dataset.playerTab;
+                        let targetContentId = '';
+                        if (targetTabName === 'player') targetContentId = 'player-content-area';
+                        else if (targetTabName === 'load-link') targetContentId = 'link-loader-area';
+                        const targetContent = document.getElementById(targetContentId);
+                        if (targetContent) {
+                            targetContent.classList.add('active');
+                        } else {
+                            console.error("Target content area not found for player tab:", targetTabName);
+                        }
+                    } catch (error) { console.error("ERROR in player tab click listener:", error); }
+                });
+            });
+        } else { console.warn("DEBUG: playerTabs NodeList not found or empty."); }
 
- const term = flashcardTermInput.value.trim();
- const definition = flashcardDefinitionInput.value.trim();
- console.log(`DEBUG: Term='${term}', Definition='${definition}'`);
+         // Playlist Click/DoubleClick (if elements exist)
+         // Check playlistContainerDisplay *before* adding listener
+         if (playlistContainerDisplay) {
+            playlistContainerDisplay.addEventListener('click', (event) => {
+                 try {
+                    if (event.target.tagName === 'INPUT' && event.target.classList.contains('playlist-item-rename-input')) { return; }
+                    const clickedItem = event.target.closest('.playlist-item');
+                    if (clickedItem && playlistContainerDisplay.contains(clickedItem)) {
+                        const index = parseInt(clickedItem.dataset.index);
+                        if (!isNaN(index) && index >= 0 && index < tracks.length) {
+                            currentTrackIndex = index;
+                            loadTrackFromPlaylist(currentTrackIndex); // Check if loadTrackFromPlaylist causes issues
+                        }
+                    }
+                 } catch(error) { console.error("ERROR in playlistContainerDisplay click:", error); }
+            });
+            playlistContainerDisplay.addEventListener('dblclick', handlePlaylistDoubleClick); // handlePlaylistDoubleClick needs to be defined above
+         } else { console.warn("DEBUG: playlistContainerDisplay not found when attaching listeners."); } // Warn if null here
 
- if (term && definition) {
- flashcards.push({ term, definition });
- console.log("DEBUG: Pushed to flashcards array. New count:", flashcards.length, flashcards);
- 
- flashcardTermInput.value = '';
- flashcardDefinitionInput.value = '';
+         // Check playlistEditorList before adding listener
+         if (playlistEditorList) {
+            playlistEditorList.addEventListener('dblclick', handlePlaylistDoubleClick);
+         } else { console.warn("DEBUG: playlistEditorList not found when attaching listener."); }
 
- if (currentFlashcardIndex === -1 && flashcards.length > 0) {
- currentFlashcardIndex = 0;
- } else if (flashcards.length > 0) {
- currentFlashcardIndex = flashcards.length -1;
- }
- isFlashcardFlipped = false;
- console.log("DEBUG: currentFlashcardIndex set to:", currentFlashcardIndex);
 
- renderFlashcard();
- console.log("DEBUG: About to call renderFlashcardTermList from addNewFlashcardBtn"); // New DEBUG
- renderFlashcardTermList(); // CRUCIAL CALL
- saveState();
- console.log("DEBUG: Flashcard added and state saved.");
- } else {
- alert("Please enter both a term and a definition.");
- console.log("DEBUG: Term or definition was empty.");
- }
- } catch (error) {
- console.error("MAJOR ERROR in addNewFlashcardBtn click listener:", error);
- alert("An error occurred while adding the flashcard. Check console.");
- }
- console.log("--------------------------------------------------"); // Separator
- });
- } else {
- console.error("FATAL DEBUG: addNewFlashcardBtn element was NOT FOUND. Add card functionality will not work.");
- }
+        // Player Controls
+        if (playBtn) playBtn.addEventListener('click', playCurrentMedia); else console.warn("DEBUG: playBtn not found.");
+        if (pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); else console.warn("DEBUG: pauseBtn not found.");
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                try { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); } catch(error) { console.error("ERROR in prevBtn click:", error); }
+            });
+        } else { console.warn("DEBUG: prevBtn not found."); }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                 try { if (tracks.length === 0) return; currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); } catch(error) { console.error("ERROR in nextBtn click:", error); }
+            });
+         } else { console.warn("DEBUG: nextBtn not found."); }
 
-document.addEventListener('keydown', function(e) { /* ... (unchanged as in user's provided code, but consider adding try-catch if issues arise here) ... */ });
+        // Player Progress/Volume Bars
+        if (progressBarContainer) {
+            progressBarContainer.addEventListener('mousedown', (e) => {
+                try { if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration) || currentMediaType === 'soundcloud' && soundcloudWidget || currentMediaType === 'youtube' && youtubePlayer && youtubePlayer.getDuration && youtubePlayer.getDuration() > 0) { isDraggingProgress = true; handleProgressBarSeek(e); } } catch(error) { console.error("ERROR in progressBarContainer mousedown:", error); }
+             });
+        } else { console.warn("DEBUG: progressBarContainer not found."); }
+        if (volumeSlider) {
+             volumeSlider.addEventListener('mousedown', (e) => {
+                 try { isDraggingVolume = true; handleVolumeSliderDrag(e); } catch(error) { console.error("ERROR in volumeSlider mousedown:", error); }
+            });
+        } else { console.warn("DEBUG: volumeSlider not found."); }
 
-function deleteFlashcard(indexToDelete) {
- console.log("--------------------------------------------------"); // Separator
- console.log("DEBUG: deleteFlashcard CALLED for originalIndex:", indexToDelete);
- try {
- if (indexToDelete < 0 || indexToDelete >= flashcards.length) {
- console.error("Invalid index for deleting flashcard:", indexToDelete);
- return;
- }
+        // Media Loader
+        if (loadMediaBtn) {
+            loadMediaBtn.addEventListener('click', () => {
+                 try {
+                    const inputVal = mediaUrlInput.value.trim(); if (inputVal === "") return; let type = 'unknown'; let src = inputVal; let title = "User Added Media"; let thumbnail = defaultThumbnail; const youtubeID = getYouTubeVideoID(inputVal); const soundcloudEmbedCodeSrc = getSoundCloudEmbedSrc(inputVal); if (youtubeID) { type = 'youtube'; src = inputVal; title = `YouTube Video`; thumbnail = `https://i.ytimg.com/vi/${youtubeID}/default.jpg`; } else if (soundcloudEmbedCodeSrc) { type = 'soundcloud'; src = soundcloudEmbedCodeSrc; const titleMatch = inputVal.match(/title="([^"]*)"/); title = titleMatch && titleMatch[1] ? titleMatch[1] : "SoundCloud Track"; } else if (inputVal.startsWith('http') && (inputVal.endsWith('.mp3') || inputVal.endsWith('.ogg') || inputVal.endsWith('.wav') || inputVal.includes('audio'))) { type = 'audio'; src = inputVal; try { const urlParts = new URL(inputVal).pathname.split('/'); title = decodeURIComponent(urlParts[urlParts.length -1]) || "Audio Track"; } catch(e) { title = "Audio Track"; } } if (type !== 'unknown') { const newTrackData = { src, title, thumbnail, type }; tracks.push(newTrackData); renderAllPlaylists(); saveState(); if (tracks.length === 1 && currentTrackIndex === -1) { currentTrackIndex = 0; loadTrackFromPlaylist(currentTrackIndex); } mediaUrlInput.value = ''; } else { alert("Could not load. Please paste a valid YouTube URL, full SoundCloud Embed Code, or direct audio link."); }
+                 } catch(error) { console.error("ERROR in loadMediaBtn click:", error); }
+            });
+        } else { console.warn("DEBUG: loadMediaBtn not found."); }
+        if(mediaUrlInput) {
+            mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
+        } else { console.warn("DEBUG: mediaUrlInput not found."); }
 
- const cardToDelete = flashcards[indexToDelete];
- if (!confirm(`Are you sure you want to delete the flashcard:\nTerm: "${cardToDelete.term}"\nDefinition: "${cardToDelete.definition.substring(0, 50)}..."?`)) {
- console.log("DEBUG: Flashcard deletion cancelled by user.");
- return;
- }
+        // Widget Tabs
+        if(widgetTabs) {
+            widgetTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    try {
+                        widgetTabs.forEach(t => t.classList.remove('active'));
+                        widgetContents.forEach(c => c.style.display = 'none');
+                        tab.classList.add('active');
+                        const targetWidgetName = tab.dataset.widget;
+                        const targetWidget = document.getElementById(`${targetWidgetName}-widget`);
+                        if (targetWidget) {
+                            targetWidget.style.display = 'flex';
+                        } else {
+                            console.error("Target widget content not found for tab:", targetWidgetName);
+                        }
+                    } catch (error) { console.error("ERROR in widget tab click listener:", error); }
+                });
+            });
+        } else { console.warn("DEBUG: widgetTabs NodeList not found or empty."); }
 
- flashcards.splice(indexToDelete, 1);
- console.log("DEBUG: Spliced flashcard. New flashcards array:", flashcards);
+        // Checklist Add Button / Input
+        if(addChecklistItemBtn) {
+             addChecklistItemBtn.addEventListener('click', () => {
+                 try { addChecklistItem(); } catch(e){ console.error("ERROR in addChecklistItemBtn click:", e); }
+             });
+        } else { console.warn("DEBUG: addChecklistItemBtn not found."); }
+        if(checklistItemInput) {
+             checklistItemInput.addEventListener('keypress', (e) => {
+                try { if (e.key === 'Enter') addChecklistItem(); } catch(e){ console.error("ERROR in checklistItemInput keypress:", e); }
+            });
+        } else { console.warn("DEBUG: checklistItemInput not found."); }
 
- if (flashcards.length === 0) {
- currentFlashcardIndex = -1;
- } else if (currentFlashcardIndex === indexToDelete) {
- currentFlashcardIndex = Math.max(0, indexToDelete - 1);
- } else if (currentFlashcardIndex > indexToDelete) {
- currentFlashcardIndex--;
- }
- console.log("DEBUG: currentFlashcardIndex after delete logic:", currentFlashcardIndex);
+        // Flashcard Buttons
+        if(flashcardDisplay) { flashcardDisplay.addEventListener('click', flipCurrentFlashcard); } else { console.warn("DEBUG: flashcardDisplay not found."); }
+        if(flipFlashcardBtn) { flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard); } else { console.warn("DEBUG: flipFlashcardBtn not found."); }
+        if(prevFlashcardBtn) { prevFlashcardBtn.addEventListener('click', () => { try { if (flashcards.length === 0) return; currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcards.length) % flashcards.length; isFlashcardFlipped = false; renderFlashcard(); saveState(); } catch (error) { console.error("ERROR in prevFlashcardBtn click:", error); } }); } else { console.warn("DEBUG: prevFlashcardBtn not found."); }
+        if(nextFlashcardBtn) { nextFlashcardBtn.addEventListener('click', () => { try { if (flashcards.length === 0) return; currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcards.length; isFlashcardFlipped = false; renderFlashcard(); saveState(); } catch (error) { console.error("ERROR in nextFlashcardBtn click:", error); } }); } else { console.warn("DEBUG: nextFlashcardBtn not found."); }
 
- isFlashcardFlipped = false;
- renderFlashcard();
- renderFlashcardTermList();
- saveState();
- console.log("DEBUG: Flashcard deleted and UI updated.");
- } catch (error) {
- console.error("MAJOR ERROR in deleteFlashcard function:", error);
- }
- console.log("--------------------------------------------------"); // Separator
- }
+        // Sticky Note Add Button
+        if (addStickyNoteBtn) { addStickyNoteBtn.addEventListener('click', () => { try { createStickyNote(); } catch(e){ console.error("ERROR in addStickyNoteBtn click:", e); } }); } else { console.warn("DEBUG: addStickyNoteBtn not found."); }
 
-function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, left = 20, z = ++stickyNoteZIndex, shouldSave = true) { /* ... (unchanged as in user's provided code) ... */ }
- if (addStickyNoteBtn) { /* ... (unchanged as in user's provided code) ... */ }
+        // Notes Area Auto-Save
+        const debouncedSaveNotesToBackend = debounce(saveNotesToBackend, 1500);
+        if (notesAreaElement) {
+            notesAreaElement.addEventListener('input', () => { try { debouncedSaveNotesToBackend(); saveState(); } catch(e) { console.error("ERROR in notesArea input listener:", e); } });
+            console.log("Frontend: Auto-save listener added to notes area.");
+        } else { console.error("Notes area element not found! Cannot add auto-save listener."); }
 
-// --- LOCAL STORAGE ---
- function saveState() { /* ... (unchanged but ensure checks for null elements if adding more interactions) ... */ }
- function loadState() { /* ... (unchanged but ensure checks for null elements if adding more interactions) ... */ }
+        // Global Keydown Listener
+         document.addEventListener('keydown', function(e) { try { const activeElement = document.activeElement; const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable; if (isInputFocused) { if (activeElement === mediaUrlInput && e.key === 'Enter' && loadMediaBtn) { loadMediaBtn.click(); } else if (activeElement === checklistItemInput && e.key === 'Enter' && addChecklistItemBtn) { addChecklistItemBtn.click(); } return; } const flashcardsWidget = document.getElementById('flashcards-widget'); const isFlashcardsWidgetActive = flashcardsWidget && getComputedStyle(flashcardsWidget).display !== 'none'; if (isFlashcardsWidgetActive) { if (e.key === 'ArrowLeft') { if (prevFlashcardBtn) prevFlashcardBtn.click(); } else if (e.key === 'ArrowRight') { if (nextFlashcardBtn) nextFlashcardBtn.click(); } else if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); if (flipFlashcardBtn) flipFlashcardBtn.click(); else if (flashcardDisplay) flipCurrentFlashcard(); } } } catch(error) { console.error("ERROR in keydown listener:", error); } });
 
-// --- INITIAL LOAD ---
- document.addEventListener('DOMContentLoaded', () => { /* ... (unchanged, but ensure the fetchGreeting simulation or actual call is what's intended) ... */ });
+        // Window Listeners for Dragging/Unload
+        window.addEventListener('mousemove', (e) => { try { if (isDraggingProgress) handleProgressBarSeek(e); if (isDraggingVolume) handleVolumeSliderDrag(e); if (isResizing) handleResizerMouseMove(e); } catch(error) { console.error("ERROR in window mousemove:", error); } });
+        window.addEventListener('mouseup', () => { try { if (isDraggingProgress) isDraggingProgress = false; if (isDraggingVolume) isDraggingVolume = false; if (isResizing) handleResizerMouseUp(); } catch(error) { console.error("ERROR in window mouseup:", error); } });
+        window.addEventListener('beforeunload', () => { try { saveState(); } catch(e) { console.error("ERROR in beforeunload saveState:", e); } });
 
-// --- MAKE SURE ALL FUNCTIONS ARE DEFINED BEFORE THEY ARE CALLED ---
- // e.g. renderPlaylistView, deleteTrack, etc. should be defined above where they are first used.
- // The provided code seems to follow this, but it's a good general check.
- // Functions used as callbacks (like in event listeners) are fine as long as the listener is attached after function definition.
+
+         // --- Initialization Calls ---
+         // Inject YouTube API Script
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        if (firstScriptTag && firstScriptTag.parentNode) { firstScriptTag.parentNode.insertBefore(tag, firstScriptTag); }
+        else { document.head.appendChild(tag); }
+
+        // Set initial tab states (visual only, listeners are attached above)
+        const initialActivePlayerTab = document.querySelector('.player-tab-btn.active'); if(initialActivePlayerTab) { const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); if(playerTabContents) playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
+        const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveWidgetTab) { const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); if(widgetContents) widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
+
+        // Load saved state and initialize components
+        loadState(); // This calls render functions internally
+        initializePlaylistEditorSortable(); // Depends on playlistEditorList
+        loadNotesFromBackend(); // Load notes after potentially getting fallback from loadState
+
+        // Add New Flashcard Listener (Specific one with detailed logs)
+        if(addNewFlashcardBtn) {
+            addNewFlashcardBtn.addEventListener('click', () => {
+                console.log("--------------------------------------------------");
+                console.log("DEBUG: Add New Flashcard button CLICKED!");
+                try {
+                    if (!flashcardTermInput || !flashcardDefinitionInput) { console.error("FATAL DEBUG: flashcardTermInput or flashcardDefinitionInput is NULL. Cannot add card."); alert("Error: Input fields not found. Please refresh."); return; }
+                    const term = flashcardTermInput.value.trim();
+                    const definition = flashcardDefinitionInput.value.trim();
+                    console.log(`DEBUG: Term='${term}', Definition='${definition}'`);
+                    if (term && definition) {
+                        flashcards.push({ term, definition });
+                        console.log("DEBUG: Pushed to flashcards array. New count:", flashcards.length, flashcards);
+                        flashcardTermInput.value = '';
+                        flashcardDefinitionInput.value = '';
+                        if (currentFlashcardIndex === -1 && flashcards.length > 0) { currentFlashcardIndex = 0; }
+                        else if (flashcards.length > 0) { currentFlashcardIndex = flashcards.length -1; }
+                        isFlashcardFlipped = false;
+                        console.log("DEBUG: currentFlashcardIndex set to:", currentFlashcardIndex);
+                        renderFlashcard();
+                        console.log("DEBUG: About to call renderFlashcardTermList from addNewFlashcardBtn");
+                        renderFlashcardTermList();
+                        saveState();
+                        console.log("DEBUG: Flashcard added and state saved.");
+                    } else { alert("Please enter both a term and a definition."); console.log("DEBUG: Term or definition was empty."); }
+                } catch (error) { console.error("MAJOR ERROR in addNewFlashcardBtn click listener:", error); alert("An error occurred while adding the flashcard. Check console."); }
+                console.log("--------------------------------------------------");
+            });
+         } else { console.error("FATAL DEBUG: addNewFlashcardBtn element was NOT FOUND. Add card functionality will not work."); }
+
+
+        // --- Calls that might depend on other initializations ---
+        console.log("DEBUG: About to call fetchGreeting().");
+        fetchGreeting(); // Call this last? Or does it matter? Keep as is for now.
+        console.log("DEBUG: Called fetchGreeting().");
+
+    } catch(error) {
+        console.error("MAJOR ERROR within DOMContentLoaded listener:", error);
+    }
+ }); // End of DOMContentLoaded listener
