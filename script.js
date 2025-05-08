@@ -40,6 +40,9 @@ const flashcardTermListUL = document.getElementById('flashcard-term-list');
 const addStickyNoteBtn = document.getElementById('add-sticky-note-btn');
 const stickyNotesBoard = document.getElementById('sticky-notes-board');
 const notesArea = document.getElementById('notes-area');
+// --- Notes Persistence Elements --- (Added for clarity)
+const notesAreaElement = document.getElementById('notes-area');
+const saveNotesButton = document.getElementById('save-notes-btn');
 
 // State variables
 let isResizing = false;
@@ -672,39 +675,59 @@ function createStickyNote(id = `sticky-${Date.now()}`, content = '', top = 20, l
     if (stickyNotesBoard) stickyNotesBoard.appendChild(note); if (shouldSave && id.startsWith('sticky-')) saveState();
 }
 if (addStickyNoteBtn) { addStickyNoteBtn.addEventListener('click', () => { const topPos = 20 + (stickyNotesBoard ? stickyNotesBoard.scrollTop : 0); const leftPos = 20 + (stickyNotesBoard ? stickyNotesBoard.scrollLeft : 0); createStickyNote(undefined, '', topPos, leftPos); });}
-if (notesArea) notesArea.addEventListener('input', saveState);
+// --- MODIFICATION: Comment out the original localStorage save for notes area ---
+// if (notesArea) notesArea.addEventListener('input', saveState);
 
-// --- LOCAL STORAGE ---
+// --- LOCAL STORAGE (Still used for other things) ---
 function saveState() {
     try {
-        const state = { tracks: tracks, currentTrackIndex: currentTrackIndex, volume: audio.volume, leftColumnWidth: leftColumn.style.flexBasis || '320px', checklistItems: [], flashcards: flashcards, currentFlashcardIndex: currentFlashcardIndex, isFlashcardFlipped: isFlashcardFlipped, mainNote: notesArea ? notesArea.value : '', stickyNotes: [] };
+        // Modify state saving to potentially EXCLUDE mainNote if handled by backend,
+        // or keep it as a local backup. For now, keep it.
+        const state = {
+            tracks: tracks,
+            currentTrackIndex: currentTrackIndex,
+            volume: audio.volume,
+            leftColumnWidth: leftColumn.style.flexBasis || '320px',
+            checklistItems: [],
+            flashcards: flashcards,
+            currentFlashcardIndex: currentFlashcardIndex,
+            isFlashcardFlipped: isFlashcardFlipped,
+            mainNote: notesAreaElement ? notesAreaElement.value : '', // Use notesAreaElement
+            stickyNotes: []
+        };
         if (checklist) { checklist.querySelectorAll('li').forEach(li => { const checkbox = li.querySelector('input[type="checkbox"]'); const label = li.querySelector('label'); if (checkbox && label) { state.checklistItems.push({ text: label.textContent, checked: checkbox.checked }); } }); }
         if (stickyNotesBoard) { stickyNotesBoard.querySelectorAll('.sticky-note').forEach(note => { const textarea = note.querySelector('textarea'); if (textarea) { state.stickyNotes.push({ id: note.dataset.id, content: textarea.value, top: note.offsetTop, left: note.offsetLeft, zIndex: parseInt(note.style.zIndex) || 1 }); } }); }
         localStorage.setItem('studyHubState', JSON.stringify(state));
     } catch (error) { console.error("Error saving state to localStorage:", error); }
 }
-function loadState() {
+function loadState() { // Loads state *except* main note, which is loaded from backend
     const savedStateJSON = localStorage.getItem('studyHubState');
     if (savedStateJSON) {
         try {
             const state = JSON.parse(savedStateJSON);
-            tracks = state.tracks || []; currentTrackIndex = state.currentTrackIndex !== undefined ? state.currentTrackIndex : -1; audio.volume = state.volume !== undefined ? state.volume : 0.5; if (state.leftColumnWidth) leftColumn.style.flexBasis = state.leftColumnWidth;
+            tracks = state.tracks || [];
+            currentTrackIndex = state.currentTrackIndex !== undefined ? state.currentTrackIndex : -1;
+            audio.volume = state.volume !== undefined ? state.volume : 0.5;
+            if (state.leftColumnWidth) leftColumn.style.flexBasis = state.leftColumnWidth;
             if (state.checklistItems && checklist) { checklist.innerHTML = ''; state.checklistItems.forEach(item => addChecklistItem(item.text, item.checked, false)); }
-            flashcards = state.flashcards || []; currentFlashcardIndex = state.currentFlashcardIndex !== undefined ? state.currentFlashcardIndex : -1; isFlashcardFlipped = state.isFlashcardFlipped || false;
-            if (notesArea && state.mainNote !== undefined) notesArea.value = state.mainNote;
+            flashcards = state.flashcards || [];
+            currentFlashcardIndex = state.currentFlashcardIndex !== undefined ? state.currentFlashcardIndex : -1;
+            isFlashcardFlipped = state.isFlashcardFlipped || false;
+            // **NOTE**: We are NO LONGER loading mainNote from localStorage here,
+            // because loadNotesFromBackend() will handle it.
+            // if (notesAreaElement && state.mainNote !== undefined) notesAreaElement.value = state.mainNote;
             if (state.stickyNotes && stickyNotesBoard) { stickyNotesBoard.innerHTML = ''; let maxZ = 0; state.stickyNotes.forEach(noteData => { createStickyNote(noteData.id, noteData.content, noteData.top, noteData.left, noteData.zIndex, false); if (noteData.zIndex > maxZ) maxZ = noteData.zIndex; }); stickyNoteZIndex = maxZ || 1; }
 
             setInitialVolume(); // Set volume for audio element and for thumb position
             renderAllPlaylists();
-            renderFlashcard(); renderFlashcardTermList();
+            renderFlashcard();
+            renderFlashcardTermList();
 
+            // Load track info, but don't auto-play (as before)
             if (tracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < tracks.length) {
-                // Don't auto-load track here if YT API isn't ready yet.
-                // Player will be created when user clicks or if API becomes ready and we trigger it.
-                // For simplicity on load, display info but don't force play.
                  const track = tracks[currentTrackIndex];
                  if (songTitleElem) songTitleElem.textContent = track.title;
-                 updateProgressBar(); // Update display with current track info, even if not playing
+                 updateProgressBar();
             } else if (tracks.length > 0) {
                 currentTrackIndex = 0;
                 const track = tracks[currentTrackIndex];
@@ -714,14 +737,22 @@ function loadState() {
                 if(songTitleElem) songTitleElem.textContent = "Playlist Empty";
                 updateProgressBar();
             }
-            // If you want to auto-play the last track when the page loads AND the API is ready:
-            // This is more complex as API readiness is async.
-            // A simple approach: if currentTrackIndex is valid, call loadTrackFromPlaylist.
-            // It will attempt to create the player.
+            // Attempt to load the last active track if needed
             if (currentTrackIndex !== -1 && tracks[currentTrackIndex]) {
-                loadTrackFromPlaylist(currentTrackIndex);
+                 // Be careful with autoplay on load, might be blocked by browser
+                 // loadTrackFromPlaylist(currentTrackIndex);
+                 // Instead, just display info without playing:
+                 const track = tracks[currentTrackIndex];
+                 loadMediaToPlayer(track.src, track.type, track.title); // Loads visuals/sets type
+                 // Prevent autoplay from loadMediaToPlayer if it was added there
+                 if (youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') youtubePlayer.pauseVideo();
+                 if (soundcloudWidget && typeof soundcloudWidget.pause === 'function') soundcloudWidget.pause();
+                 audio.pause();
+                 updateProgressBar(); // Update progress bar based on loaded (but paused) media
+                 // Highlight the track in the playlist
+                 const displayItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+                 displayItems.forEach(item => { item.classList.toggle('active-track', parseInt(item.dataset.index) === currentTrackIndex); });
             }
-
 
         } catch (error) {
             console.error("Error parsing saved state:", error);
@@ -737,54 +768,92 @@ function loadState() {
 document.addEventListener('DOMContentLoaded', () => {
     // Load YouTube API
     var tag = document.createElement('script');
-    // --- MODIFICATION START: Use HTTPS for YouTube API ---
-    tag.src = "https://www.youtube.com/iframe_api"; // Use HTTPS and the standard API endpoint
-    // --- MODIFICATION END ---
+    tag.src = "https://www.youtube.com/iframe_api"; // Consider HTTPS
     var firstScriptTag = document.getElementsByTagName('script')[0];
     if (firstScriptTag && firstScriptTag.parentNode) {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     } else {
-        document.head.appendChild(tag); // Fallback if no script tags found
+        document.head.appendChild(tag); // Fallback
     }
 
 
     const initialActivePlayerTab = document.querySelector('.player-tab-btn.active'); if(initialActivePlayerTab) { const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); if(playerTabContents) playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
     const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveWidgetTab) { const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); if(widgetContents) widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
 
-    loadState(); // Load other state elements
+    loadState(); // Load state from localStorage (now excludes main note)
     initializePlaylistEditorSortable();
-    // Note: setInitialVolume is called within loadState()
-    // Note: initializePlaylist is called within loadState() if no state, or its components are called
-    //      to restore playlist display. The actual player for the current track
-    //      will be instantiated by loadTrackFromPlaylist, which is called
-    //      at the end of loadState if a track was active.
 
-    // --- Call our new backend function (with debugging logs) ---
-    console.log("DEBUG: DOMContentLoaded event fired."); // <-- ADDED THIS
 
-    async function fetchGreeting() {
-        console.log("DEBUG: fetchGreeting function started."); // <-- ADDED THIS
+    // --- Notes Persistence Logic ---
+    // Function to load notes from the backend when the page starts
+    async function loadNotesFromBackend() {
+        if (!notesAreaElement) return; // Make sure the textarea exists
+
+        console.log("Frontend: Attempting to load notes from /api/notes/load...");
         try {
-            console.log("DEBUG: Attempting to fetch /api/greeting..."); // <-- ADDED THIS
-            const response = await fetch('/api/greeting');
-            console.log("DEBUG: Fetch response status:", response.status); // <-- ADDED THIS
+            const response = await fetch('/api/notes/load'); // Calls your load.js function
             if (!response.ok) {
-                console.error("DEBUG: Fetch failed with status:", response.statusText); // <-- ADDED THIS
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const data = await response.json();
-            console.log("Data from backend function:", data); // <-- This is the success log
+            const noteText = await response.text();
+            notesAreaElement.value = noteText; // Put the loaded text into the textarea
+            console.log("Frontend: Notes loaded successfully from backend.");
         } catch (error) {
-            console.error("DEBUG: Error inside fetchGreeting catch block:", error); // <-- Modified this
+            console.error("Frontend: Failed to load notes from backend:", error);
+            // Maybe load from localStorage as fallback if backend failed?
+             const fallbackState = localStorage.getItem('studyHubState');
+             if (fallbackState) {
+                 try {
+                     const parsedState = JSON.parse(fallbackState);
+                     if (notesAreaElement && parsedState.mainNote !== undefined) {
+                         notesAreaElement.value = parsedState.mainNote;
+                         console.log("Frontend: Loaded notes from localStorage as fallback.");
+                     }
+                 } catch (e) { console.error("Error parsing fallback state", e);}
+             }
         }
-        console.log("DEBUG: fetchGreeting function finished."); // <-- ADDED THIS
     }
 
-    console.log("DEBUG: About to call fetchGreeting()."); // <-- ADDED THIS
-    fetchGreeting(); // <-- Make sure this line exists and is not commented out
-    console.log("DEBUG: Called fetchGreeting()."); // <-- ADDED THIS
-    // --- End of backend function call ---
+    // Function to save notes when the button is clicked
+    async function saveNotesToBackend() {
+        if (!notesAreaElement) return; // Make sure the textarea exists
 
+        const currentNotes = notesAreaElement.value;
+        console.log("Frontend: Attempting to save notes to /api/notes/save...");
 
+        try {
+            const response = await fetch('/api/notes/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain' // We are sending plain text
+                },
+                body: currentNotes // Send the current content of the textarea
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log("Frontend: Notes sent to backend successfully.");
+            alert("Notes saved to cloud!"); // Give user feedback
+
+        } catch (error) {
+            console.error("Frontend: Failed to save notes to backend:", error);
+            alert("Error saving notes to cloud."); // Give user feedback
+        }
+    }
+
+    // --- Event Listeners ---
+    loadNotesFromBackend(); // Load notes from backend *after* other initial state is potentially loaded
+
+    // Add click listener for the new save button
+    if (saveNotesButton) {
+        saveNotesButton.addEventListener('click', saveNotesToBackend);
+    } else {
+        console.error("Save Notes button not found!");
+    }
+
+    // --- Removed the fetchGreeting test call ---
+
+    // --- Save state (including localStorage parts) before unload ---
     window.addEventListener('beforeunload', saveState);
 });
