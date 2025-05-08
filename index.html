@@ -4,15 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Hub - Player Tabs Fixed!</title>
+    <title>Study Hub - Player/Playlist Refinements</title>
     <style>
-        /* --- CSS (No changes from last version) --- */
+        /* --- CSS --- */
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; display: flex; min-height: 100vh; overflow: hidden; }
         .main-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
-        #left-column { min-width: 320px; padding: 0; /* Remove padding here, add to content */ background-color: #f9f9f9; overflow: hidden; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; box-sizing: border-box; }
+        #left-column { min-width: 320px; padding: 0; background-color: #f9f9f9; overflow: hidden; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; box-sizing: border-box; }
         .resizer { width: 10px; background-color: #c1c1c1; cursor: ew-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .resizer::after { content: '⋮'; font-size: 18px; color: #555; line-height: 0; }
         #right-column { flex-grow: 1; min-width: 350px; padding: 20px; background-color: #ffffff; overflow-y: auto; display: flex; flex-direction: column; box-sizing: border-box; }
+        
+        /* --- Drag State Styling --- */
+        body.is-resizing iframe, 
+        body.is-resizing .widget-content-area { /* Disable pointer events on iframes/widgets during resize */
+            pointer-events: none; 
+        }
+        body.is-resizing {
+             cursor: ew-resize; /* Show resize cursor everywhere */
+        }
+
+        /* Buttons */
         button, .button-like { padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; text-align: center; font-weight: bold; line-height: 1.4; }
         button:hover, .button-like:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .control-btn { background: #e0e0e0; color: #333; border-color: #ccc; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin: 0 5px; padding: 0; } .control-btn:hover { background: #d0d0d0; }
@@ -21,12 +32,16 @@
         .btn-success { background-color: #28a745; color: white; border-color: #28a745;} .btn-success:hover { background-color: #218838; border-color: #218838;}
         .btn-secondary { background-color: #6c757d; color: white; border-color: #6c757d;} .btn-secondary:hover { background-color: #5a6268; border-color: #545b62;}
         .delete-item-btn { color: #d9534f; background: none; border: none; padding: 5px; line-height: 1; flex-shrink: 0; font-weight: normal; } .delete-item-btn:hover { color: #c9302c; background: #f0f0f0;}
+        
+        /* Left Column - Player Container & Tabs */
         .music-player-container { flex-grow: 1; display: flex; flex-direction: column; margin: 0; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
         .player-tabs { display: flex; border-bottom: 1px solid #ddd; flex-shrink: 0; }
         .player-tab-btn { padding: 10px 15px; cursor: pointer; border: none; background-color: #f0f0f0; color: #555; font-size: 14px; flex-grow: 1; text-align: center; border-bottom: 3px solid transparent; }
         .player-tab-btn.active { background-color: #fff; font-weight: bold; color: #333; border-bottom-color: #007bff;}
-        .player-tab-content { padding: 20px; overflow-y: auto; flex-grow: 1; display: none; } /* Hide inactive */
-        .player-tab-content.active { display: flex; flex-direction: column; } /* Show active */
+        .player-tab-content { padding: 20px; overflow-y: auto; flex-grow: 1; display: none; } 
+        .player-tab-content.active { display: flex; flex-direction: column; } 
+        
+        /* Player Content Styling */
         .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden; background-color: #ddd; margin-bottom: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .song-title { margin: 10px 0; font-size: 18px; font-weight: bold; color: #333; text-align: center; flex-shrink: 0; }
@@ -45,20 +60,27 @@
         .volume-container { display: flex; align-items: center; margin-left: 15px; }
         .volume-slider-container { width: 80px; height: 15px; background-color: #ddd; border-radius: 5px; position: relative; cursor: pointer; }
         .volume-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background-color: #888; border-radius: 50%; left: 50%; }
+        
+        /* Link Loader Content Styling */
         .media-input-area { margin-top: 10px; padding-top: 0; border-top: none; }
         .media-input-area h4 { margin-top:0; margin-bottom: 10px; font-size: 1.1em; color: #333;}
         .media-input-area p { font-size: 0.9em; color: #666; margin-bottom: 15px;}
         .media-input-container { display: flex; margin-bottom: 5px; }
         #media-url-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 14px; min-width: 100px; }
         #load-media-btn { border-radius: 0 5px 5px 0; flex-shrink: 0; }
+        .load-instructions { font-size: 0.8em; color: #888; margin-top: 5px;}
+
+        /* Right Column Widgets */
         .widget-tabs { display: flex; margin-bottom: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
         .widget-tab-btn { background-color: #f0f0f0; color:#333; border-color:transparent; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 5px; position: relative; bottom: -1px; padding: 10px 15px; margin-bottom: -1px; }
         .widget-tab-btn:hover { background-color: #e7e7e7; }
         .widget-tab-btn.active { background-color: #fff; border-color: #ddd #ddd transparent #ddd; font-weight: bold; border-bottom: 1px solid #fff; z-index: 1; }
         .widget-content-area { border: 1px solid #ddd; border-top: none; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .widget-card { background-color: #fff; box-sizing: border-box; display: none; /* Hide all by default */ flex-direction: column; height: 100%; }
-        .widget-card.active-widget { display: flex; /* Show active widget */ } 
+        .widget-card { background-color: #fff; box-sizing: border-box; display: none; flex-direction: column; height: 100%; }
+        .widget-card.active-widget { display: flex; } 
         .widget-card h3 { margin-top: 0; margin-bottom: 15px; color: #333; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        
+        /* Widgets Content Styling */
         .checklist-widget {}
         .checklist-input-container { display: flex; margin-bottom: 15px; }
         #checklist-item-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; font-size: 15px; }
@@ -117,23 +139,24 @@
                     <div class="video-container" id="main-video-player"></div>
                     <div class="song-title">Select a Song or Video</div>
                     <div class="player-controls-area">
-                        <div class="controls"> <button id="prev-btn" class="control-btn">⏮</button> <button id="play-btn" class="control-btn">▶</button> <button id="pause-btn" class="control-btn" style="display: none;">⏸</button> <button id="next-btn" class="control-btn">⏭</button> <div class="volume-container"> <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div> </div> </div> <div class="progress-container"> <div class="time" id="current-time">0:00</div> <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div> <div class="time" id="duration">0:00</div> </div>
+                         <div class="controls"> <button id="prev-btn" class="control-btn">⏮</button> <button id="play-btn" class="control-btn">▶</button> <button id="pause-btn" class="control-btn" style="display: none;">⏸</button> <button id="next-btn" class="control-btn">⏭</button> <div class="volume-container"> <div class="volume-slider-container" id="volume-slider"><div class="volume-thumb"></div></div> </div> </div> <div class="progress-container"> <div class="time" id="current-time">0:00</div> <div class="progress-bar" id="progress-bar"><div class="progress" id="progress"></div></div> <div class="time" id="duration">0:00</div> </div>
                     </div>
-                    <div class="playlist-container">
-                        <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio"> <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div> </div> <div class="playlist-item" data-src="youtu.be8" data-thumbnail="youtu.be9" data-type="youtube"> <img src="youtu.be10" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div> </div> <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio"> <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div> </div>
+                    <div class="playlist-container" id="playlist-container-display"> <div class="playlist-item" data-src="https://raw.githubusercontent.com/NganBTruong/Interactive-Music-Player/f36f824e1dddf033f803b47c1a03ac161ee2c250/y2mate.com%20-%20Amber%20Run%20%20I%20Found%20Official%20Lyric%20Video%20(1).mp3" data-thumbnail="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" data-type="audio"> <img src="https://via.placeholder.com/40/92c952/FFFFFF?Text=IF" alt="I Found"><div>Amber Run - I Found (Audio)</div> </div> <div class="playlist-item" data-src="youtu.be11" data-thumbnail="youtu.be12" data-type="youtube"> <img src="youtu.be13" alt="YT Video"><div>Lofi Hip Hop Radio (YT Video)</div> </div> <div class="playlist-item" data-src="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3" data-thumbnail="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" data-type="audio"> <img src="https://via.placeholder.com/40/3498db/FFFFFF?Text=KM" alt="RPG"><div>Kangaroo MusiQue - RPG (Audio)</div> </div>
                     </div>
                 </div>
 
                  <div class="player-tab-content" id="link-loader-area">
                     <div class="media-input-area">
-                        <h4>Load Media into Player:</h4>
-                        <p>Paste a YouTube video URL, or the **Embed SRC URL** from SoundCloud's Share > Embed option.</p>
+                        <h4>Load Media & Add to Playlist:</h4>
+                        <p>Paste a YouTube URL or full SoundCloud Embed Code.</p>
                         <div class="media-input-container">
-                            <input type="text" id="media-url-input" placeholder="YouTube URL or SoundCloud Embed SRC...">
-                            <button id="load-media-btn" class="btn-success">Load Media</button>
-                        </div>
-                         <p style="font-size:0.8em; color: #888;">(Note: Standard SoundCloud track links likely won't work directly. Use Share > Embed > Copy SRC value.)</p>
-                    </div>
+                            <input type="text" id="media-url-input" placeholder="YouTube URL or full <iframe...> code from SoundCloud">
+                            <button id="load-media-btn" class="btn-success">Add to Playlist</button> </div>
+                         <div class="load-instructions">
+                            For SoundCloud: Click Share > Embed > Copy the full iframe code.<br/>
+                            (Loaded media will be added to the end of the playlist in the 'Player' tab).
+                         </div>
+                         </div>
                 </div>
             </div>
         </section>
@@ -141,88 +164,178 @@
         <div class="resizer" id="drag-handle"></div>
 
         <section id="right-column">
-             <div class="widget-tabs">
+            <div class="widget-tabs">
                   <button class="widget-tab-btn active" data-widget="checklist">Checklist</button>
                   <button class="widget-tab-btn" data-widget="notes">Notes & Sticky</button> 
                   <button class="widget-tab-btn" data-widget="flashcards">Flashcards</button>
              </div>
              <div class="widget-content-area">
-                  <div class="checklist-widget widget-card active-widget" id="checklist-widget">
-                     <div class="checklist-input-container"> <input type="text" id="checklist-item-input" placeholder="Add a new task..."> <button id="add-checklist-item-btn" class="btn-primary">Add</button> </div> <ul id="checklist"></ul>
-                  </div>
-                  <div class="notes-widget widget-card" id="notes-widget" style="display: none;">
-                     <textarea id="notes-area" placeholder="Write your main notes here..."></textarea>
-                     <div class="sticky-notes-section"> <h4>Sticky Notes</h4> <div id="sticky-notes-controls"> <button id="add-sticky-note-btn" class="btn-primary">Add New Sticky Note</button> </div> <div id="sticky-notes-board"></div> </div>
-                  </div>
-                  <div class="flashcards-widget widget-card" id="flashcards-widget" style="display: none;">
-                      <h3>Flashcards</h3>
-                      <div class="flashcard-display-area" id="flashcard-display" tabindex="0"> <div class="flashcard-face flashcard-front" id="flashcard-front">Term</div> <div class="flashcard-face flashcard-back" id="flashcard-back">Definition</div> </div>
-                      <div class="flashcard-nav"> <button id="prev-flashcard-btn" class="btn-secondary">⬅️ Previous</button> <span id="current-card-info">0/0</span> <button id="next-flashcard-btn" class="btn-secondary">Next ➡️</button> </div>
-                      <div class="flashcard-nav"> <button id="flip-flashcard-btn" class="btn-secondary" style="width:100%; margin-top:5px;">Show Answer / Flip</button> </div>
-                      <div class="add-flashcard-area"> <h4>Add New Flashcard</h4> <div><label for="flashcard-term-input">Term (Front):</label><input type="text" id="flashcard-term-input"></div> <div><label for="flashcard-definition-input">Definition (Back):</label><textarea id="flashcard-definition-input"></textarea></div> <button id="add-new-flashcard-btn" class="btn-success">Add Card</button> </div>
-                      <div class="flashcard-term-list-container"> <h4>Your Flashcard Terms:</h4> <ul id="flashcard-term-list"></ul> </div>
-                  </div>
+                  <div class="checklist-widget widget-card active-widget" id="checklist-widget"> <div class="checklist-input-container"> <input type="text" id="checklist-item-input" placeholder="Add a new task..."> <button id="add-checklist-item-btn" class="btn-primary">Add</button> </div> <ul id="checklist"></ul> </div>
+                  <div class="notes-widget widget-card" id="notes-widget" style="display: none;"> <textarea id="notes-area" placeholder="Write your main notes here..."></textarea> <div class="sticky-notes-section"> <h4>Sticky Notes</h4> <div id="sticky-notes-controls"> <button id="add-sticky-note-btn" class="btn-primary">Add New Sticky Note</button> </div> <div id="sticky-notes-board"></div> </div> </div>
+                  <div class="flashcards-widget widget-card" id="flashcards-widget" style="display: none;"> <h3>Flashcards</h3> <div class="flashcard-display-area" id="flashcard-display" tabindex="0"> <div class="flashcard-face flashcard-front" id="flashcard-front">Term</div> <div class="flashcard-face flashcard-back" id="flashcard-back">Definition</div> </div> <div class="flashcard-nav"> <button id="prev-flashcard-btn" class="btn-secondary">⬅️ Previous</button> <span id="current-card-info">0/0</span> <button id="next-flashcard-btn" class="btn-secondary">Next ➡️</button> </div> <div class="flashcard-nav"> <button id="flip-flashcard-btn" class="btn-secondary" style="width:100%; margin-top:5px;">Show Answer / Flip</button> </div> <div class="add-flashcard-area"> <h4>Add New Flashcard</h4> <div><label for="flashcard-term-input">Term (Front):</label><input type="text" id="flashcard-term-input"></div> <div><label for="flashcard-definition-input">Definition (Back):</label><textarea id="flashcard-definition-input"></textarea></div> <button id="add-new-flashcard-btn" class="btn-success">Add Card</button> </div> <div class="flashcard-term-list-container"> <h4>Your Flashcard Terms:</h4> <ul id="flashcard-term-list"></ul> </div> </div>
              </div>
         </section>
     </div>
 
     <script>
         // --- COLUMN RESIZER JavaScript ---
-        // ... (Resizer JS with dynamic min-width calculation) ...
-        const leftColumn = document.getElementById('left-column'); const rightColumn = document.getElementById('right-column'); const dragHandle = document.getElementById('drag-handle'); let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0; let calculatedLeftMinWidth = 320; function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); } document.addEventListener('DOMContentLoaded', () => { if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; } setTimeout(calculateLeftMinWidth, 100); /* Calculate after potential render delay */ const containerWidth = leftColumn.parentElement.offsetWidth; const initialLeftPercent = 35; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const resizerWidth = dragHandle.offsetWidth || 10; let initialLeftPx = (containerWidth * initialLeftPercent) / 100; initialLeftPx = Math.max(calculatedLeftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${initialLeftPx}px`; }); if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); document.body.style.userSelect = 'none'; document.body.style.cursor = 'ew-resize'; }); } function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; } function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); document.body.style.userSelect = ''; document.body.style.cursor = ''; }
+        const leftColumn = document.getElementById('left-column'); const rightColumn = document.getElementById('right-column'); const dragHandle = document.getElementById('drag-handle'); let isResizing = false; let initialPosX = 0; let initialLeftWidth = 0; let calculatedLeftMinWidth = 320; function calculateLeftMinWidth() { const mediaInputArea = document.querySelector('.media-input-area'); const controlsArea = document.querySelector('.controls'); let requiredWidth = 0; if(mediaInputArea && mediaInputArea.offsetParent !== null) { requiredWidth = mediaInputArea.scrollWidth + 40; } if(controlsArea && controlsArea.offsetParent !== null) { let controlsWidth = Array.from(controlsArea.children).reduce((sum, el) => sum + el.offsetWidth + 10, 0) + 20; requiredWidth = Math.max(requiredWidth, controlsWidth); } const cssMin = parseFloat(getComputedStyle(leftColumn).minWidth) || 320; calculatedLeftMinWidth = Math.max(cssMin, requiredWidth, 320); } document.addEventListener('DOMContentLoaded', () => { if (!leftColumn || !rightColumn || !dragHandle) { console.error("Resizer elements not found!"); return; } setTimeout(calculateLeftMinWidth, 100); const containerWidth = leftColumn.parentElement.offsetWidth; const initialLeftPercent = 35; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const resizerWidth = dragHandle.offsetWidth || 10; let initialLeftPx = (containerWidth * initialLeftPercent) / 100; initialLeftPx = Math.max(calculatedLeftMinWidth, Math.min(initialLeftPx, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${initialLeftPx}px`; }); if (dragHandle) { dragHandle.addEventListener('mousedown', function(e) { e.preventDefault(); isResizing = true; initialPosX = e.clientX; initialLeftWidth = leftColumn.offsetWidth; calculateLeftMinWidth(); document.body.classList.add('is-resizing'); /* Add class to disable pointer events */ document.addEventListener('mousemove', handleResizerMouseMove); document.addEventListener('mouseup', handleResizerMouseUp); }); } function handleResizerMouseMove(e) { if (!isResizing) return; const deltaX = e.clientX - initialPosX; let newLeftWidth = initialLeftWidth + deltaX; const rightMinWidth = parseFloat(getComputedStyle(rightColumn).minWidth) || 350; const containerWidth = leftColumn.parentElement.offsetWidth; const resizerWidth = dragHandle.offsetWidth || 10; newLeftWidth = Math.max(calculatedLeftMinWidth, Math.min(newLeftWidth, containerWidth - rightMinWidth - resizerWidth)); leftColumn.style.flexBasis = `${newLeftWidth}px`; } function handleResizerMouseUp() { if (!isResizing) return; isResizing = false; document.body.classList.remove('is-resizing'); /* Remove class */ document.removeEventListener('mousemove', handleResizerMouseMove); document.removeEventListener('mouseup', handleResizerMouseUp); }
 
 
         // --- LEFT PLAYER TABS ---
-        const playerTabs = document.querySelectorAll('.player-tab-btn');
-        const playerTabContents = document.querySelectorAll('.player-tab-content');
+        // ... (Player tab switching JS - corrected) ...
+        const playerTabs = document.querySelectorAll('.player-tab-btn'); const playerTabContents = document.querySelectorAll('.player-tab-content'); playerTabs.forEach(tab => { tab.addEventListener('click', () => { playerTabs.forEach(t => t.classList.remove('active')); playerTabContents.forEach(c => c.classList.remove('active')); tab.classList.add('active'); const targetTabName = tab.dataset.playerTab; let targetContentId = ''; if (targetTabName === 'player') targetContentId = 'player-content-area'; else if (targetTabName === 'load-link') targetContentId = 'link-loader-area'; const targetContent = document.getElementById(targetContentId); if (targetContent) { targetContent.classList.add('active'); } else { console.error("Target content area not found for player tab:", targetTabName); } }); });
 
-        playerTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                playerTabs.forEach(t => t.classList.remove('active'));
-                playerTabContents.forEach(c => c.classList.remove('active')); // Use class for visibility
 
-                tab.classList.add('active');
-                const targetTabName = tab.dataset.playerTab; 
-                // Correctly map dataset name to element ID
-                let targetContentId = '';
-                if (targetTabName === 'player') {
-                    targetContentId = 'player-content-area';
-                } else if (targetTabName === 'load-link') {
-                    targetContentId = 'link-loader-area';
-                }
-                const targetContent = document.getElementById(targetContentId); 
-                
-                if (targetContent) {
-                    targetContent.classList.add('active'); // Add active class to show content
-                } else {
-                     console.error("Target content area not found for tab:", targetTabName, "Expected ID:", targetContentId);
-                }
-            });
-        });
-        // Ensure initial active player tab content is shown
-         document.addEventListener('DOMContentLoaded', () => {
-              const initialActivePlayerTab = document.querySelector('.player-tab-btn.active');
-             if(initialActivePlayerTab) {
-                  const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab;
-                  let initialPlayerContentId = '';
-                  if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area';
-                  else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area';
-                  
-                  const initialPlayerContent = document.getElementById(initialPlayerContentId);
-                  playerTabContents.forEach(c => c.classList.remove('active')); // Ensure all hidden first
-                  if(initialPlayerContent) initialPlayerContent.classList.add('active');
+        // --- MEDIA PLAYER (Audio, YouTube, SoundCloud Embed Code) ---
+        const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); const playlistContainerDisplay = document.getElementById('playlist-container-display'); // Use ID
+        const volumeSlider = document.getElementById('volume-slider'); const volumeThumb = volumeSlider.querySelector('.volume-thumb'); const songTitleElem = document.getElementById('song-title'); const mainVideoPlayerContainer = document.getElementById('main-video-player'); const playerControlsArea = document.querySelector('.player-controls-area'); const mediaUrlInput = document.getElementById('media-url-input'); const loadMediaBtn = document.getElementById('load-media-btn'); 
+        let audio = new Audio(); 
+        let currentTrackIndex = -1; // Start at -1, set when loading
+        let currentMediaType = null; 
+        let activeMediaFrame = null; 
+        let tracks = []; // Will be populated from HTML initially, then updated
+        let isDraggingProgress = false; let isDraggingVolume = false; 
+
+        // Function to parse initial playlist items from HTML
+        function initializePlaylist() {
+            const initialItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+            tracks = Array.from(initialItems).map(item => ({ 
+                src: item.dataset.src, 
+                title: item.querySelector('div') ? item.querySelector('div').textContent.trim() : "Unknown Title", 
+                thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/40/DDDDDD/808080?Text=M', // Smaller default thumb
+                type: item.dataset.type || 'audio' 
+            }));
+            // Add click listeners to initial items
+            addPlaylistListeners();
+            // Load the first track if playlist is not empty
+            if (tracks.length > 0) {
+                 currentTrackIndex = 0;
+                 loadTrackFromPlaylist(currentTrackIndex);
+            } else {
+                 if(songTitleElem) songTitleElem.textContent = "Playlist Empty";
+            }
+        }
+
+        // Function to add event listeners to playlist items
+        function addPlaylistListeners() {
+             const allPlaylistItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+             allPlaylistItems.forEach((item, index) => {
+                // Remove existing listener first to avoid duplicates if called again
+                item.replaceWith(item.cloneNode(true)); // Simple way to remove all listeners
+             });
+             // Re-select items and add listeners
+             const newPlaylistItems = playlistContainerDisplay.querySelectorAll('.playlist-item');
+             newPlaylistItems.forEach((item, index) => {
+                  item.addEventListener('click', () => { 
+                       currentTrackIndex = index; 
+                       loadTrackFromPlaylist(currentTrackIndex); 
+                  });
+             });
+        }
+
+        function clearPlayerScreen() { /* ... as before ... */ mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } 
+        function getYouTubeVideoID(url) { /* ... as before ... */ const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; } 
+        
+        // Updated function to extract SRC from SoundCloud embed code
+        function getSoundCloudEmbedSrc(iframeCode) {
+             if (typeof iframeCode === 'string' && iframeCode.trim().startsWith('<iframe')) {
+                  const match = iframeCode.match(/src="([^"]*)"/);
+                  if (match && match[1] && match[1].includes('w.soundcloud.com/player')) {
+                       return match[1]; // Return the extracted src URL
+                  }
              }
-         });
+             return null; // Not valid iframe code or src not found/valid
+        }
 
+        function loadMediaToPlayer(urlOrId, type, title = "Loading...") { /* ... as before, using urlOrId ... */ 
+            clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title; 
+            if (type === 'youtube') { 
+                const videoID = getYouTubeVideoID(urlOrId); // Assume urlOrId is a standard YT URL
+                if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; 
+                } else { songTitleElem.textContent = "Invalid YouTube URL"; } 
+            } else if (type === 'soundcloud') { 
+                 // Assume urlOrId is the already extracted Embed SRC
+                 if(urlOrId.includes('w.soundcloud.com/player')) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = urlOrId; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; 
+                 } else { songTitleElem.textContent = "Invalid SoundCloud Embed SRC"; }
+            } else { // audio
+                 audio.src = urlOrId; audio.load(); const trackData = tracks.find(t => t.src === urlOrId && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); 
+            } 
+        } 
 
-        // --- MEDIA PLAYER (Audio, YouTube, SoundCloud Placeholder) ---
-        // ... (Largely unchanged JS) ...
-        const playBtn = document.getElementById('play-btn'); const pauseBtn = document.getElementById('pause-btn'); const prevBtn = document.getElementById('prev-btn'); const nextBtn = document.getElementById('next-btn'); const progressBarElem = document.getElementById('progress'); const progressBarContainer = document.getElementById('progress-bar'); const currentTimeElem = document.getElementById('current-time'); const durationElem = document.getElementById('duration'); const playlistItemsJS = document.querySelectorAll('.playlist-item'); const volumeSlider = document.getElementById('volume-slider'); const volumeThumb = volumeSlider.querySelector('.volume-thumb'); const songTitleElem = document.getElementById('song-title'); const mainVideoPlayerContainer = document.getElementById('main-video-player'); const playerControlsArea = document.querySelector('.player-controls-area'); const mediaUrlInput = document.getElementById('media-url-input'); const loadMediaBtn = document.getElementById('load-media-btn'); let audio = new Audio(); let currentTrackIndex = 0; let currentMediaType = 'audio'; let activeMediaFrame = null; const tracks = Array.from(playlistItemsJS).map(item => ({ src: item.dataset.src, title: item.querySelector('div').textContent.trim(), thumbnail: item.dataset.thumbnail || 'https://via.placeholder.com/200/DDDDDD/808080?Text=Media', type: item.dataset.type || 'audio' })); let isDraggingProgress = false; let isDraggingVolume = false; function clearPlayerScreen() { mainVideoPlayerContainer.innerHTML = ''; mainVideoPlayerContainer.style.backgroundImage = 'none'; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; activeMediaFrame = null; mainVideoPlayerContainer.style.height = "0"; } function getYouTubeVideoID(url) { const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2] && match[2].length === 11) ? match[2] : null; } function isSoundCloudUrl(url) { return url.includes('soundcloud.com'); } function loadMediaToPlayer(url, type, title = "Loading...") { clearPlayerScreen(); audio.pause(); songTitleElem.textContent = title; if (type === 'youtube') { const videoID = getYouTubeVideoID(url); if (videoID) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`; activeMediaFrame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; activeMediaFrame.allowFullscreen = true; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'youtube'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { songTitleElem.textContent = "Invalid YouTube URL"; } } else if (type === 'soundcloud') { if(url.includes('w.soundcloud.com/player')) { activeMediaFrame = document.createElement('iframe'); activeMediaFrame.width = "100%"; activeMediaFrame.height = "166"; activeMediaFrame.scrolling="no"; activeMediaFrame.frameborder="no"; activeMediaFrame.allow="autoplay"; activeMediaFrame.src = url; mainVideoPlayerContainer.style.paddingBottom = "0"; mainVideoPlayerContainer.style.height = "166px"; mainVideoPlayerContainer.appendChild(activeMediaFrame); currentMediaType = 'soundcloud'; if(playerControlsArea) playerControlsArea.style.display = 'none'; } else { alert("Please use the Embed SRC URL from SoundCloud Share > Embed."); songTitleElem.textContent = "Invalid SoundCloud URL"; } } else { audio.src = url; audio.load(); const trackData = tracks.find(t => t.src === url && t.type === 'audio'); mainVideoPlayerContainer.style.backgroundImage = `url('${trackData ? trackData.thumbnail : 'https://via.placeholder.com/200/DDDDDD/808080?Text=Audio'}')`; mainVideoPlayerContainer.style.height = "0"; mainVideoPlayerContainer.style.paddingBottom = "56.25%"; currentMediaType = 'audio'; if(playerControlsArea) playerControlsArea.style.display = 'block'; updateProgressBar(); } } if(loadMediaBtn) { loadMediaBtn.addEventListener('click', () => { const url = mediaUrlInput.value.trim(); if (url === "") return; let type = 'unknown'; if (getYouTubeVideoID(url)) { type = 'youtube';} else if (isSoundCloudUrl(url) && url.includes('w.soundcloud.com/player')) { type = 'soundcloud'; } else if (isSoundCloudUrl(url)) { alert("Please use the Embed SRC URL from SoundCloud Share > Embed."); return; } if (type !== 'unknown') { loadMediaToPlayer(url, type, "User Loaded Media"); } else { alert("Could not determine media type. Please use a valid YouTube URL or a SoundCloud Embed SRC URL."); } mediaUrlInput.value = ''; }); } if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); }); function loadTrackFromPlaylist(index) { const track = tracks[index]; if (track) loadMediaToPlayer(track.src, track.type, track.title); playlistItemsJS.forEach(item => item.classList.remove('active-track')); if(playlistItemsJS[index]) playlistItemsJS[index].classList.add('active-track'); } function playCurrentMedia() { if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } } function pauseCurrentMedia() { if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; } if(playBtn) playBtn.addEventListener('click', playCurrentMedia); if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()}); function updateProgressBar() { if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } } function formatTime(seconds) { if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; } if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); playlistItemsJS.forEach((item, index) => { item.addEventListener('click', () => { currentTrackIndex = index; loadTrackFromPlaylist(currentTrackIndex); }); }); if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); }); window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; }); function handleProgressBarSeek(e) { if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); } if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); function handleVolumeSliderDrag(e) { const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;} function setInitialVolume() { const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
+        // Logic for the "Load Media" button
+        if(loadMediaBtn) { 
+            loadMediaBtn.addEventListener('click', () => { 
+                const inputVal = mediaUrlInput.value.trim(); 
+                if (inputVal === "") return; 
+
+                let type = 'unknown'; 
+                let src = inputVal;
+                let title = "User Added Media";
+                let thumbnail = 'https://via.placeholder.com/40/DDDDDD/808080?Text=M'; // Default thumb
+
+                const youtubeID = getYouTubeVideoID(inputVal);
+                const soundcloudSrc = getSoundCloudEmbedSrc(inputVal); // Try parsing as iframe code
+
+                if (youtubeID) {
+                    type = 'youtube';
+                    src = inputVal; // Store original URL for potential reprocessing if needed
+                    title = `YouTube Video (${youtubeID.substring(0,5)}...)`; // Placeholder title
+                    thumbnail = `https://img.youtube.com/vi/${youtubeID}/default.jpg`;
+                } else if (soundcloudSrc) {
+                    type = 'soundcloud';
+                    src = soundcloudSrc; // Store the extracted SRC
+                    title = "SoundCloud Track"; // Placeholder title
+                    // Fetching SC thumbnail is complex client-side, use default
+                }
+
+                if (type !== 'unknown') {
+                    // Add to playlist data array
+                    const newTrackData = { src, title, thumbnail, type };
+                    tracks.push(newTrackData);
+
+                    // Add to visible playlist in Player tab
+                    const newItem = document.createElement('div');
+                    newItem.classList.add('playlist-item');
+                    newItem.dataset.src = src;
+                    newItem.dataset.thumbnail = thumbnail;
+                    newItem.dataset.type = type;
+                    newItem.innerHTML = `
+                        <img src="${thumbnail}" alt="Media">
+                        <div>${title}</div>
+                    `;
+                    playlistContainerDisplay.appendChild(newItem);
+                    
+                    // Re-attach listeners to all items including the new one
+                    addPlaylistListeners(); 
+
+                    // Optionally, load the newly added track
+                    // currentTrackIndex = tracks.length - 1;
+                    // loadTrackFromPlaylist(currentTrackIndex); 
+                    
+                    alert(`${title} added to playlist!`); // Give feedback
+
+                } else { 
+                    alert("Could not load. Please paste a valid YouTube URL or full SoundCloud Embed Code."); 
+                } 
+                mediaUrlInput.value = ''; 
+            }); 
+        } 
+        if(mediaUrlInput) mediaUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && loadMediaBtn) loadMediaBtn.click(); });
+        
+        function loadTrackFromPlaylist(index) { /* ... as before, calls loadMediaToPlayer ... */ const track = tracks[index]; if (track) loadMediaToPlayer(track.src, track.type, track.title); const allItems = playlistContainerDisplay.querySelectorAll('.playlist-item'); allItems.forEach(item => item.classList.remove('active-track')); if(allItems[index]) allItems[index].classList.add('active-track'); }
+        function playCurrentMedia() { /* ... as before ... */ if (currentMediaType === 'audio') { audio.play().then(() => { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; }).catch(error => console.error("Error playing audio:", error)); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { if(playBtn) playBtn.style.display = 'none'; if(pauseBtn) pauseBtn.style.display = 'inline-block'; } } 
+        function pauseCurrentMedia() { /* ... as before ... */ if (currentMediaType === 'audio') { audio.pause(); } else if (currentMediaType === 'youtube' && activeMediaFrame && activeMediaFrame.contentWindow) { activeMediaFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');} else if (currentMediaType === 'soundcloud' && activeMediaFrame && activeMediaFrame.contentWindow) { /* SC specific pause */ } if(playBtn) playBtn.style.display = 'inline-block'; if(pauseBtn) pauseBtn.style.display = 'none'; } 
+        if(playBtn) playBtn.addEventListener('click', playCurrentMedia); if(pauseBtn) pauseBtn.addEventListener('click', pauseCurrentMedia); audio.addEventListener('loadedmetadata', updateProgressBar); audio.addEventListener('durationchange', updateProgressBar); audio.addEventListener('timeupdate', updateProgressBar); audio.addEventListener('ended', () => {if(nextBtn) nextBtn.click()}); function updateProgressBar() { /* ... as before ... */ if (currentMediaType === 'audio' && audio.duration && isFinite(audio.duration)) { const progressPercent = (audio.currentTime / audio.duration) * 100; if(progressBarElem) progressBarElem.style.width = progressPercent + '%'; if(currentTimeElem) currentTimeElem.textContent = formatTime(audio.currentTime); if(durationElem) durationElem.textContent = formatTime(audio.duration); } else if (currentMediaType === 'youtube' || currentMediaType === 'soundcloud') { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "-:--"; if(durationElem) durationElem.textContent = "-:--"; } else { if(progressBarElem) progressBarElem.style.width = '0%'; if(currentTimeElem) currentTimeElem.textContent = "0:00"; if(durationElem) durationElem.textContent = (audio.src && !isFinite(audio.duration)) ? "Loading..." : "0:00"; } } function formatTime(seconds) { /* ... as before ... */ if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return "0:00"; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${mins}:${secs < 10 ? '0' : ''}${secs}`; } 
+        if(prevBtn) prevBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
+        if(nextBtn) nextBtn.addEventListener('click', () => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; loadTrackFromPlaylist(currentTrackIndex); }); 
+        // Initial listeners set in initializePlaylist
+        if(progressBarContainer) progressBarContainer.addEventListener('mousedown', (e) => { if (currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; isDraggingProgress = true; handleProgressBarSeek(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingProgress && currentMediaType === 'audio') handleProgressBarSeek(e); }); window.addEventListener('mouseup', () => { if (isDraggingProgress) isDraggingProgress = false; }); function handleProgressBarSeek(e) { /* ... as before ... */ if (!isDraggingProgress || currentMediaType !== 'audio' || !audio.duration || !isFinite(audio.duration)) return; const rect = progressBarContainer.getBoundingClientRect(); const offsetX = e.clientX - rect.left; const progressWidth = Math.min(Math.max(offsetX, 0), rect.width); audio.currentTime = (progressWidth / rect.width) * audio.duration; updateProgressBar(); } if(volumeSlider) volumeSlider.addEventListener('mousedown', (e) => { isDraggingVolume = true; handleVolumeSliderDrag(e); }); window.addEventListener('mousemove', (e) => { if (isDraggingVolume) handleVolumeSliderDrag(e); }); window.addEventListener('mouseup', () => { if (isDraggingVolume) isDraggingVolume = false; }); function handleVolumeSliderDrag(e) { /* ... as before ... */ const rect = volumeSlider.getBoundingClientRect(); let offsetX = e.clientX - rect.left; offsetX = Math.max(0, Math.min(offsetX, rect.width)); audio.volume = offsetX / rect.width; if(volumeThumb) volumeThumb.style.left = `${Math.max(0, Math.min(rect.width - volumeThumb.offsetWidth, offsetX - (volumeThumb.offsetWidth / 2)))}px`;} function setInitialVolume() { /* ... as before ... */ const initialVolume = 0.5; audio.volume = initialVolume; if (!volumeSlider || !volumeThumb) return; const rect = volumeSlider.getBoundingClientRect(); volumeThumb.style.left = rect.width > 0 ? `${initialVolume * rect.width - (volumeThumb.offsetWidth / 2)}px` : `calc(${initialVolume * 100}% - ${volumeThumb.offsetWidth / 2}px)`;}
 
 
         // --- RIGHT WIDGET TAB Switching ---
-        // ... (Right widget tab JS unchanged) ...
-         const widgetTabs = document.querySelectorAll('.widget-tab-btn'); const widgetContents = document.querySelectorAll('.widget-content-area .widget-card'); widgetTabs.forEach(tab => { tab.addEventListener('click', () => { widgetTabs.forEach(t => t.classList.remove('active')); widgetContents.forEach(c => c.style.display = 'none'); tab.classList.add('active'); const widgetName = tab.dataset.widget; const activeWidgetContent = document.getElementById(`${widgetName}-widget`); if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; }); }); document.addEventListener('DOMContentLoaded', () => { const initialActiveTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveTab) { const initialWidgetName = initialActiveTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; } });
+        // ... (Widget tab JS unchanged) ...
+         const widgetTabs = document.querySelectorAll('.widget-tab-btn'); const widgetContents = document.querySelectorAll('.widget-content-area .widget-card'); widgetTabs.forEach(tab => { tab.addEventListener('click', () => { widgetTabs.forEach(t => t.classList.remove('active')); widgetContents.forEach(c => c.style.display = 'none'); tab.classList.add('active'); const widgetName = tab.dataset.widget; const activeWidgetContent = document.getElementById(`${widgetName}-widget`); if (activeWidgetContent) activeWidgetContent.style.display = 'flex'; }); }); 
 
 
         // --- CHECKLIST JavaScript ---
@@ -231,29 +344,29 @@
 
 
         // --- FLASHCARDS JavaScript ---
-        // ... (Flashcard JS unchanged - already preserves flip state) ...
+        // ... (Flashcard JS unchanged) ...
         const flashcardDisplay = document.getElementById('flashcard-display'); const flashcardFront = document.getElementById('flashcard-front'); const flashcardBack = document.getElementById('flashcard-back'); const prevFlashcardBtn = document.getElementById('prev-flashcard-btn'); const nextFlashcardBtn = document.getElementById('next-flashcard-btn'); const flipFlashcardBtn = document.getElementById('flip-flashcard-btn'); const currentCardInfo = document.getElementById('current-card-info'); const flashcardTermInput = document.getElementById('flashcard-term-input'); const flashcardDefinitionInput = document.getElementById('flashcard-definition-input'); const addNewFlashcardBtn = document.getElementById('add-new-flashcard-btn'); const flashcardTermListUL = document.getElementById('flashcard-term-list'); let flashcards = []; let currentFlashcardIndex = -1; let isFlashcardFlipped = false; function renderFlashcard() { if (!flashcardDisplay || !flashcardFront || !flashcardBack || !currentCardInfo) return; if (flashcards.length === 0) { flashcardFront.textContent = "No cards yet!"; flashcardBack.textContent = "Add some cards below."; flashcardDisplay.classList.remove('is-flipped'); isFlashcardFlipped = false; currentCardInfo.textContent = "0/0"; if(prevFlashcardBtn) prevFlashcardBtn.disabled = true; if(nextFlashcardBtn) nextFlashcardBtn.disabled = true; if(flipFlashcardBtn) flipFlashcardBtn.disabled = true; return; } if(prevFlashcardBtn) prevFlashcardBtn.disabled = currentFlashcardIndex === 0; if(nextFlashcardBtn) nextFlashcardBtn.disabled = currentFlashcardIndex === flashcards.length - 1; if(flipFlashcardBtn) flipFlashcardBtn.disabled = false; const card = flashcards[currentFlashcardIndex]; flashcardFront.textContent = card.term; flashcardBack.textContent = card.definition; flashcardDisplay.classList.toggle('is-flipped', isFlashcardFlipped); currentCardInfo.textContent = `${currentFlashcardIndex + 1}/${flashcards.length}`; } function flipCurrentFlashcard() { if (flashcards.length === 0) return; isFlashcardFlipped = !isFlashcardFlipped; renderFlashcard(); } function renderFlashcardTermList() { if (!flashcardTermListUL) return; flashcardTermListUL.innerHTML = ''; const sortedForDisplay = [...flashcards].sort((a, b) => a.term.localeCompare(b.term)); sortedForDisplay.forEach(card => { const originalIndex = flashcards.findIndex(fc => fc === card); const listItem = document.createElement('li'); listItem.dataset.originalIndex = originalIndex; const termSpan = document.createElement('span'); termSpan.className = 'term'; termSpan.textContent = card.term; const defSpan = document.createElement('span'); defSpan.className = 'definition'; defSpan.textContent = card.definition; listItem.appendChild(termSpan); listItem.appendChild(defSpan); listItem.addEventListener('click', function() { currentFlashcardIndex = parseInt(this.dataset.originalIndex); renderFlashcard(); }); flashcardTermListUL.appendChild(listItem); }); } if(flashcardDisplay) flashcardDisplay.addEventListener('click', flipCurrentFlashcard); if(flipFlashcardBtn) flipFlashcardBtn.addEventListener('click', flipCurrentFlashcard); if(prevFlashcardBtn) { prevFlashcardBtn.addEventListener('click', () => { if (currentFlashcardIndex > 0) { currentFlashcardIndex--; renderFlashcard(); } }); } if(nextFlashcardBtn) { nextFlashcardBtn.addEventListener('click', () => { if (currentFlashcardIndex < flashcards.length - 1) { currentFlashcardIndex++; renderFlashcard(); } }); } if(addNewFlashcardBtn) { addNewFlashcardBtn.addEventListener('click', () => { const term = flashcardTermInput.value.trim(); const definition = flashcardDefinitionInput.value.trim(); if (term && definition) { flashcards.push({ term, definition }); flashcardTermInput.value = ''; flashcardDefinitionInput.value = ''; if (currentFlashcardIndex === -1) currentFlashcardIndex = 0; else currentFlashcardIndex = flashcards.length - 1; isFlashcardFlipped = false; renderFlashcard(); renderFlashcardTermList(); if(flashcardTermInput) flashcardTermInput.focus(); } else { alert("Please enter both a term and a definition."); } }); } document.addEventListener('keydown', function(e) { const flashcardsTab = document.querySelector('.widget-tab-btn[data-widget="flashcards"]'); if (flashcardsTab && flashcardsTab.classList.contains('active') && e.code === 'Space') { if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); flipCurrentFlashcard(); } } });
 
         // --- STICKY NOTES JavaScript ---
         // ... (Sticky notes JS unchanged) ...
         const addStickyNoteBtn = document.getElementById('add-sticky-note-btn'); const stickyNotesBoard = document.getElementById('sticky-notes-board'); let stickyNoteZIndex = 1; function createStickyNote(id = Date.now(), content = '', top = 20, left = 20) { const note = document.createElement('div'); note.classList.add('sticky-note'); const boardRect = stickyNotesBoard.getBoundingClientRect(); note.style.top = `${Math.min(top, Math.max(0, boardRect.height - 180))}px`; note.style.left = `${Math.min(left, Math.max(0, boardRect.width - 180))}px`; note.dataset.id = id; const header = document.createElement('div'); header.className = 'sticky-note-header'; const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '×'; deleteBtn.className = 'delete-sticky-btn'; deleteBtn.title = "Delete Note"; deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); if (confirm('Delete this sticky note?')) note.remove(); }); header.appendChild(deleteBtn); note.appendChild(header); const textarea = document.createElement('textarea'); textarea.value = content; textarea.placeholder = "Write something..."; textarea.addEventListener('input', () => { /* Save content later */ }); textarea.addEventListener('mousedown', (e) => e.stopPropagation()); note.appendChild(textarea); let isDraggingNote = false; let noteStartX, noteStartY, initialMouseX, initialMouseY; note.addEventListener('mousedown', (e) => { if (e.target === deleteBtn || e.target === textarea) return; isDraggingNote = true; noteStartX = note.offsetLeft; noteStartY = note.offsetTop; initialMouseX = e.clientX; initialMouseY = e.clientY; note.style.zIndex = ++stickyNoteZIndex; note.style.cursor = 'grabbing'; document.addEventListener('mousemove', handleStickyMouseMove); document.addEventListener('mouseup', handleStickyMouseUp); }); function handleStickyMouseMove(e) { if (!isDraggingNote || !stickyNotesBoard) return; const dx = e.clientX - initialMouseX; const dy = e.clientY - initialMouseY; const boardWidth = stickyNotesBoard.scrollWidth; const boardHeight = stickyNotesBoard.scrollHeight; let newLeft = Math.max(0, Math.min(noteStartX + dx, boardWidth - note.offsetWidth)); let newTop = Math.max(0, Math.min(noteStartY + dy, boardHeight - note.offsetHeight)); note.style.left = `${newLeft}px`; note.style.top = `${newTop}px`; } function handleStickyMouseUp() { if (!isDraggingNote) return; isDraggingNote = false; note.style.cursor = 'move'; document.removeEventListener('mousemove', handleStickyMouseMove); document.removeEventListener('mouseup', handleStickyMouseUp); } if(stickyNotesBoard) stickyNotesBoard.appendChild(note); } if(addStickyNoteBtn) { addStickyNoteBtn.addEventListener('click', () => createStickyNote()); }
 
+
         // --- INITIAL LOAD ---
-        // ... (Initial load ensures correct player tab is shown first) ...
         document.addEventListener('DOMContentLoaded', () => { 
-             // Initialize player first if needed by other initializations
-             if (tracks.length > 0) { loadTrackFromPlaylist(currentTrackIndex); } else { if(songTitleElem) songTitleElem.textContent = "No tracks in playlist"; if(mainVideoPlayerContainer) mainVideoPlayerContainer.style.backgroundImage = "url('https://via.placeholder.com/200/DDDDDD/808080?Text=No+Tracks')"; }
+             // Initialize Playlist first
+             initializePlaylist(); 
+             // Then init other UI elements
              setInitialVolume();
              updateProgressBar();
              renderFlashcard(); 
              renderFlashcardTermList();
              
-             // Then ensure tabs are correctly initialized
-            const initialActivePlayerTab = document.querySelector('.player-tab-btn.active');
-            if(initialActivePlayerTab) { /* ... Show initial Player tab content ... */ const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
-            const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active');
-            if(initialActiveWidgetTab) { /* ... Show initial Widget tab content ... */ const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
-        });
+             // Init Player Tabs
+             const initialActivePlayerTab = document.querySelector('.player-tab-btn.active'); if(initialActivePlayerTab) { const initialPlayerTabName = initialActivePlayerTab.dataset.playerTab; let initialPlayerContentId = ''; if (initialPlayerTabName === 'player') initialPlayerContentId = 'player-content-area'; else if (initialPlayerTabName === 'load-link') initialPlayerContentId = 'link-loader-area'; const initialPlayerContent = document.getElementById(initialPlayerContentId); playerTabContents.forEach(c => c.classList.remove('active')); if(initialPlayerContent) initialPlayerContent.classList.add('active'); }
+             // Init Widget Tabs
+             const initialActiveWidgetTab = document.querySelector('.widget-tab-btn.active'); if(initialActiveWidgetTab) { const initialWidgetName = initialActiveWidgetTab.dataset.widget; const initialWidgetContent = document.getElementById(`${initialWidgetName}-widget`); widgetContents.forEach(c => c.style.display = 'none'); if(initialWidgetContent) initialWidgetContent.style.display = 'flex'; }
+         });
 
     </script>
 </body>
